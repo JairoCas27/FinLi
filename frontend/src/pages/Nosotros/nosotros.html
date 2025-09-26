@@ -1,11 +1,183 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FinLi - Nosotros</title>
+    <link rel="icon" href="/frontend/public/img/Logo/LogoFinLi.png" />
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Iconos de Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
+    <!-- CSS -->
+    <link rel="stylesheet" href="/frontend/src/pages/Inicio/inicio.css">
+    <link rel="stylesheet" href="/frontend/src/pages/Nosotros/nosotros.css">
 </head>
-<body>
-    
+<body class="antialiased text-gray-800">
+    <!-- Fondo de burbujas -->
+    <div class="bubbles">
+        <div class="bubble bubble-verdeCla bubble-small" style="top: 10%; left: 5%;">$</div>
+        <div class="bubble bubble-verdeOs bubble-medium" style="top: 20%; left: 85%;">$</div>
+        <div class="bubble bubble-amarrillo bubble-large" style="top: 40%; left: 10%;">$</div>
+        <div class="bubble bubble-plomo bubble-small" style="top: 60%; left: 90%;">$</div>
+        <div class="bubble bubble-verdeCla bubble-medium" style="top: 80%; left: 15%;">$</div>
+        <div class="bubble bubble-verdeOs bubble-small" style="top: 30%; left: 70%;">$</div>
+        <div class="bubble bubble-amarrillo bubble-medium" style="top: 50%; left: 80%;">$</div>
+        <div class="bubble bubble-plomo bubble-large" style="top: 70%; left: 5%;">$</div>
+        <div class="bubble bubble-verdeCla bubble-small" style="top: 15%; left: 50%;">$</div>
+        <div class="bubble bubble-verdeOs bubble-medium" style="top: 45%; left: 30%;">$</div>
+        <div class="bubble bubble-amarrillo bubble-small" style="top: 75%; left: 60%;">$</div>
+        <div class="bubble bubble-plomo bubble-medium" style="top: 25%; left: 25%;">$</div>
+        <div class="bubble bubble-verdeCla bubble-large" style="top: 55%; left: 45%;">$</div>
+        <div class="bubble bubble-verdeOs bubble-small" style="top: 85%; left: 75%;">$</div>
+        <div class="bubble bubble-amarrillo bubble-medium" style="top: 35%; left: 95%;">$</div>
+    </div>
+
+    <!-- Barra de Navegacion -->
+    <nav class="navbar navbar-expand-lg bg-white py-3">
+        <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="/frontend/src/pages/Inicio/inicio.html">
+            <img src="/frontend/public/img/Logo/LogoFinLi.png" alt="Logo FinLi" width="50" height="50">
+            <span class="fw-semibold fs-5">FinLi</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>  
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto gap-2 gap-md-4">
+            <li class="nav-item">
+                <a class="nav-link" href="/frontend/src/pages/Inicio/inicio.html">Inicio</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="nosotros.html">Nosotros</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/frontend/src/pages/Servicios/servicios.html">Servicios</a>
+            </li>
+            </ul>
+            
+            <div class="d-flex">
+            <a href="/frontend/src/pages/Autenticación/login.html" class="btn btn-custom">Iniciar Sesión</a>
+            </div>
+        </div>
+        </div>
+    </nav>
+
+        <!-- Sección Nuestra Historia -->
+        <section class="historia-hero">
+        <div class="container">
+            <div class="row align-items-center justify-content-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div class="historia-img card-shadow">
+                <img src="/frontend/public/img/Contenido/nosotros.png" alt="Equipo FinLi trabajando" loading="lazy" class="w-100 h-100">
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <h1 class="nosotros-title">Nuestra Historia</h1>
+                <p class="nosotros-subtitle">
+                FinLi nació de la frustración de ver a muchos jóvenes como nosotros sentirse abrumados y sin herramientas claras para manejar su dinero. Queríamos crear una solución que fuera a la vez intuitiva y poderosa, que realmente empoderara a la gente a tomar el control de su futuro financiero.
+                </p>
+            </div>
+            </div>
+        </div>
+        </section>
+
+    <!-- Sección Nuestra Misión -->
+    <section class="nosotros-hero text-center">
+        <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+            <h1 class="nosotros-title">Nuestra Misión</h1>
+            <p class="nosotros-subtitle">Descubre cómo FinLi está ayudando a cientos de jóvenes a transformar su relación con el dinero.</p>
+            
+            <div class="valores-container">
+                <div class="valor-item">
+                <div class="valor-icon">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <p>Empoderar a nuestros usuarios para que tomen el control de sus finanzas personales con confianza.</p>
+                </div>
+                
+                <div class="valor-item">
+                <div class="valor-icon">
+                    <i class="bi bi-piggy-bank"></i>
+                </div>
+                <p>Simplificar la gestión del dinero, transformando una tarea compleja en un hábito diario, simple e inteligente.</p>
+                </div>
+                
+                <div class="valor-item">
+                <div class="valor-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <p>Democratizar el bienestar financiero, haciendo que las herramientas de planificación y ahorro sean accesibles para todos.</p>
+                </div>
+            </div>
+            </div>
+        </div>
+        </div>
+    </section>
+
+    <!-- Sección Nuestra Visión -->
+    <section class="mision-vision-section">
+        <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+            <div class="mision-vision-card">
+                <h2 class="mision-vision-title">Nuestra Visión</h2>
+                <p class="mision-vision-content">
+                Ser la plataforma líder en tecnología financiera en Latinoamérica, reconocida por empoderar a millones de personas a alcanzar sus metas y tranquilidad financiera, transformando la percepción de las finanzas personales de una tarea compleja en un hábito diario y gratificante.
+                </p>
+            </div>
+            </div>
+        </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+        <div class="row">
+            <div class="col-lg-4 mb-5 mb-lg-0 logo-section">
+            <div id="img" class="d-flex justify-content-center justify-content-lg-start align-items-center gap-3 mb-4">
+                <img src="/frontend/public/img/Logo/LogoFinLi2.png" alt="Logo FinLi" width="50" height="70">
+            </div>
+            <p class="footer-content text-center text-lg-start">Toma el control de tu dinero, de manera sencilla y con ayuda real.</p>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-5 mb-md-0">
+            <h5 class="footer-title text-center text-md-start">Navegación</h5>
+            <ul class="footer-links">
+                <li class="text-center text-md-start"><a href="/frontend/src/pages/Inicio/inicio.html">Inicio</a></li>
+                <li class="text-center text-md-start"><a href="nosotros.html">Nosotros</a></li>
+                <li class="text-center text-md-start"><a href="/frontend/src/pages/Servicios/servicios.html">Servicios</a></li>
+            </ul>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-5 mb-md-0">
+            <h5 class="footer-title text-center text-md-start">Legal</h5>
+            <ul class="footer-links">
+                <li class="text-center text-md-start"><a href="#">Términos y Condiciones</a></li>
+                <li class="text-center text-md-start"><a href="#">Política de Privacidad</a></li>
+            </ul>
+            </div> 
+            <div class="col-lg-4 col-md-4">
+            <h5 class="footer-title text-center text-md-start">Conéctate con nosotros</h5>
+            <div class="social-icons mb-4 text-center text-md-start">
+                <a href="#"><i class="bi bi-facebook"></i></a>
+                <a href="#"><i class="bi bi-twitter"></i></a>
+                <a href="#"><i class="bi bi-instagram"></i></a>
+                <a href="#"><i class="bi bi-linkedin"></i></a>
+            </div>
+            <p class="footer-content text-center text-md-start">Síguenos en nuestras redes sociales para mantenerte actualizado.</p>
+            </div>
+        </div>
+        </div>
+        <div class="copyright-container">
+        <p class="copyright">© 2025 FinLi. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
