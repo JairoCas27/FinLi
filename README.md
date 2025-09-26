@@ -79,15 +79,15 @@ No incluido:
 - Soporte multilenguaje completo (nuestra versión inicial será en español).
 - Aplicación nativa móvil (se prioriza web responsiva; se evaluará app móvil en próximas fases).
 ## 4. Requerimientos
-<img width="854" height="649" alt="image" src="https://github.com/user-attachments/assets/41b92b5a-c17a-4bb1-95fb-ccc7fcf98f62" />
-<img width="869" height="568" alt="image" src="https://github.com/user-attachments/assets/d9158877-2c7b-42f7-949a-de520c0c2275" />
+<img width="857" height="639" alt="image" src="https://github.com/user-attachments/assets/d34a8407-67d9-41c1-a0ca-792f76585ca1" />
+<img width="854" height="563" alt="image" src="https://github.com/user-attachments/assets/8c7f4a33-1b21-4e39-91c4-6703a2beb3fa" />
 
 ## 5. Lean Canvas
-<img width="1300" height="733" alt="image" src="https://github.com/user-attachments/assets/bfa386c0-480c-4f56-8b37-bb486646f644" />
+<img width="886" height="502" alt="image" src="https://github.com/user-attachments/assets/6159ffca-5646-4081-80f9-36319422fe0a" />
 [Lean Canvas](https://drive.google.com/file/d/1Y1wmewULqF-TfBiBvjXi6V-MjKoLcuAc/view?usp=drive_link)
 
 ## 6. Diagrama de Gantt
-<img width="886" height="448" alt="image" src="https://github.com/user-attachments/assets/ba23191d-b867-430c-b92e-88d53da5fddd" />
+<img width="886" height="448" alt="image" src="https://github.com/user-attachments/assets/5ff7393c-af65-445d-9796-0dfa2de64183" />
 [Diagrama de Gantt](https://docs.google.com/spreadsheets/d/1wgCwwsCE_3m2v7sExJYU6LgrJryyp4O_/edit?usp=drive_link&ouid=100945798026821383727&rtpof=true&sd=true)
 
 ## 7. Work Breakdown Structure
@@ -96,40 +96,40 @@ No incluido:
 ## Capitulo 2
 ## 1. Pago de Suscripción
 ### 1.1. Prototipo de Boleta Electrónica
-<img width="305" height="460" alt="image" src="https://github.com/user-attachments/assets/b074e608-d452-4b19-83b3-7ea5ea410f43" />
+<img width="305" height="460" alt="image" src="https://github.com/user-attachments/assets/d8e39323-45d0-4283-8fee-7fd78d5db366" />
 
 ### 1.2. Prototipo de Factura Electrónica
-<img width="469" height="443" alt="image" src="https://github.com/user-attachments/assets/6cdf8eda-33c1-4163-9730-0c45c32538f6" />
+<img width="469" height="443" alt="image" src="https://github.com/user-attachments/assets/0ea862fa-0d68-4349-af89-9841783c131c" />
 
 ## 2. Diagrama de Proceso de Suscripción
-<img width="886" height="346" alt="image" src="https://github.com/user-attachments/assets/f01f4335-c72c-49b3-a56b-a52b343fa30b" />
+<img width="567" height="222" alt="image" src="https://github.com/user-attachments/assets/eb785692-4131-417d-8730-8a66a9c58ad9" />
 
 ## 3. MOCKUP
-<img width="886" height="655" alt="image" src="https://github.com/user-attachments/assets/253364e3-f35a-41f6-a790-77e17fb8ee15" />
+<img width="567" height="419" alt="image" src="https://github.com/user-attachments/assets/981aca86-a9de-4f7c-afc1-fa1d146e19d3" />
 [Mockup](https://drive.google.com/file/d/1avPrhVzS0bMJEhFP-uAzfOXYqLKeNW5z/view?usp=drive_link) 
 
 ### 3.1. Mockup conectado a la base de datos
-<img width="886" height="458" alt="image" src="https://github.com/user-attachments/assets/1dd8a6d5-9afb-4fc9-850f-bae2f252b158" />
+<img width="567" height="293" alt="image" src="https://github.com/user-attachments/assets/0e4c00db-6c78-4884-b5a9-51f58ebffdc8" />
 
 ## 4. Project Charter
 ### 4.1. Project Charter Básico
-<img width="886" height="581" alt="image" src="https://github.com/user-attachments/assets/de2e9755-70ef-412d-b5b8-a5f72dadd6bb" />
+<img width="567" height="372" alt="image" src="https://github.com/user-attachments/assets/98a33e96-91a0-44ca-bcb8-cc7a78212c45" />
 [Project Charter Básico](https://n9.cl/w7jq5 )
 
 ### 4.2. Project Charter Profesional
-<img width="886" height="621" alt="image" src="https://github.com/user-attachments/assets/ff946bb6-0949-48dd-abb0-b13f63a7774d" />
+<img width="567" height="398" alt="image" src="https://github.com/user-attachments/assets/7c8da3d0-acb2-4ee8-9903-ba043583e7e0" />
 [Project Charter Profesional](https://n9.cl/lkenf)
 
 ## 5. SRS
-<img width="869" height="758" alt="image" src="https://github.com/user-attachments/assets/66531f1c-a7ba-4807-b706-cf6de594c0f4" />
+<img width="556" height="485" alt="image" src="https://github.com/user-attachments/assets/3876f3ed-7a44-4ba4-8b83-2084fc1b38b3" />
 [SRS](https://n9.cl/rmynpp )
 
 ## 6. Estructura de Capas
-<img width="756" height="568" alt="image" src="https://github.com/user-attachments/assets/89519dff-bd0b-40cc-98b9-23865c165173" />
+<img width="484" height="363" alt="image" src="https://github.com/user-attachments/assets/d00b4adc-2540-4a71-a99f-8ee1e7e7ae40" />
 
 ## 7. Diagrama Entidad Relación
 ### 7.1. Modelo Conceptual
-<img width="886" height="488" alt="image" src="https://github.com/user-attachments/assets/1127b4bd-e40d-4308-9fd4-c03bb87bc133" />
+<img width="567" height="312" alt="image" src="https://github.com/user-attachments/assets/46c87944-96e8-4f2f-a569-0335aaebb418" />
 
 #### Entidades y Atributos
 
@@ -178,10 +178,10 @@ Gestiona los recordatorios de pagos recurrentes mensuales.
 - Un usuario tiene muchos pagos fijos: Relación de uno a muchos (1:M) entre Usuario y PagoFijo. Cada pago fijo pertenece a un único usuario, pero un usuario puede tener muchos pagos fijos.
 
 ### 7.2 Model Lógico
-<img width="886" height="465" alt="image" src="https://github.com/user-attachments/assets/449550a0-e8d8-45d8-a905-4e79d453b795" />
+<img width="567" height="297" alt="image" src="https://github.com/user-attachments/assets/406a2e7f-e970-437f-b5db-0959706a7eba" />
 
 ### 7.3. Modelo Físico
-<img width="886" height="772" alt="image" src="https://github.com/user-attachments/assets/7ff84f47-9a50-498d-9bfa-f24871b6c4ce" />
+<img width="567" height="494" alt="image" src="https://github.com/user-attachments/assets/67cbf1db-90b2-4861-97b4-86390b118373" />
 
 ### 7.4. Diagrama de Clases
 
