@@ -1,0 +1,328 @@
+/* Estilos de colores y letras del contenido */
+:root{
+  --verdeCla: #d7ffe3; /* verde claro principal */
+  --verdeOs: #0ea46f; /* verde oscuro */
+  --blanco: #ffff; /* blanco puro de fondo */
+  --amarrillo: #ffd000; /* amarillo */
+  --plomo: #f7f7f7; /* gris claro */
+  --mint: #d7ffe3; /* tono mint */
+  --letra: 'Footlight MT Light', sans-serif; /* fuente principal del proyecto */
+  font-size: 19px; /* tamaño base de letra */
+}
+
+body{ 
+  font-family: var(--letra); /* fuente por defecto */
+  background:var(--blanco);  /* fondo de la página */
+}
+
+p, form{
+  font-family: 'Poppins'; /* fuente para cuerpos de texto */
+}
+
+/* Estilos para el menú de navegación */
+.navbar-nav .nav-link {
+  position: relative; /* para pseudo-elementos */
+  color: #6c757d !important; /* tono gris por defecto */
+  padding: 0.5rem 0; /* espacio vertical en cada enlace */
+  margin: 0 1rem; /* separación lateral entre links */
+  transition: all 0.3s ease; /* transición */
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+  color: #000 !important; /* negro para resaltar */
+}
+
+/* Efecto de línea inferior */
+.navbar-nav .nav-link::after {
+  content: ''; /* pseudo-elemento vacío para la línea */
+  position: absolute; /* posicionado respecto al enlace */
+  width: 0; /* empieza sin ancho */
+  height: 2px; /* grosor de la línea */
+  bottom: 0; /* pegado al fondo del enlace */
+  left: 50%; /* inicia desde el centro */
+  background-color: var(--verdeOs); /* color de la línea */
+  transition: all 0.3s ease; /* anima la expansión */
+}
+
+.navbar-nav .nav-link:hover::after,
+.navbar-nav .nav-link.active::after {
+  width: 100%; /* se expande al ancho total */
+  left: 0; /* y se alinea al inicio */
+}
+
+/* Estilos de botones personalizados */
+.btn-custom {
+  font-family: 'Poppins'; /* Tipo de letra */
+  background: var(--verdeCla); /* Color de fondo suave */
+  padding: .6rem 1.5rem; /* Espacio interno para mejor clic */
+  border-radius: .5rem; /* Bordes redondeados */
+  font-size: 14px; /* tamaño de botones */
+  border: none; /* sin borde */
+  color: #000; /* texto oscuro */
+  font-weight: 600; /* texto con peso */
+  transition: all 0.3s ease; /* transición al pasar el puntero */
+  width: 100%; /* ocupa el ancho del contenedor */
+}
+
+/* Efecto al pasar el puntero en botones */
+.btn-custom:hover {
+  background: var(--verdeOs); /* cambia a verde oscuro */
+  color: var(--verdeCla); /* texto claro al invertir colores */
+  transform: translateY(-2px); /* ligero levantamiento visual */
+  box-shadow: 0 10px 22px rgba(16,185,129,0.12); /* sombra al pasar */
+}
+
+/* Estilos de las tarjetas */
+.card-shadow { 
+    box-shadow: 0 8px 24px rgba(14, 32, 45, 0.128); /* sombra */
+    border: none; /* sin borde visible */
+    border-radius: 12px; /* esquinas redondeadas */
+    backdrop-filter: blur(10px); /* efecto vidrio */
+    background: rgba(255, 255, 255, 0.9); /* fondo semi-transparente */
+    position: relative; /* para capas internas posicionadas */
+    z-index: 2; /* por encima de fondos */
+    transition: transform 0.4s ease; /* animación al interactuar */
+} 
+
+/* Efecto de acercamiento de las tarjetas*/
+.card-shadow:hover {
+  transform: translateY(-8px); /* eleva la tarjeta al pasar el cursor */
+}
+
+/* ---- CONTENIDO PRINCIPAL ---- */
+.hero-section {
+  position: relative; /* contenedor */
+  overflow: hidden; /* recorta lo que sobresalga */
+  height: 100vh; /* para pantalla completa */
+  display: flex; /* para centrar contenido */
+  align-items: center; /* centra verticalmente */
+}
+
+/* Carrusel del contenido principal*/
+.hero-carousel {
+  position: absolute; /* se coloca tras el contenido */
+  top: 0; /* pegado arriba */
+  left: 0; /* pegado a la izquierda */
+  width: 100%; /* ancho completo */
+  height: 100%; /* alto completo */
+  z-index: 0; /* detrás del contenido principal */
+}
+
+/* Cada elemento del carrusel mantiene la altura de la ventana. */
+.hero-carousel .carousel-item {
+  height: 100vh; /* para pantalla completa */
+}
+
+/* Imagenes del carrusel */
+.hero-carousel img {
+  object-fit: cover;  /* cubre y recorta proporcionalmente */
+  height: 100%; /* alto completo del contenedor */
+  width: 100%; /* ancho completo del contenedor */
+  display: block;
+}
+
+/* Capa oscura sobre la imagen para mejorar la visualizacion del texto. */
+.hero-overlay {
+  position: absolute; /* sobre la imagen */
+  top: 0; /* pegado arriba */
+  left: 0; /* pegado izquierda */
+  width: 100%; /* cubre todo el ancho */
+  height: 100%; /* cubre todo el alto */
+  background: rgba(0, 0, 0, 0.2); /* semitransparente */
+  z-index: 1; /* entre imagen y contenido */
+}
+
+/* Contenido del hero encima del overlay */
+.hero-content {
+  position: relative; /* sobre el overlay */
+  z-index: 2; /* por encima de la capa oscura */
+  color: white; /* texto claro sobre la imagen */
+  text-shadow: 1px 1px 0px #333, -1px -1px 0px #fff; /* Sombra para el texto*/
+}
+
+/* Asegura que las filas dentro del hero estén centradas verticalmente */
+.hero-content .row {
+  min-height: 100vh; /* para la pantalla completa */
+  align-items: center; /* centra su contenido verticalmente */
+}
+
+/* TESTIMONIOS DE USUARIOS*/
+.testimonial-carousel .carousel-item {
+  padding: 20px; /* espacio interno para separar contenido */
+}
+
+/* Controladores del carrusel */
+.carousel-control-prev, .carousel-control-next {
+  width: 5%; /* controles compactos en los extremos */
+}
+
+/* Elementos de testimonios */
+.testimonial-dot { 
+  width: 8px; /* ancho del punto */
+  height: 8px; /* alto del punto */
+  background: var(--blanco); /* color del punto */
+  border-radius: 999px; /* lo dejamos redondo */
+  display: inline-block; /* para alinearlo en línea */
+  margin: 0 6px; /* separación entre puntos */
+}
+
+/* Colores de las estrellas de los comentarios */
+.estrellas {
+  color: var(--amarrillo); /* amarillo */
+}
+
+/* Seccion secundaria */
+.bg-plomo {
+  background-color: var(--plomo); /* gris de apoyo */
+}
+
+/* Fondo verde para variantes de sección. */
+.bg-mint {
+  background-color: var(--mint); /* mint suave */
+}
+
+/* Imágenes de perfil de los usuarios*/
+.testimonial-img {
+  width: 50px; /* ancho */
+  height: 50px; /* alto */
+  border-radius: 50%; /* borde circular */
+  object-fit: cover; /* recorta sin deformar la imagen */
+  border: 3px solid var(--verdeCla); /* borde verde claro */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* sombra leve */
+}
+
+/* Tarjetas de testimonios */
+.testimonial-card {
+  min-height: 220px; /* mantiene cards con altura similar */
+  transition: transform 0.4s ease; /* animación */
+}
+
+/* Efecto de las cards de testimonios */
+.testimonial-card:hover {
+  transform: translateY(-8px); /* elevacion de las cards */
+}
+
+/* Alineación del contenido en las tarjetas */
+.testimonial-content {
+  display: flex; /* contenedor flexible */
+  flex-direction: column; /* organiza verticalmente */
+  height: 100%; /* ocupa toda la tarjeta */
+}
+
+/* Texto dentro de las tarjetas */
+.testimonial-text {
+  flex-grow: 1; /* ocupa espacio disponible */
+  display: flex; /* para centrar contenido */
+  flex-direction: column; /* columna para texto y botones */
+  justify-content: center; /* centra verticalmente */
+}
+
+/* Indicadores del carrusel */
+.carousel-indicators [data-bs-target] {
+  width: 12px; /* tamaño del indicador */
+  height: 12px; /* tamaño del indicador */
+  border-radius: 50%; /* redondeado */
+  margin: 0 5px; /* separación entre indicadores */
+  background-color: var(--verdeOs); /* color verde oscuro al seleccionar */
+}
+
+/* Alineación de nombres de usuarios */
+.testimonial-header {
+  display: flex; /* organiza elementos en fila */
+  align-items: center; /* alinea verticalmente */
+  margin-bottom: 10px; /* espacio abajo del header */
+}
+
+/* Contenedor de la información del usuario en el testimonio. */
+.testimonial-info {
+  margin-left: 15px; /* separación desde la imagen */
+  flex: 1; /* toma espacio restante */
+}
+
+/* Nombre del usuario */
+.testimonial-name {
+  font-weight: 600; /* enfatiza el nombre */
+  margin-bottom: 2px; /* pequeño espacio debajo */
+  color: #333; /* color oscuro */
+}
+
+/* Fecha del testimonio */
+.testimonial-date {
+  color: #6c757d; /* gris tenue para la fecha */
+  font-size: 0.85rem; /* tamaño */
+  margin-bottom: 0; /* sin margen */
+}
+
+/* ---- PIE DE PAGINA ---- */
+.footer {
+  background-color: #616263; /* tono oscuro */
+  color: white; /* texto en blanco */
+  padding: 3rem 0 0;
+}
+
+/* Estilos de titulos del footer*/
+.footer-title {
+  font-size: 1rem; /* tamaño del título */
+  font-weight: 600; /* texto en negrita */
+  margin-bottom: 1rem; /* separación inferior */
+  color: white; /* color del título */
+  font-family: var(--letra); /* mantiene la tipografía */
+} 
+
+/* Estilos de links del footer */
+.footer-links {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-links li {
+  margin-bottom: 0.5rem; /* espacio entre items */
+}
+
+/* efectos de enlaces al pasar cursor */
+.footer-links a {
+  color: #A0AEC0; /* color base de los links */
+  text-decoration: none; /* sin subrayado */
+  transition: color 0.3s; /* transición */
+  font-family: var(--letra); /* fuente */
+}
+
+.footer-links a:hover {
+  color: var(--verdeCla); /* color al pasar el cursor */
+}
+
+/* Separador visual dentro del footer */
+.footer-divider {
+  border-top: 1px solid #4A5568; /* línea superior */
+  margin: 2rem 0; /* espacio arriba y abajo */
+} 
+
+/* Texto general del footer */
+.footer-content {
+  color: #A0AEC0; /* color de texto */
+  font-family: var(--letra); /* fuente */
+}
+
+/* Estilos de iconos al pasar puntero */
+.social-icons a {
+  color: var(--verdeCla); /* color inicial de los iconos */
+  font-size: 1.5rem; /* tamaño visible de iconos */
+  margin-right: 1rem;  /* espacio entre iconos */
+  transition: color 0.3s; /* transición de color */
+} 
+
+.social-icons a:hover {
+  color: var(--verdeOs); /* color al pasar el cursor */
+}
+
+/* Barra de copyright */
+.copyright {
+  color: black; /* texto oscuro */
+  font-size: 0.9rem; /* tamaño de texto */
+  background-color: var(--verdeCla); /* fondo temático */
+  padding: 1rem 0; /* padding vertical */
+  text-align: center; /* centrar el texto */
+  margin-bottom: 0; /* sin margen */
+  font-family: var(--letra); /* fuente */
+}
