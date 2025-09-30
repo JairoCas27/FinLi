@@ -1,0 +1,1734 @@
+/* ---- VARIABLES ---- */
+:root {
+    --verdeOs: #0ea46f; /* verde oscuro principal */
+    --grisOs: #6c757d; /* gris oscuro para textos secundarios */
+    --grisCla: #838e98; /* gris claro para elementos de apoyo */
+    --verdeCla: #d7ffe3; /* verde claro para fondos y acentos */
+    --rojo: #ff6b6b; /* rojo para errores y gastos */
+    --gris: #6c757d; /* gris general */
+    --SombrasCards: 0 8px 32px rgba(12, 37, 24, 0.08); /* sombra sutil para tarjetas */
+    --SombrasFlotantes: 0 12px 40px rgba(12, 37, 24, 0.12); /* sombra más pronunciada para hover */
+}
+
+/* ---- CONFIGURACIÓN BASE ---- */
+
+html, body {
+    height: 100%; /* altura completa para ocupar toda la pantalla */
+    font-family: 'Poppins', sans-serif; /* tipografía principal */
+    background: linear-gradient(135deg, #f7fbff 0%, #f5f7fb 100%); /* gradiente de fondo sutil */
+    color: #222; /* color de texto principal */
+    -webkit-font-smoothing: antialiased; /* suavizado de fuentes en WebKit */
+    -moz-osx-font-smoothing: grayscale; /* suavizado de fuentes en Firefox */
+    overflow-x: hidden; /* oculta scroll horizontal */
+}
+
+/* ---- ESTRUCTURA PRINCIPAL ---- */
+
+.app-shell {
+    display: flex; /* layout flexible para sidebar y contenido */
+    min-height: 100vh; /* altura mínima de toda la pantalla */
+    gap: 1.5rem; /* separación entre sidebar y contenido */
+    padding: 1rem; /* padding exterior */
+}
+
+/* ---- SIDEBAR ---- */
+/* Panel lateral de navegación */
+
+.sidebar {
+    width: 270px; /* ancho fijo del sidebar */
+    background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%); /* fondo con gradiente y transparencia */
+    backdrop-filter: blur(16px); /* efecto de desenfoque de fondo */
+    -webkit-backdrop-filter: blur(16px); /* compatibilidad WebKit para backdrop */
+    padding: 1.5rem 1.25rem; /* espacio interno */
+    border-radius: 20px; /* bordes redondeados */
+    box-shadow: var(--SombrasCards); /* sombra aplicada */
+    position: sticky; /* posición fija al hacer scroll */
+    top: 1rem; /* separación desde arriba */
+    height: calc(100vh - 2rem); /* altura calculada menos padding */
+    overflow: auto; /* scroll interno si es necesario */
+    border: 1px solid rgba(255,255,255,0.6); /* borde sutil */
+    transition: all 0.3s ease; /* transición suave para hover */
+    z-index: 100; /* capa por encima del contenido */
+}
+
+.sidebar:hover {
+    box-shadow: var(--SombrasFlotantes); /* sombra más pronunciada al pasar cursor */
+    transform: translateY(-2px); /* efecto de elevación */
+}
+
+/* ---- MARCA Y LOGOTIPO ---- */
+/* Estilos para el área de branding */
+
+.brand {
+    display: flex; /* disposición flexible */
+    align-items: center; /* centrado vertical */
+    gap: .75rem; /* separación entre icono y texto */
+    margin-bottom: 1.5rem; /* espacio inferior */
+    padding-bottom: 1rem; /* padding inferior */
+    border-bottom: 1px solid rgba(0,0,0,0.05); /* línea divisoria sutil */
+}
+
+.brand h3 {
+    margin: 0; /* sin margen */
+    font-weight: 700; /* peso de fuente negrita */
+    background: linear-gradient(90deg, var(--verdeOs), var(--grisCla)); /* gradiente de texto */
+    background-clip: text; /* recorte de fondo al texto */
+    -webkit-text-fill-color: transparent; /* texto transparente para mostrar gradiente */
+}
+
+/* ---- ENABLES DE NAVEGACIÓN ---- */
+/* Estilos para los links del menú */
+
+.nav-link {
+    color: rgba(0,0,0,0.65); /* color semi-transparente */
+    padding: .85rem 1rem; /* espacio interno */
+    border-radius: 12px; /* bordes redondeados */
+    margin-bottom: .4rem; /* separación inferior */
+    display: flex; /* disposición flexible */
+    align-items: center; /* centrado vertical */
+    gap: .75rem; /* separación entre icono y texto */
+    transition: all 0.3s ease; /* transición suave */
+    font-weight: 500; /* peso de fuente medio */
+    cursor: pointer; /* cursor pointer */
+    text-decoration: none; /* sin subrayado */
+    position: relative; /* para pseudo-elementos */
+}
+
+.nav-link i {
+    font-size: 1.1rem; /* tamaño de iconos */
+    width: 20px; /* ancho fijo para alineación */
+    text-align: center; /* centrado de icono */
+    transition: transform 0.2s ease; /* transición para efecto hover */
+}
+
+.nav-link.active {
+    background: linear-gradient(90deg, var(--verdeOs) 0%, var(--grisOs) 100%); /* fondo gradiente activo */
+    color: white; /* texto blanco */
+    box-shadow: 0 4px 12px rgba(14, 164, 111, 0.3); /* sombra verde */
+}
+
+.nav-link:hover:not(.active) {
+    background: rgba(6, 163, 255, 0.08); /* fondo sutil al hover */
+    color: var(--verdeOs); /* color verde al hover */
+    transform: translateX(4px); /* desplazamiento horizontal */
+}
+
+.nav-link:hover:not(.active) i {
+    transform: scale(1.1); /* escalado de icono al hover */
+}
+
+/* ---- BOTÓN DE CERRAR SESIÓN ---- */
+/* Estilo específico para el botón de logout */
+
+.btn-logout {
+    width: 100%; /* ancho completo */
+    margin-top: 1.5rem; /* separación superior */
+    border-radius: 12px; /* bordes redondeados */
+    padding: 0.75rem; /* espacio interno */
+    font-weight: 500; /* peso de fuente medio */
+    transition: all 0.3s ease; /* transición suave */
+    border: 1px solid rgba(0,0,0,0.1); /* borde sutil */
+    background: rgba(255,255,255,0.7); /* fondo semi-transparente */
+}
+
+.btn-logout:hover {
+    transform: translateY(-2px); /* efecto de elevación */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* sombra al hover */
+    border-color: rgba(0,0,0,0.2); /* borde más visible */
+    background: rgba(255,255,255,0.9); /* fondo más opaco */
+}
+
+/* ---- CONTENIDO PRINCIPAL ---- */
+/* Área principal de la aplicación */
+
+.main {
+    flex: 1; /* ocupa espacio restante */
+    padding: 1.75rem; /* espacio interno */
+    border-radius: 20px; /* bordes redondeados */
+    background: rgba(255,255,255,0.7); /* fondo semi-transparente */
+    backdrop-filter: blur(10px); /* efecto de desenfoque */
+    -webkit-backdrop-filter: blur(10px); /* compatibilidad WebKit */
+    box-shadow: var(--SombrasCards); /* sombra aplicada */
+    border: 1px solid rgba(255,255,255,0.5); /* borde sutil */
+    transition: all 0.3s ease; /* transición para hover */
+}
+
+.main:hover {
+    box-shadow: var(--SombrasFlotantes); /* sombra más pronunciada al hover */
+}
+
+/* ---- BARRA SUPERIOR ---- */
+/* Cabecera con búsqueda y controles */
+
+.topbar {
+    display: flex; /* disposición flexible */
+    justify-content: space-between; /* espacio entre elementos */
+    align-items: center; /* centrado vertical */
+    gap: 1.5rem; /* separación entre elementos */
+    margin-bottom: 2rem; /* espacio inferior */
+    padding-bottom: 1.25rem; /* padding inferior */
+    border-bottom: 1px solid rgba(0,0,0,0.05); /* línea divisoria */
+}
+
+/* ---- CAJA DE BÚSQUEDA ---- */
+/* Estilos para el campo de búsqueda */
+
+.search-box {
+    max-width: 420px; /* ancho máximo */
+    position: relative; /* para posicionar icono */
+    flex: 1; /* ocupa espacio disponible */
+}
+
+.search-box input {
+    border-radius: 12px; /* bordes redondeados */
+    padding-left: 2.75rem; /* espacio para icono */
+    border: 1px solid rgba(0,0,0,0.1); /* borde sutil */
+    transition: all 0.3s ease; /* transición suave */
+    font-size: 0.9rem; /* tamaño de fuente */
+    height: 42px; /* altura fija */
+    background: rgba(255,255,255,0.8); /* fondo semi-transparente */
+}
+
+.search-box input:focus {
+    box-shadow: 0 0 0 3px rgba(6, 163, 255, 0.2); /* sombra de enfoque */
+    border-color: var(--verdeOs); /* borde verde al focus */
+    background: white; /* fondo blanco sólido */
+}
+
+.search-box::before {
+    content: "\F52A"; /* código de icono de Bootstrap */
+    font-family: "bootstrap-icons"; /* familia de iconos */
+    position: absolute; /* posición absoluta */
+    left: 1rem; /* separación izquierda */
+    top: 50%; /* centrado vertical */
+    transform: translateY(-50%); /* ajuste de centrado */
+    color: var(--gris); /* color gris */
+    z-index: 5; /* por encima del input */
+    font-size: 1rem; /* tamaño de icono */
+}
+
+/* ---- SECCIONES DE CONTENIDO ---- */
+/* Gestión de visibilidad de secciones */
+
+.content-section {
+    display: none; /* oculto por defecto */
+}
+
+.content-section.active {
+    display: block; /* visible cuando está activo */
+    animation: fadeIn 0.5s ease; /* animación de aparición */
+}
+
+/* ---- COMPONENTES DE TARJETAS ---- */
+/* Estilos base para todas las tarjetas */
+
+.card-stat, .card-report, .chart-card, .table-card {
+    border-radius: 18px; /* bordes redondeados */
+    padding: 1.75rem; /* espacio interno */
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); /* fondo con gradiente */
+    backdrop-filter: blur(10px); /* efecto de desenfoque */
+    -webkit-backdrop-filter: blur(10px); /* compatibilidad WebKit */
+    box-shadow: var(--SombrasCards); /* sombra aplicada */
+    border: 1px solid rgba(255,255,255,0.5); /* borde sutil */
+    transition: all 0.3s ease; /* transición para hover */
+    position: relative; /* para pseudo-elementos */
+    overflow: hidden; /* oculta desbordamiento */
+    margin-bottom: 1.5rem; /* espacio inferior */
+}
+
+.card-stat::before, .card-report::before, .chart-card::before, .table-card::before {
+    content: ''; /* pseudo-elemento vacío */
+    position: absolute; /* posición absoluta */
+    top: 0; /* pegado arriba */
+    left: 0; /* pegado izquierda */
+    width: 100%; /* ancho completo */
+    height: 4px; /* altura de la banda superior */
+    background: linear-gradient(90deg, var(--verdeOs), var(--grisOs)); /* gradiente de color */
+}
+
+.card-stat:hover, .card-report:hover, .chart-card:hover, .table-card:hover {
+    transform: translateY(-5px); /* efecto de elevación */
+    box-shadow: var(--SombrasFlotantes); /* sombra más pronunciada */
+}
+
+/* ---- TABLAS ---- */
+/* Estilos para elementos de tabla */
+
+.table thead th {
+    border-bottom: 1px solid rgba(0,0,0,0.05); /* línea inferior sutil */
+    background: transparent; /* fondo transparente */
+    color: var(--gris); /* color gris */
+    font-weight: 600; /* peso de fuente negrita */
+    padding: 1.25rem 1rem; /* espacio interno */
+    font-size: 0.85rem; /* tamaño de fuente reducido */
+    text-transform: uppercase; /* texto en mayúsculas */
+    letter-spacing: 0.5px; /* espaciado entre letras */
+}
+
+.table tbody td {
+    padding: 1.25rem 1rem; /* espacio interno */
+    border-bottom: 1px solid rgba(0,0,0,0.03); /* línea inferior muy sutil */
+    transition: all 0.2s ease; /* transición suave */
+    vertical-align: middle; /* alineación vertical centrada */
+}
+
+.table tbody tr:hover td {
+    background: rgba(6, 163, 255, 0.03); /* fondo sutil al hover */
+}
+
+/* ---- AVATARES PEQUEÑOS ---- */
+/* Estilos para imágenes de perfil pequeñas */
+
+.avatar-sm {
+    width: 44px; /* ancho fijo */
+    height: 44px; /* alto fijo */
+    border-radius: 12px; /* bordes redondeados */
+    display: inline-flex; /* disposición flexible en línea */
+    align-items: center; /* centrado vertical */
+    justify-content: center; /* centrado horizontal */
+    font-weight: 600; /* peso de fuente negrita */
+    color: white; /* texto blanco */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* sombra sutil */
+    position: relative; /* para capas internas */
+    overflow: hidden; /* oculta desbordamiento */
+    transition: all 0.3s ease; /* transición suave */
+}
+
+.avatar-sm:hover {
+    transform: scale(1.05); /* escalado al hover */
+}
+
+.avatar-sm img {
+    width: 100%; /* ancho completo */
+    height: 100%; /* alto completo */
+    object-fit: cover; /* cubre el contenedor sin deformar */
+    border-radius: 12px; /* bordes redondeados */
+}
+
+/* ---- BADGES ---- */
+/* Estilos para etiquetas y badges */
+
+.badge {
+    font-weight: 500; /* peso de fuente medio */
+    padding: 0.4rem 0.85rem; /* espacio interno */
+    border-radius: 8px; /* bordes redondeados */
+}
+
+/* ---- BOTONES ---- */
+/* Estilos base para botones */
+
+.btn {
+    border-radius: 12px; /* bordes redondeados */
+    font-weight: 500; /* peso de fuente medio */
+    transition: all 0.3s ease; /* transición suave */
+    padding: 0.65rem 1.25rem; /* espacio interno */
+    font-size: 0.9rem; /* tamaño de fuente reducido */
+}
+
+.btn:hover {
+    transform: translateY(-2px); /* efecto de elevación */
+}
+
+.btn-sm {
+    padding: 0.5rem 0.9rem; /* espacio interno reducido */
+    border-radius: 10px; /* bordes menos redondeados */
+    font-size: 0.85rem; /* tamaño de fuente más pequeño */
+}
+
+/* ---- CLASES DE UTILIDAD ---- */
+/* Clases auxiliares para uso general */
+
+.muted {
+    color: var(--gris); /* color gris para textos secundarios */
+}
+
+.text-gradient {
+    background: linear-gradient(90deg, var(--verdeOs), var(--grisOs)); /* gradiente de texto */
+    background-clip: text; /* recorte de fondo al texto */
+    -webkit-text-fill-color: transparent; /* texto transparente */
+}
+
+.page-title {
+    font-size: 1.9rem; /* tamaño grande para títulos */
+    font-weight: 700; /* peso de fuente negrita */
+    margin-bottom: 0.5rem; /* espacio inferior */
+    color: #333; /* color oscuro */
+}
+
+.page-subtitle {
+    color: var(--gris); /* color gris */
+    margin-bottom: 1.5rem; /* espacio inferior */
+    font-size: 0.95rem; /* tamaño de fuente reducido */
+}
+
+/* ---- DESPLEGABLE DE NOTIFICACIONES ---- */
+/* Estilos para el dropdown de notificaciones */
+
+.dropdown-notifications {
+    min-width: 340px; /* ancho mínimo */
+    border-radius: 16px; /* bordes redondeados */
+    overflow: hidden; /* oculta desbordamiento */
+    box-shadow: var(--SombrasFlotantes); /* sombra aplicada */
+    border: 1px solid rgba(255,255,255,0.5); /* borde sutil */
+}
+
+/* ---- DISEÑO RESPONSIVE ---- */
+/* Media queries para adaptabilidad móvil */
+
+@media (max-width: 991px) {
+    .sidebar {
+        position: relative; /* posición normal en móvil */
+        width: 100%; /* ancho completo */
+        height: auto; /* altura automática */
+        margin-left: 0; /* sin margen izquierdo */
+        margin-right: 0; /* sin margen derecho */
+    }
+    
+    .app-shell {
+        flex-direction: column; /* disposición en columna */
+        padding: 0.5rem; /* padding reducido */
+    }
+    
+    .main {
+        margin: 0; /* sin margen */
+        padding: 1.25rem; /* padding reducido */
+    }
+    
+    .dropdown-notifications {
+        position: fixed !important; /* posición fija en móvil */
+        top: 80px !important; /* separación desde arriba */
+        right: 20px !important; /* separación desde derecha */
+        left: auto !important; /* posición automática izquierda */
+        transform: none !important; /* sin transformación */
+    }
+    
+    .topbar {
+        flex-direction: column; /* disposición en columna */
+        align-items: flex-start; /* alineación a la izquierda */
+    }
+    
+    .search-box {
+        max-width: 100%; /* ancho completo */
+        width: 100%; /* ancho completo */
+    }
+}
+
+/* ---- ANIMACIONES ---- */
+/* Definiciones de animaciones y transiciones */
+
+.fade-in {
+    animation: fadeIn .6s ease both; /* animación de aparición */
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0; /* completamente transparente */
+        transform: translateY(10px); /* desplazado hacia abajo */
+    }
+    to {
+        opacity: 1; /* completamente opaco */
+        transform: none; /* posición normal */
+    }
+}
+
+/* ---- PERSONALIZACIÓN DE SCROLLBAR ---- */
+/* Estilos para barras de scroll personalizadas */
+
+::-webkit-scrollbar {
+    width: 6px; /* ancho del scrollbar */
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05); /* fondo sutil del track */
+    border-radius: 10px; /* bordes redondeados */
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.2); /* color del thumb */
+    border-radius: 10px; /* bordes redondeados */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,0,0,0.3); /* color más oscuro al hover */
+}
+
+/* ---- BADGES DE CATEGORÍA ---- */
+/* Estilos para etiquetas de categorías */
+
+.category-badge {
+    display: inline-block; /* disposición en línea */
+    padding: 0.35rem 0.85rem; /* espacio interno */
+    border-radius: 20px; /* bordes completamente redondeados */
+    font-size: 0.8rem; /* tamaño de fuente pequeño */
+    font-weight: 500; /* peso de fuente medio */
+    margin-right: 0.5rem; /* separación derecha */
+    transition: all 0.2s ease; /* transición suave */
+}
+
+/* ---- BADGES DE TIPO DE TRANSACCIÓN ---- */
+/* Estilos para indicar ingresos vs gastos */
+
+.transaction-type-badge {
+    padding: 0.4rem 0.85rem; /* espacio interno */
+    border-radius: 8px; /* bordes redondeados */
+    font-size: 0.8rem; /* tamaño de fuente pequeño */
+    font-weight: 500; /* peso de fuente medio */
+}
+
+.transaction-type-income {
+    background-color: rgba(14, 164, 111, 0.1); /* fondo verde muy claro */
+    color: var(--verdeOs); /* texto verde */
+}
+
+.transaction-type-expense {
+    background-color: rgba(255, 107, 107, 0.1); /* fondo rojo muy claro */
+    color: var(--rojo); /* texto rojo */
+}
+
+.transaction-amount-income {
+    color: var(--verdeOs); /* color verde para ingresos */
+    font-weight: 600; /* peso de fuente negrita */
+    font-size: 1rem; /* tamaño de fuente normal */
+}
+
+.transaction-amount-expense {
+    color: var(--rojo); /* color rojo para gastos */
+    font-weight: 600; /* peso de fuente negrita */
+    font-size: 1rem; /* tamaño de fuente normal */
+}
+
+/* ---- GRILLA DE CATEGORÍAS ---- */
+/* Layout grid para selección de categorías */
+
+.category-grid {
+    display: grid; /* disposición grid */
+    grid-template-columns: repeat(4, 1fr); /* 4 columnas iguales */
+    gap: 0.85rem; /* separación entre elementos */
+    margin-top: 1.25rem; /* espacio superior */
+}
+
+.category-item {
+    border: 1px solid rgba(0,0,0,0.1); /* borde sutil */
+    border-radius: 12px; /* bordes redondeados */
+    padding: 1rem; /* espacio interno */
+    text-align: center; /* texto centrado */
+    cursor: pointer; /* cursor pointer */
+    transition: all 0.3s ease; /* transición suave */
+    background: white; /* fondo blanco */
+    display: flex; /* disposición flexible */
+    flex-direction: column; /* dirección en columna */
+    align-items: center; /* centrado horizontal */
+    justify-content: center; /* centrado vertical */
+    min-height: 80px; /* altura mínima */
+}
+
+.category-item:hover {
+    border-color: var(--verdeOs); /* borde verde al hover */
+    transform: translateY(-3px); /* efecto de elevación */
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1); /* sombra al hover */
+}
+
+.category-item.active {
+    border-color: var(--verdeOs); /* borde verde activo */
+    background: rgba(14, 164, 111, 0.05); /* fondo verde muy claro */
+    transform: translateY(-2px); /* efecto de elevación */
+    box-shadow: 0 4px 12px rgba(14, 164, 111, 0.2); /* sombra verde */
+}
+
+/* ---- FORMULARIO DE TRANSACCIONES ---- */
+/* Layout grid para formularios de transacciones */
+
+.transaction-form-grid {
+    display: grid; /* disposición grid */
+    grid-template-columns: 1fr 1fr 1fr; /* 3 columnas iguales */
+    gap: 1.25rem; /* separación entre elementos */
+    margin-top: 1.25rem; /* espacio superior */
+}
+
+.transaction-form-item {
+    display: flex; /* disposición flexible */
+    flex-direction: column; /* dirección en columna */
+}
+
+.transaction-form-item.full-width {
+    grid-column: 1 / -1; /* ocupa todas las columnas */
+}
+
+/* ---- DIVISOR DE SECCIÓN ---- */
+/* Línea divisoria para separar secciones */
+
+.section-divider {
+    height: 1px; /* altura mínima */
+    background: rgba(0,0,0,0.1); /* color de fondo */
+    margin: 1.75rem 0; /* espacio vertical */
+}
+
+/* ---- VISTA PREVIA DE IMAGEN ---- */
+/* Estilos para previsualización de imágenes */
+
+.image-preview {
+    width: 100%; /* ancho completo */
+    height: 130px; /* altura fija */
+    border: 2px dashed #ddd; /* borde punteado */
+    border-radius: 10px; /* bordes redondeados */
+    display: flex; /* disposición flexible */
+    align-items: center; /* centrado vertical */
+    justify-content: center; /* centrado horizontal */
+    overflow: hidden; /* oculta desbordamiento */
+    margin-top: 0.5rem; /* espacio superior */
+    cursor: pointer; /* cursor pointer */
+    transition: all 0.3s ease; /* transición suave */
+}
+
+.image-preview:hover {
+    border-color: var(--verdeOs); /* borde verde al hover */
+    background-color: rgba(14, 164, 111, 0.03); /* fondo verde muy claro */
+}
+
+.image-preview img {
+    max-width: 100%; /* ancho máximo */
+    max-height: 100%; /* alto máximo */
+    object-fit: contain; /* contiene la imagen sin recortar */
+}
+
+.image-preview-placeholder {
+    display: flex; /* disposición flexible */
+    flex-direction: column; /* dirección en columna */
+    align-items: center; /* centrado horizontal */
+    color: var(--gris); /* color gris */
+}
+
+.image-preview-placeholder i {
+    font-size: 2.2rem; /* tamaño de icono grande */
+    margin-bottom: 0.5rem; /* espacio inferior */
+}
+
+/* ---- FILA DE FECHA Y HORA ---- */
+/* Layout grid para campos de fecha y hora */
+
+.datetime-row {
+    display: grid; /* disposición grid */
+    grid-template-columns: 1fr 1fr; /* 2 columnas iguales */
+    gap: 1.25rem; /* separación entre elementos */
+    margin-top: 1.25rem; /* espacio superior */
+}
+
+/* ---- BOTONES DE ACCIÓN ---- */
+/* Contenedor para botones de acciones en tabla */
+
+.action-buttons {
+    display: flex; /* disposición flexible */
+    gap: 0.6rem; /* separación entre botones */
+    justify-content: flex-end; /* alineación a la derecha */
+}
+
+.action-btn {
+    width: 36px; /* ancho fijo */
+    height: 36px; /* alto fijo */
+    display: flex; /* disposición flexible */
+    align-items: center; /* centrado vertical */
+    justify-content: center; /* centrado horizontal */
+    border-radius: 8px; /* bordes redondeados */
+    transition: all 0.2s ease; /* transición suave */
+}
+
+.view-btn {
+    background-color: rgba(14, 164, 111, 0.1); /* fondo verde muy claro */
+    color: var(--verdeOs); /* texto verde */
+}
+
+.view-btn:hover {
+    background-color: var(--verdeOs); /* fondo verde al hover */
+    color: white; /* texto blanco */
+}
+
+.edit-btn {
+    background-color: rgba(6, 163, 255, 0.1); /* fondo azul muy claro */
+    color: var(--grisCla); /* texto gris claro */
+}
+
+.edit-btn:hover {
+    background-color: var(--grisCla); /* fondo gris claro al hover */
+    color: white; /* texto blanco */
+}
+
+.delete-btn {
+    background-color: rgba(255, 107, 107, 0.1); /* fondo rojo muy claro */
+    color: var(--rojo); /* texto rojo */
+}
+
+.delete-btn:hover {
+    background-color: var(--rojo); /* fondo rojo al hover */
+    color: white; /* texto blanco */
+}
+
+/* ---- IMAGEN DE TRANSACCIÓN ---- */
+/* Estilos para imágenes en listado de transacciones */
+
+.transaction-image {
+    width: 44px; /* ancho fijo */
+    height: 44px; /* alto fijo */
+    border-radius: 10px; /* bordes redondeados */
+    object-fit: cover; /* cubre el contenedor sin deformar */
+    cursor: pointer; /* cursor pointer */
+    transition: all 0.3s ease; /* transición suave */
+}
+
+.transaction-image:hover {
+    transform: scale(1.05); /* escalado al hover */
+}
+
+.transaction-image-placeholder {
+    width: 44px; /* ancho fijo */
+    height: 44px; /* alto fijo */
+    border-radius: 10px; /* bordes redondeados */
+    background-color: rgba(0,0,0,0.05); /* fondo gris muy claro */
+    display: flex; /* disposición flexible */
+    align-items: center; /* centrado vertical */
+    justify-content: center; /* centrado horizontal */
+    color: var(--gris); /* color gris */
+    cursor: pointer; /* cursor pointer */
+    transition: all 0.3s ease; /* transición suave */
+}
+
+.transaction-image-placeholder:hover {
+    background-color: rgba(0,0,0,0.08); /* fondo más oscuro al hover */
+}
+
+.modal-image {
+    max-width: 100%; /* ancho máximo */
+    max-height: 400px; /* alto máximo */
+    border-radius: 10px; /* bordes redondeados */
+}
+
+/* ---- PERFIL DE USUARIO ---- */
+/* Estilos específicos para la sección de perfil */
+
+.profile-header {
+    display: flex; /* disposición flexible */
+    justify-content: space-between; /* espacio entre elementos */
+    align-items: flex-start; /* alineación superior */
+    margin-bottom: 1.75rem; /* espacio inferior */
+}
+
+.profile-info {
+    flex: 1; /* ocupa espacio disponible */
+}
+
+.profile-name {
+    font-size: 1.9rem; /* tamaño grande */
+    font-weight: 600; /* peso de fuente negrita */
+    margin-bottom: 0.25rem; /* espacio inferior pequeño */
+}
+
+.profile-email {
+    color: var(--gris); /* color gris */
+    font-size: 1.05rem; /* tamaño de fuente */
+}
+
+.profile-avatar {
+    width: 130px; /* ancho fijo */
+    height: 130px; /* alto fijo */
+    border-radius: 50%; /* completamente redondeado */
+    overflow: hidden; /* oculta desbordamiento */
+    border: 4px solid white; /* borde blanco */
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12); /* sombra */
+    position: relative; /* para capas internas */
+    cursor: pointer; /* cursor pointer */
+    transition: all 0.3s ease; /* transición suave */
+}
+
+.profile-avatar:hover {
+    transform: scale(1.05); /* escalado al hover */
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15); /* sombra más pronunciada */
+}
+
+.profile-avatar img {
+    width: 100%; /* ancho completo */
+    height: 100%; /* alto completo */
+    object-fit: cover; /* cubre el contenedor sin deformar */
+}
+
+.profile-avatar-overlay {
+    position: absolute; /* posición absoluta */
+    bottom: 0; /* pegado abajo */
+    left: 0; /* pegado izquierda */
+    right: 0; /* pegado derecha */
+    background: rgba(0,0,0,0.6); /* fondo oscuro semi-transparente */
+    color: white; /* texto blanco */
+    padding: 6px; /* espacio interno */
+    text-align: center; /* texto centrado */
+    font-size: 0.8rem; /* tamaño de fuente pequeño */
+    opacity: 0; /* completamente transparente */
+    transition: opacity 0.3s ease; /* transición de opacidad */
+}
+
+.profile-avatar:hover .profile-avatar-overlay {
+    opacity: 1; /* completamente opaco al hover */
+}
+
+/* ---- OPCIONES DE CONFIGURACIÓN ---- */
+/* Estilos para elementos de configuración */
+
+.settings-option {
+    display: flex; /* disposición flexible */
+    justify-content: space-between; /* espacio entre elementos */
+    align-items: center; /* centrado vertical */
+    padding: 1.25rem 0; /* espacio interno vertical */
+    border-bottom: 1px solid rgba(0,0,0,0.05); /* línea divisoria sutil */
+    transition: all 0.2s ease; /* transición suave */
+}
+
+.settings-option:hover {
+    background-color: rgba(0,0,0,0.02); /* fondo sutil al hover */
+    padding-left: 0.75rem; /* padding izquierdo aumentado */
+    border-radius: 10px; /* bordes redondeados */
+}
+
+.settings-option:last-child {
+    border-bottom: none; /* sin borde inferior en último elemento */
+}
+
+.settings-option-label {
+    display: flex; /* disposición flexible */
+    align-items: center; /* centrado vertical */
+    gap: 0.85rem; /* separación entre icono y texto */
+}
+
+.settings-option-label i {
+    font-size: 1.25rem; /* tamaño de icono */
+    width: 24px; /* ancho fijo */
+    text-align: center; /* centrado de icono */
+}
+
+/* ---- TARJETA PREMIUM ---- */
+/* Estilos para sección de suscripción premium */
+
+.premium-card {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef); /* gradiente gris */
+    border-radius: 14px; /* bordes redondeados */
+    padding: 1.75rem; /* espacio interno */
+    text-align: center; /* texto centrado */
+    margin-top: 1.75rem; /* espacio superior */
+    position: relative; /* para pseudo-elementos */
+    overflow: hidden; /* oculta desbordamiento */
+    border: 1px solid rgba(0,0,0,0.05); /* borde sutil */
+}
+
+.premium-card::before {
+    content: ''; /* pseudo-elemento vacío */
+    position: absolute; /* posición absoluta */
+    top: 0; /* pegado arriba */
+    left: 0; /* pegado izquierda */
+    width: 100%; /* ancho completo */
+    height: 4px; /* altura de banda superior */
+    background: linear-gradient(90deg, #ffd700, #ffed4e); /* gradiente dorado */
+}
+
+.premium-title {
+    font-size: 1.6rem; /* tamaño grande */
+    font-weight: 600; /* peso de fuente negrita */
+    margin-bottom: 0.5rem; /* espacio inferior */
+}
+
+.premium-price-table {
+    width: 100%; /* ancho completo */
+    margin: 1.25rem 0; /* espacio vertical */
+    border-collapse: collapse; /* colapsar bordes de tabla */
+}
+
+.premium-price-table tr {
+    border-bottom: 1px solid rgba(0,0,0,0.05); /* línea divisoria */
+}
+
+.premium-price-table tr:last-child {
+    border-bottom: none; /* sin borde en última fila */
+}
+
+.premium-price-table td {
+    padding: 0.85rem 0; /* espacio interno vertical */
+    text-align: left; /* texto alineado izquierda */
+}
+
+.premium-price-table td:last-child {
+    text-align: right; /* texto alineado derecha */
+    font-weight: 600; /* peso de fuente negrita */
+}
+
+/* ---- CHECKBOX PERSONALIZADO ---- */
+/* Estilos para inputs de tipo checkbox */
+
+.form-check-input:checked {
+    background-color: var(--verdeOs); /* fondo verde cuando está seleccionado */
+    border-color: var(--verdeOs); /* borde verde cuando está seleccionado */
+}
+
+/* ---- VISUALES GENERALES ---- */
+/* Ajustes y mejoras adicionales */
+
+.notification-item {
+    padding: 0.85rem; /* espacio interno */
+    border-radius: 10px; /* bordes redondeados */
+    margin-bottom: 0.6rem; /* espacio inferior */
+    transition: all 0.2s ease; /* transición suave */
+}
+
+.notification-item:hover {
+    background-color: rgba(6, 163, 255, 0.05); /* fondo azul muy claro al hover */
+}
+
+.notification-time {
+    font-size: 0.8rem; /* tamaño de fuente pequeño */
+    color: var(--gris); /* color gris */
+    margin-top: 0.25rem; /* espacio superior pequeño */
+}
+
+.dropdown-notifications {
+    padding: 0.75rem; /* espacio interno */
+}
+
+.dropdown-notifications .dropdown-item {
+    border-radius: 10px; /* bordes redondeados */
+}
+
+.card-stat .btn-primary, .premium-card .btn-primary {
+    background: linear-gradient(90deg, var(--verdeOs), var(--grisOs)); /* gradiente verde-gris */
+    border: none; /* sin borde */
+    padding: 0.75rem 1.75rem; /* espacio interno */
+    font-weight: 500; /* peso de fuente medio */
+    transition: all 0.3s ease; /* transición suave */
+}
+
+.card-stat .btn-primary:hover, .premium-card .btn-primary:hover {
+    transform: translateY(-2px); /* efecto de elevación */
+    box-shadow: 0 6px 15px rgba(14, 164, 111, 0.3); /* sombra verde */
+}
+
+.btn-outline-primary {
+    color: var(--verdeOs); /* texto verde */
+    border-color: var(--verdeOs); /* borde verde */
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--verdeOs); /* fondo verde al hover */
+    border-color: var(--verdeOs); /* borde verde */
+    color: white; /* texto blanco */
+}
+
+/* ---- FORMULARIO DE PERFIL ---- */
+/* Estilos específicos para formulario de edición de perfil */
+
+.profile-form-container {
+    position: relative; /* para elementos posicionados internos */
+}
+
+.profile-picture-edit {
+    display: flex; /* disposición flexible */
+    flex-direction: column; /* dirección en columna */
+    align-items: center; /* centrado horizontal */
+    margin-bottom: 1.75rem; /* espacio inferior */
+}
+
+.profile-picture-preview {
+    width: 160px; /* ancho fijo */
+    height: 160px; /* alto fijo */
+    border-radius: 50%; /* completamente redondeado */
+    overflow: hidden; /* oculta desbordamiento */
+    border: 4px solid white; /* borde blanco */
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12); /* sombra */
+    margin-bottom: 1.25rem; /* espacio inferior */
+    position: relative; /* para elementos internos */
+}
+
+.profile-picture-preview img {
+    width: 100%; /* ancho completo */
+    height: 100%; /* alto completo */
+    object-fit: cover; /* cubre el contenedor sin deformar */
+}
+
+.profile-picture-change-btn {
+    background: rgba(0,0,0,0.7); /* fondo oscuro semi-transparente */
+    color: white; /* texto blanco */
+    border: none; /* sin borde */
+    border-radius: 20px; /* bordes completamente redondeados */
+    padding: 0.6rem 1.25rem; /* espacio interno */
+    font-size: 0.9rem; /* tamaño de fuente reducido */
+    cursor: pointer; /* cursor pointer */
+    transition: all 0.3s ease; /* transición suave */
+}
+
+.profile-picture-change-btn:hover {
+    background: rgba(0,0,0,0.9); /* fondo más oscuro al hover */
+    transform: translateY(-2px); /* efecto de elevación */
+}
+
+/* ---- TABLA DE TRANSACCIONES ---- */
+/* Ajustes visuales para tablas responsive */
+
+.table-responsive {
+    border-radius: 14px; /* bordes redondeados */
+    overflow: hidden; /* oculta desbordamiento */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* sombra sutil */
+}
+
+.table thead th:first-child {
+    border-top-left-radius: 14px; /* redondeo superior izquierdo */
+}
+
+.table thead th:last-child {
+    border-top-right-radius: 14px; /* redondeo superior derecho */
+}
+
+/* ---- ANIMACIONES ---- */
+/* Definición de animación de pulso */
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(14, 164, 111, 0.4); /* sombra inicial */
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(14, 164, 111, 0); /* sombra expandida */
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(14, 164, 111, 0); /* sombra desaparecida */
+    }
+}
+
+.pulse-animation {
+    animation: pulse 2s infinite; /* animación infinita */
+}
+
+/* ---- SECCIÓN DE INFORMES ---- */
+/* Estilos para filtros y gráficos */
+
+.filters-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); /* fondo con gradiente */
+    backdrop-filter: blur(10px); /* efecto de desenfoque */
+    -webkit-backdrop-filter: blur(10px); /* compatibilidad WebKit */
+    border-radius: 16px; /* bordes redondeados */
+    padding: 1.75rem; /* espacio interno */
+    box-shadow: var(--SombrasCards); /* sombra aplicada */
+    border: 1px solid rgba(255,255,255,0.5); /* borde sutil */
+    margin-bottom: 1.75rem; /* espacio inferior */
+}
+
+.filter-group {
+    margin-bottom: 1.25rem; /* espacio inferior */
+}
+
+.filter-label {
+    font-weight: 600; /* peso de fuente negrita */
+    margin-bottom: 0.6rem; /* espacio inferior */
+    color: var(--gris); /* color gris */
+    font-size: 0.9rem; /* tamaño de fuente reducido */
+}
+
+.chart-container {
+    position: relative; /* para elementos posicionados internos */
+    height: 320px; /* altura fija */
+}
+
+/* ---- SIDEBAR ---- */
+/* Pie del sidebar */
+
+.sidebar-footer {
+    margin-top: 2.25rem; /* espacio superior */
+    padding-top: 1.25rem; /* padding superior */
+    border-top: 1px solid rgba(0,0,0,0.05); /* línea divisoria */
+}
+
+/* ---- FORMULARIOS ---- */
+/* Estilos para labels y controles de formulario */
+
+.form-label {
+    font-weight: 600; /* peso de fuente negrita */
+    margin-bottom: 0.5rem; /* espacio inferior */
+    color: #444; /* color gris oscuro */
+    font-size: 0.9rem; /* tamaño de fuente reducido */
+}
+
+.form-control, .form-select {
+    border-radius: 10px; /* bordes redondeados */
+    padding: 0.75rem 1rem; /* espacio interno */
+    border: 1px solid rgba(0,0,0,0.1); /* borde sutil */
+    transition: all 0.3s ease; /* transición suave */
+    font-size: 0.9rem; /* tamaño de fuente reducido */
+    background: rgba(255,255,255,0.8); /* fondo semi-transparente */
+}
+
+.form-control:focus, .form-select:focus {
+    box-shadow: 0 0 0 3px rgba(14, 164, 111, 0.2); /* sombra de enfoque verde */
+    border-color: var(--verdeOs); /* borde verde */
+    background: white; /* fondo blanco sólido */
+}
+
+/* ---- TÍTULOS DE SECCIÓN ---- */
+/* Estilos para encabezados de sección */
+
+.section-title {
+    font-size: 1.4rem; /* tamaño de fuente */
+    font-weight: 600; /* peso de fuente negrita */
+    margin-bottom: 1.25rem; /* espacio inferior */
+    display: flex; /* disposición flexible */
+    align-items: center; /* centrado vertical */
+    gap: 0.75rem; /* separación entre icono y texto */
+}
+
+.section-title i {
+    color: var(--verdeOs); /* color verde para iconos */
+}
+
+/* ---- ESTADOS VACÍOS ---- */
+/* Estilos para estados sin contenido */
+
+.empty-state {
+    text-align: center; /* texto centrado */
+    padding: 3rem 1rem; /* espacio interno */
+    color: var(--gris); /* color gris */
+}
+
+.empty-state i {
+    font-size: 3rem; /* tamaño de icono grande */
+    margin-bottom: 1rem; /* espacio inferior */
+    opacity: 0.5; /* opacidad reducida */
+}
+
+/* ---- MODAL ---- */
+/* Estilos para componentes modales */
+
+.modal-content {
+    border-radius: 18px; /* bordes redondeados */
+    overflow: hidden; /* oculta desbordamiento */
+    box-shadow: var(--SombrasFlotantes); /* sombra aplicada */
+    border: 1px solid rgba(255,255,255,0.5); /* borde sutil */
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(0,0,0,0.05); /* línea divisoria */
+    padding: 1.25rem 1.5rem; /* espacio interno */
+}
+
+.modal-body {
+    padding: 1.5rem; /* espacio interno */
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(0,0,0,0.05); /* línea divisoria */
+    padding: 1.25rem 1.5rem; /* espacio interno */
+}
+
+/* ---- BOTÓN DE DESPLEGABLE ---- */
+/* Ajustes para el indicador de dropdown */
+
+.dropdown-toggle::after {
+    margin-left: 0.5rem; /* separación izquierda */
+}
+
+/* ---- INSIGNIAS DE ESTADO ---- */
+/* Estilos para indicadores de estado */
+
+.status-badge {
+    padding: 0.35rem 0.75rem; /* espacio interno */
+    border-radius: 20px; /* bordes completamente redondeados */
+    font-size: 0.8rem; /* tamaño de fuente pequeño */
+    font-weight: 500; /* peso de fuente medio */
+}
+
+/* ---- INFORMACIÓN SOBRE HERRAMIENTAS  ---- */
+/* Estilos para tooltips informativos */
+
+.tooltip {
+    font-family: 'Poppins', sans-serif; /* tipografía consistente */
+}
+
+/* ---- MEJORAS PARA PLACEHOLDERS ---- */
+/* Estilos para textos placeholder */
+
+::placeholder {
+    color: var(--gris); /* color gris */
+    opacity: 0.7; /* opacidad reducida */
+}
+
+/* ---- ENLACES ---- */
+/* Transiciones para elementos de enlace */
+
+a {
+    transition: all 0.2s ease; /* transición suave */
+}
+
+/* ---- ELEMENTOS DE LISTA ---- */
+/* Estilos para items de list-group */
+
+.list-group-item {
+    border: 1px solid rgba(0,0,0,0.05); /* borde sutil */
+    padding: 1rem 1.25rem; /* espacio interno */
+    transition: all 0.2s ease; /* transición suave */
+}
+
+.list-group-item:hover {
+    background-color: rgba(0,0,0,0.02); /* fondo sutil al hover */
+}
+
+/* ---- MEJORAS PARA CARDS DE ESTADÍSTICAS ---- */
+/* Estilos específicos para tarjetas de estadísticas */
+
+.stat-card {
+    text-align: center; /* texto centrado */
+    padding: 1.5rem; /* espacio interno */
+    border-radius: 16px; /* bordes redondeados */
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); /* fondo con gradiente */
+    box-shadow: var(--SombrasCards); /* sombra aplicada */
+    border: 1px solid rgba(255,255,255,0.5); /* borde sutil */
+    transition: all 0.3s ease; /* transición suave */
+}
+
+.stat-card:hover {
+    transform: translateY(-5px); /* efecto de elevación */
+    box-shadow: var(--SombrasFlotantes); /* sombra más pronunciada */
+}
+
+.stat-value {
+    font-size: 2rem; /* tamaño grande para valores */
+    font-weight: 700; /* peso de fuente negrita */
+    margin-bottom: 0.5rem; /* espacio inferior */
+}
+
+.stat-label {
+    color: var(--gris); /* color gris */
+    font-size: 0.9rem; /* tamaño de fuente reducido */
+}
+
+/* ---- BOTÓN FLOTANTE PARA AGREGAR ---- */
+/* Botón de acción flotante */
+
+.floating-add-btn {
+    position: fixed; /* posición fija en pantalla */
+    bottom: 2rem; /* separación desde abajo */
+    right: 2rem; /* separación desde derecha */
+    width: 60px; /* ancho fijo */
+    height: 60px; /* alto fijo */
+    border-radius: 50%; /* completamente redondeado */
+    background: linear-gradient(135deg, var(--verdeOs), var(--grisOs)); /* gradiente de fondo */
+    color: white; /* texto blanco */
+    display: flex; /* disposición flexible */
+    align-items: center; /* centrado vertical */
+    justify-content: center; /* centrado horizontal */
+    box-shadow: 0 6px 20px rgba(14, 164, 111, 0.4); /* sombra verde */
+    border: none; /* sin borde */
+    font-size: 1.5rem; /* tamaño de icono grande */
+    transition: all 0.3s ease; /* transición suave */
+    z-index: 99; /* por encima de otros elementos */
+}
+
+.floating-add-btn:hover {
+    transform: translateY(-5px) scale(1.1); /* efecto de elevación y escalado */
+    box-shadow: 0 10px 25px rgba(14, 164, 111, 0.6); /* sombra más pronunciada */
+}
+
+/* ---- ENCABEZADO Y CUERPO DE CARD ---- */
+/* Estilos para componentes internos de cards */
+
+.card-header {
+    background: transparent; /* fondo transparente */
+    border-bottom: 1px solid rgba(0,0,0,0.05); /* línea divisoria */
+    padding: 1.25rem 1.75rem; /* espacio interno */
+}
+
+.card-body {
+    padding: 1.75rem; /* espacio interno */
+}
+
+/* ---- TARJETAS DE TRANSACCIÓN ---- */
+/* Estilos para cards individuales de transacción */
+
+.transaction-card {
+    border-radius: 16px; /* bordes redondeados */
+    overflow: hidden; /* oculta desbordamiento */
+    background: white; /* fondo blanco */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* sombra sutil */
+    margin-bottom: 1rem; /* espacio inferior */
+    transition: all 0.3s ease; /* transición suave */
+}
+
+.transaction-card:hover {
+    transform: translateY(-3px); /* efecto de elevación */
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1); /* sombra más pronunciada */
+}
+
+.transaction-card-header {
+    padding: 1rem 1.25rem; /* espacio interno */
+    border-bottom: 1px solid rgba(0,0,0,0.05); /* línea divisoria */
+    display: flex; /* disposición flexible */
+    justify-content: space-between; /* espacio entre elementos */
+    align-items: center; /* centrado vertical */
+}
+
+.transaction-card-body {
+    padding: 1.25rem; /* espacio interno */
+}
+
+/* ---- GRILLA DE ESTADÍSTICAS ---- */
+/* Layout grid para estadísticas */
+
+.stats-grid {
+    display: grid; /* disposición grid */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* columnas adaptables */
+    gap: 1.25rem; /* separación entre elementos */
+    margin-bottom: 2rem; /* espacio inferior */
+}
+
+/* ---- ACCIONES RÁPIDAS ---- */
+/* Contenedor para botones de acción rápida */
+
+.quick-actions {
+    display: flex; /* disposición flexible */
+    gap: 1rem; /* separación entre elementos */
+    margin-bottom: 2rem; /* espacio inferior */
+    flex-wrap: wrap; /* permite wrap en móvil */
+}
+
+.quick-action-btn {
+    flex: 1; /* ocupa espacio disponible */
+    min-width: 150px; /* ancho mínimo */
+    padding: 1.25rem; /* espacio interno */
+    border-radius: 12px; /* bordes redondeados */
+    background: white; /* fondo blanco */
+    border: 1px solid rgba(0,0,0,0.05); /* borde sutil */
+    display: flex; /* disposición flexible */
+    flex-direction: column; /* dirección en columna */
+    align-items: center; /* centrado horizontal */
+    gap: 0.75rem; /* separación entre elementos */
+    transition: all 0.3s ease; /* transición suave */
+    text-decoration: none; /* sin subrayado */
+    color: inherit; /* color heredado */
+}
+
+.quick-action-btn:hover {
+    transform: translateY(-3px); /* efecto de elevación */
+    box-shadow: 0 6px 15px rgba(0,0,0,0.08); /* sombra al hover */
+    color: inherit; /* mantiene color heredado */
+}
+
+.quick-action-btn i {
+    font-size: 1.5rem; /* tamaño de icono */
+    color: var(--verdeOs); /* color verde */
+}
+
+/* ---- ICONOS DE CATEGORÍA ---- */
+/* Estilos para iconos en categorías */
+
+.category-icon {
+    width: 40px; /* ancho fijo */
+    height: 40px; /* alto fijo */
+    border-radius: 10px; /* bordes redondeados */
+    display: flex; /* disposición flexible */
+    align-items: center; /* centrado vertical */
+    justify-content: center; /* centrado horizontal */
+    margin-bottom: 0.5rem; /* espacio inferior */
+    font-size: 1.25rem; /* tamaño de icono */
+}
+
+.category-item .category-icon {
+    background: rgba(14, 164, 111, 0.1); /* fondo verde muy claro */
+    color: var(--verdeOs); /* texto verde */
+}
+
+.category-item.active .category-icon {
+    background: var(--verdeOs); /* fondo verde */
+    color: white; /* texto blanco */
+}
+
+/* ---- TARJETA DE SALDO ---- */
+/* Estilos destacados para saldo */
+
+.balance-card {
+    background: linear-gradient(135deg, var(--verdeOs), var(--grisOs)); /* gradiente verde-gris */
+    color: white; /* texto blanco */
+    border-radius: 16px; /* bordes redondeados */
+    padding: 1.75rem; /* espacio interno */
+    margin-bottom: 1.5rem; /* espacio inferior */
+    box-shadow: 0 6px 20px rgba(14, 164, 111, 0.3); /* sombra verde */
+    position: relative; /* para pseudo-elementos */
+    overflow: hidden; /* oculta desbordamiento */
+}
+
+.balance-card::before {
+    content: ''; /* pseudo-elemento vacío */
+    position: absolute; /* posición absoluta */
+    top: -50%; /* posición superior */
+    right: -20%; /* posición derecha */
+    width: 200px; /* ancho */
+    height: 200px; /* alto */
+    background: rgba(255,255,255,0.1); /* fondo blanco semi-transparente */
+    border-radius: 50%; /* completamente redondeado */
+}
+
+.balance-card::after {
+    content: ''; /* pseudo-elemento vacío */
+    position: absolute; /* posición absoluta */
+    bottom: -60%; /* posición inferior */
+    left: -10%; /* posición izquierda */
+    width: 150px; /* ancho */
+    height: 150px; /* alto */
+    background: rgba(255,255,255,0.1); /* fondo blanco semi-transparente */
+    border-radius: 50%; /* completamente redondeado */
+}
+
+.balance-amount {
+    font-size: 2.5rem; /* tamaño muy grande */
+    font-weight: 700; /* peso de fuente negrita */
+    margin-bottom: 0.5rem; /* espacio inferior */
+}
+
+.balance-label {
+    opacity: 0.9; /* opacidad reducida */
+    font-size: 0.9rem; /* tamaño de fuente reducido */
+}
+
+/* ---- TRANSACCIONES RECIENTES ---- */
+/* Contenedor scrollable para listado de transacciones */
+
+.recent-transactions {
+    max-height: 400px; /* altura máxima */
+    overflow-y: auto; /* scroll vertical */
+}
+
+/* ---- ITEMS DE TRANSACCIÓN ---- */
+/* Estilos para elementos individuales de transacción */
+
+.transaction-item {
+    display: flex; /* disposición flexible */
+    align-items: center; /* centrado vertical */
+    padding: 1rem; /* espacio interno */
+    border-radius: 12px; /* bordes redondeados */
+    margin-bottom: 0.75rem; /* espacio inferior */
+    background: rgba(255,255,255,0.7); /* fondo semi-transparente */
+    transition: all 0.2s ease; /* transición suave */
+}
+
+.transaction-item:hover {
+    background: rgba(255,255,255,0.9); /* fondo más opaco al hover */
+    transform: translateX(5px); /* desplazamiento horizontal */
+}
+
+.transaction-icon {
+    width: 40px; /* ancho fijo */
+    height: 40px; /* alto fijo */
+    border-radius: 10px; /* bordes redondeados */
+    display: flex; /* disposición flexible */
+    align-items: center; /* centrado vertical */
+    justify-content: center; /* centrado horizontal */
+    margin-right: 1rem; /* separación derecha */
+    font-size: 1.25rem; /* tamaño de icono */
+}
+
+.transaction-details {
+    flex: 1; /* ocupa espacio disponible */
+}
+
+.transaction-title {
+    font-weight: 600; /* peso de fuente negrita */
+    margin-bottom: 0.25rem; /* espacio inferior pequeño */
+}
+
+.transaction-meta {
+    font-size: 0.85rem; /* tamaño de fuente pequeño */
+    color: var(--gris); /* color gris */
+}
+
+.transaction-amount {
+    font-weight: 600; /* peso de fuente negrita */
+    font-size: 1.1rem; /* tamaño de fuente */
+}
+
+.transaction-income {
+    color: var(--verdeOs); /* color verde para ingresos */
+}
+
+.transaction-expense {
+    color: var(--rojo); /* color rojo para gastos */
+}
+
+/* ---- NAVEGACIÓN POR PESTAÑAS ---- */
+/* Estilos para navegación tipo tabs */
+
+.tab-nav {
+    display: flex; /* disposición flexible */
+    border-bottom: 1px solid rgba(0,0,0,0.05); /* línea inferior */
+    margin-bottom: 1.5rem; /* espacio inferior */
+}
+
+.tab-link {
+    padding: 0.75rem 1.5rem; /* espacio interno */
+    font-weight: 500; /* peso de fuente medio */
+    color: var(--gris); /* color gris */
+    text-decoration: none; /* sin subrayado */
+    border-bottom: 2px solid transparent; /* borde inferior transparente */
+    transition: all 0.2s ease; /* transición suave */
+}
+
+.tab-link.active {
+    color: var(--verdeOs); /* color verde activo */
+    border-bottom-color: var(--verdeOs); /* borde inferior verde */
+}
+
+.tab-link:hover:not(.active) {
+    color: var(--verdeOs); /* color verde al hover */
+}
+
+/* ---- BARRA DE PROGRESO PERSONALIZADA ---- */
+/* Estilos para barras de progreso */
+
+.progress-bar-custom {
+    height: 8px; /* altura fija */
+    border-radius: 4px; /* bordes redondeados */
+    background: rgba(0,0,0,0.05); /* fondo gris muy claro */
+    overflow: hidden; /* oculta desbordamiento */
+}
+
+.progress-fill {
+    height: 100%; /* altura completa */
+    border-radius: 4px; /* bordes redondeados */
+    background: linear-gradient(90deg, var(--verdeOs), var(--grisOs)); /* gradiente de relleno */
+}
+
+/* ---- ITEMS DE PRESUPUESTO ---- */
+/* Estilos para elementos de presupuesto */
+
+.budget-item {
+    display: flex; /* disposición flexible */
+    justify-content: space-between; /* espacio entre elementos */
+    align-items: center; /* centrado vertical */
+    padding: 1rem 0; /* espacio interno vertical */
+    border-bottom: 1px solid rgba(0,0,0,0.05); /* línea divisoria */
+}
+
+.budget-item:last-child {
+    border-bottom: none; /* sin borde en último elemento */
+}
+
+.budget-category {
+    font-weight: 500; /* peso de fuente medio */
+}
+
+.budget-amount {
+    font-weight: 600; /* peso de fuente negrita */
+}
+
+.budget-progress {
+    flex: 1; /* ocupa espacio disponible */
+    margin: 0 1rem; /* espacio horizontal */
+}
+
+/* ---- CARDS ---- */
+/* Estilos para tarjetas de información insights */
+
+.insight-card {
+    padding: 1.5rem; /* espacio interno */
+    border-radius: 12px; /* bordes redondeados */
+    background: white; /* fondo blanco */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* sombra sutil */
+    margin-bottom: 1rem; /* espacio inferior */
+    transition: all 0.3s ease; /* transición suave */
+}
+
+.insight-card:hover {
+    transform: translateY(-3px); /* efecto de elevación */
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1); /* sombra más pronunciada */
+}
+
+.insight-icon {
+    width: 50px; /* ancho fijo */
+    height: 50px; /* alto fijo */
+    border-radius: 12px; /* bordes redondeados */
+    display: flex; /* disposición flexible */
+    align-items: center; /* centrado vertical */
+    justify-content: center; /* centrado horizontal */
+    margin-bottom: 1rem; /* espacio inferior */
+    font-size: 1.5rem; /* tamaño de icono */
+}
+
+.insight-positive {
+    background: rgba(14, 164, 111, 0.1); /* fondo verde muy claro */
+    color: var(--verdeOs); /* texto verde */
+}
+
+.insight-warning {
+    background: rgba(255, 193, 7, 0.1); /* fondo amarillo muy claro */
+    color: #b58900; /* texto amarillo oscuro */
+}
+
+.insight-negative {
+    background: rgba(255, 107, 107, 0.1); /* fondo rojo muy claro */
+    color: var(--rojo); /* texto rojo */
+}
+
+.insight-title {
+    font-weight: 600; /* peso de fuente negrita */
+    margin-bottom: 0.5rem; /* espacio inferior */
+}
+
+.insight-value {
+    font-size: 1.5rem; /* tamaño grande */
+    font-weight: 700; /* peso de fuente negrita */
+    margin-bottom: 0.25rem; /* espacio inferior pequeño */
+}
+
+.insight-description {
+    font-size: 0.85rem; /* tamaño de fuente pequeño */
+    color: var(--gris); /* color gris */
+}
+
+.dark-mode {
+    display: none; /* oculto por defecto (para futuro modo oscuro) */
+}
+
+/* ---- NUEVOS ESTILOS PARA CATEGORÍAS ---- */
+/* Botones de categoría mejorados */
+
+.category-buttons {
+    display: flex; /* disposición flexible */
+    flex-wrap: wrap; /* permite wrap */
+    gap: 0.5rem; /* separación entre elementos */
+    margin-top: 1rem; /* espacio superior */
+}
+
+.category-btn {
+    padding: 0.5rem 1rem; /* espacio interno */
+    border-radius: 20px; /* bordes completamente redondeados */
+    border: 1px solid rgba(0,0,0,0.1); /* borde sutil */
+    background: white; /* fondo blanco */
+    color: var(--gris); /* color gris */
+    font-weight: 500; /* peso de fuente medio */
+    transition: all 0.2s ease; /* transición suave */
+    cursor: pointer; /* cursor pointer */
+    display: flex; /* disposición flexible */
+    align-items: center; /* centrado vertical */
+    gap: 0.5rem; /* separación entre icono y texto */
+}
+
+.category-btn:hover {
+    background: rgba(14, 164, 111, 0.05); /* fondo verde muy claro al hover */
+    color: var(--verdeOs); /* texto verde */
+    border-color: var(--verdeOs); /* borde verde */
+}
+
+.category-btn.active {
+    background: var(--verdeOs); /* fondo verde activo */
+    color: white; /* texto blanco */
+    border-color: var(--verdeOs); /* borde verde */
+}
+
+.category-btn i {
+    font-size: 0.9rem; /* tamaño de icono reducido */
+}
+
+/* ---- MODAL DE DETALLE DE TRANSACCIÓN ---- */
+/* Estilos específicos para modal de detalles */
+
+.transaction-detail-modal .modal-content {
+    border-radius: 18px; /* bordes redondeados */
+    overflow: hidden; /* oculta desbordamiento */
+    box-shadow: var(--SombrasFlotantes); /* sombra aplicada */
+}
+
+.transaction-detail-header {
+    background: linear-gradient(90deg, var(--verdeOs), var(--verdeCla)); /* gradiente verde */
+    color: white; /* texto blanco */
+    padding: 1.5rem; /* espacio interno */
+}
+
+.transaction-detail-body {
+    padding: 1.5rem; /* espacio interno */
+}
+
+.transaction-detail-item {
+    display: flex; /* disposición flexible */
+    justify-content: space-between; /* espacio entre elementos */
+    align-items: center; /* centrado vertical */
+    padding: 0.75rem 0; /* espacio interno vertical */
+    border-bottom: 1px solid rgba(0,0,0,0.05); /* línea divisoria */
+}
+
+.transaction-detail-item:last-child {
+    border-bottom: none; /* sin borde en último elemento */
+}
+
+.transaction-detail-label {
+    font-weight: 600; /* peso de fuente negrita */
+    color: var(--gris); /* color gris */
+}
+
+.transaction-detail-value {
+    font-weight: 500; /* peso de fuente medio */
+}
+
+.transaction-detail-image {
+    width: 100%; /* ancho completo */
+    max-height: 300px; /* alto máximo */
+    border-radius: 10px; /* bordes redondeados */
+    object-fit: cover; /* cubre el contenedor sin deformar */
+    margin-top: 1rem; /* espacio superior */
+}
+
+/* ---- MODAL DE EDICIÓN DE TRANSACCIÓN ---- */
+/* Estilos específicos para modal de edición */
+
+.transaction-edit-modal .modal-content {
+    border-radius: 18px; /* bordes redondeados */
+    overflow: hidden; /* oculta desbordamiento */
+}
+
+.transaction-edit-header {
+    background: linear-gradient(90deg, var(--verdeOs), var(--verdeCla)); /* gradiente verde */
+    color: white; /* texto blanco */
+    padding: 1.5rem; /* espacio interno */
+}
+
+.transaction-edit-body {
+    padding: 1.5rem; /* espacio interno */
+}
+
+/* ---- DISEÑO RESPONSIVE ---- */
+/* Media queries adicionales para mejor adaptabilidad móvil */
+
+@media (max-width: 768px) {
+    .transaction-form-grid {
+        grid-template-columns: 1fr; /* una columna en móvil */
+    }
+    
+    .datetime-row {
+        grid-template-columns: 1fr; /* una columna en móvil */
+    }
+    
+    .category-grid {
+        grid-template-columns: repeat(2, 1fr); /* 2 columnas en móvil */
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr; /* una columna en móvil */
+    }
+    
+    .quick-actions {
+        flex-direction: column; /* disposición en columna */
+    }
+    
+    .quick-action-btn {
+        min-width: 100%; /* ancho completo en móvil */
+    }
+    
+    .profile-header {
+        flex-direction: column; /* disposición en columna */
+        align-items: center; /* centrado horizontal */
+        text-align: center; /* texto centrado */
+        gap: 1.5rem; /* separación entre elementos */
+    }
+    
+    .profile-info {
+        text-align: center; /* texto centrado */
+    }
+    
+    .category-buttons {
+        justify-content: center; /* centrado de botones */
+    }
+}
