@@ -2,45 +2,46 @@
 
 📋 **Descripción**
 
-La página "Nosotros" de FinLi presenta la historia, misión, visión y valores de la empresa. Incluye un diseño visual atractivo con elementos flotantes y secciones bien estructuradas que comunican la identidad y propósito de la marca.
+La página "Nosotros" de FinLi presenta la historia, misión, visión y valores de la empresa de manera visualmente atractiva. Utiliza un diseño moderno con efectos de burbujas animadas, secciones con formas curvas y una estética limpia que refleja la identidad de la marca.
 
 ---
 
 ## 🗂️ Estructura de Archivos
 
 ```text
-proyecto/
-├── nosotros.html
-├── CSS/
-│   ├── Inicio.css
-│   └── nosotros.css
-└── img/
-    ├── Logo/
-    │   ├── LogoFinLi.png
-    │   └── LogoFinLi2.png
-    └── Contenido/
-        └── nosotros.png
+frontend/
+├── public/
+│   └── img/
+│       ├── Logo/
+│       │   ├── LogoFinLi.png
+│       │   └── LogoFinLi2.png
+│       └── Contenido/
+│           └── nosotros.png
+└── src/
+    └── pages/
+        ├── Inicio/
+        │   └── inicio.css
+        ├── Nosotros/
+        │   ├── nosotros.html
+        │   └── nosotros.css
+        ├── Servicios/
+        │   └── servicios.html
+        └── Autenticación/
+            └── login.html
 ```
 
 ---
 
-## 🎨 Paleta de Colores y Elementos Visuales
-
-### Colores Utilizados
+## 🎨 Paleta de Colores
 
 | Color       | Código HEX | Uso en la Página                 |
 |-------------|------------|----------------------------------|
 | Verde Claro | #d7ffe3    | Burbujas, fondos                 |
-| Verde Oscuro| #0ea46f    | Burbujas, acentos                |
-| Amarillo    | #ffd000    | Burbujas, elementos destacados   |
-| Plomo       | #f7f7f7    | Burbujas, fondos secundarios     |
-
-### Elementos Visuales Especiales
-
-- Burbujas animadas con símbolos de dinero ($)
-- Iconos de Bootstrap para representar valores
-- Efectos de sombra y hover en tarjetas
-- Diseño responsive con imágenes optimizadas
+| Verde Oscuro| #0ea46f    | Títulos, acentos                 |
+| Amarillo    | #ffd000    | Burbujas                         |
+| Blanco      | #ffffff    | Fondos principales               |
+| Plomo       | #f7f7f7    | Fondos secundarios               |
+| Mint        | #d7ffe3    | Gradientes y fondos              |
 
 ---
 
@@ -64,64 +65,48 @@ proyecto/
 
 ### Diseño de Columnas
 
-| Componente | Clases Utilizadas           | Propósito                       |
-|------------|-----------------------------|---------------------------------|
-| Container  | .container                  | Contenedores principales        |
-| Grid System| .row, .col-lg-*, .col-md-*  | Sistema de columnas responsivo  |
-| Spacing    | .mb-*, .py-3, .gap-*        | Espaciado entre elementos       |
-| Alignment  | .align-items-center, .justify-content-center | Alineación vertical y horizontal |
+| Componente | Clases Utilizadas           | Propósito                              |
+|------------|-----------------------------|----------------------------------------|
+| Container  | .container                  | Contenedores principales centrados     |
+| Grid System| .row, .col-lg-*            | Sistema de columnas responsivo         |
+| Spacing    | .mb-*, .py-*, .p-*         | Espaciado entre elementos              |
+| Alignment  | .align-items-center, .justify-content-center | Centrado vertical y horizontal |
 
 ### Navegación
 
 | Componente | Clases Utilizadas            | Propósito                        |
 |------------|------------------------------|----------------------------------|
-| Navbar     | .navbar, .navbar-expand-lg   | Barra de navegación principal    |
+| Navbar     | .navbar, .navbar-expand-lg   | Barra de navegación responsive   |
 | Nav Items  | .nav-item, .nav-link, .active| Elementos del menú con estado activo |
-| Responsive | .navbar-toggler, .collapse   | Menú hamburguesa en móviles      |
+| Responsive | .navbar-toggler, .collapse   | Menú hamburguesa para móviles    |
 
 ### Componentes de Contenido
 
-| Componente | Clases Utilizadas            | Propósito                         |
-|------------|------------------------------|-----------------------------------|
-| Cards      | .card-shadow (personalizado) | Tarjeta de imagen con sombra      |
-| Buttons    | .btn, .btn-custom            | Botón de Iniciar Sesión personalizado |
-| Images     | .w-100, .h-100               | Imágenes responsivas              |
-
-### Utilidades Bootstrap
-
-| Categoría  | Clases Utilizadas                  | Propósito                         |
-|------------|------------------------------------|-----------------------------------|
-| Typography | .fw-semibold, .fs-5, .text-center  | Estilos de texto y alineación     |
-| Display    | .d-flex, .d-block                  | Control de visualización          |
-| Flexbox    | .justify-content-*, .align-items-* | Layout flexible y centrado        |
-| Borders    | .rounded-3                         | Bordes redondeados                |
-
----
-
-## 🎯 Funcionalidades JavaScript de Bootstrap
-
-### Navegación Responsive
-
-```javascript
-// Toggler del navbar 
-const navbarToggler = document.querySelector('.navbar-toggler');
-const navbarCollapse = document.querySelector('.navbar-collapse');
-
-// Bootstrap maneja automáticamente la funcionalidad
-// mediante data-bs-toggle y data-bs-target
-```
-
-### Comportamiento de Componentes
-
-- Navbar Toggler: Expande/contrae el menú en dispositivos móviles
-- Scroll Suave: Navegación entre secciones (si está implementado)
-- Responsive Images: Adaptación automática de imágenes
+| Componente | Clases Utilizadas            | Propósito                        |
+|------------|------------------------------|----------------------------------|
+| Cards      | .card-shadow (personalizado) | Efecto de sombra en imágenes     |
+| Buttons    | .btn, .btn-custom            | Botones personalizados           |
+| Images     | .w-100, .h-100               | Imágenes responsivas             |
 
 ---
 
 ## 🎨 Estilos Personalizados Clave
 
-### Burbujas Animadas
+### Variables CSS
+
+```css
+:root {
+  --verdeCla: #d7ffe3;
+  --verdeOs: #0ea46f;
+  --blanco: #ffffff;
+  --amarrillo: #ffd000;
+  --plomo: #f7f7f7;
+  --mint: #d7ffe3;
+  --letra: 'Footlight MT Light', sans-serif;
+}
+```
+
+### Efectos de Burbujas Animadas
 
 ```css
 .bubbles {
@@ -132,6 +117,7 @@ const navbarCollapse = document.querySelector('.navbar-collapse');
   height: 100%;
   z-index: -1;
   overflow: hidden;
+  pointer-events: none;
 }
 
 .bubble {
@@ -140,32 +126,72 @@ const navbarCollapse = document.querySelector('.navbar-collapse');
   display: flex;
   justify-content: center;
   align-items: center;
-  color: white;
   font-weight: bold;
+  opacity: 0.5;
   animation: float 6s infinite ease-in-out;
 }
 
-.bubble-small { width: 40px; height: 40px; }
-.bubble-medium { width: 60px; height: 60px; }
-.bubble-large { width: 80px; height: 80px; }
-
-.bubble-verdeCla { background-color: var(--verdeCla); }
-.bubble-verdeOs { background-color: var(--verdeOs); }
-.bubble-amarrillo { background-color: var(--amarrillo); }
-.bubble-plomo { background-color: var(--plomo); }
+.bubble-small { width: 40px; height: 40px; font-size: 16px; }
+.bubble-medium { width: 60px; height: 60px; font-size: 22px; }
+.bubble-large { width: 80px; height: 80px; font-size: 28px; }
 ```
 
-### Secciones Especializadas
+### Secciones con Formas Curvas
 
-- Historia Hero: Diseño con imagen y texto lado a lado
-- Nosotros Hero: Sección de misión con valores en iconos
-- Misión Visión: Tarjeta centrada con contenido inspirador
+```css
+.historia-hero {
+  background: linear-gradient(135deg, var(--plomo) 0%, var(--plomo) 100%);
+  padding: 4rem 0 3rem;
+  border-bottom-left-radius: 60% 20%;
+  border-bottom-right-radius: 60% 20%;
+  margin-bottom: -5rem;
+}
 
-### Efectos Visuales
+.nosotros-hero {
+  background: linear-gradient(135deg, var(--mint) 0%, var(--verdeCla) 100%);
+  padding: 8rem 0 3rem;
+  border-bottom-left-radius: 60% 15%;
+  border-bottom-right-radius: 60% 15%;
+}
+```
 
-- Card Shadows: Sombras elegantes para profundidad
-- Hover Effects: Transformaciones suaves al interactuar
-- Glass Morphism: Efecto vidrio en algunos elementos
+### Tarjeta Circular de Visión
+
+```css
+.mision-vision-card {
+  width: 420px;
+  height: 420px;
+  padding: 2rem;
+  border-radius: 50%;
+  background: var(--blanco);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.4s ease;
+}
+
+.mision-vision-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+```
+
+### Iconos de Valores
+
+```css
+.valor-icon {
+  background: var(--verdeOs);
+  color: white;
+  border-radius: 50%;
+  padding: 1rem;
+  font-size: 1.8rem;
+  width: 70px;
+  height: 70px;
+  margin-bottom: 1.5rem;
+}
+```
 
 ---
 
@@ -175,63 +201,82 @@ const navbarCollapse = document.querySelector('.navbar-collapse');
 
 - Mobile First: Diseño base para móviles
 - Tablet: col-lg-* (≥992px) - Layout de dos columnas
-- Desktop: col-lg-* para disposiciones complejas
+- Desktop: Diseño completo con todas las secciones
 
 **Comportamiento Adaptativo**
 
 - Navbar: Colapsa en móviles con menú hamburguesa
-- Imágenes: w-100 h-100 para adaptarse al contenedor
-- Texto: Tamaños y alineación responsivos
 - Grid System: Reorganización automática de columnas
-
----
-
-## 🔧 Optimizaciones Implementadas
-
-### Performance
-
-- Lazy Loading: loading="lazy" en imágenes
-- CDN Resources: Dependencias cargadas desde CDN
-- Efficient CSS: Clases utilitarias de Bootstrap
-
-### Accesibilidad
-
-- Alt Texts: Descripciones para imágenes
-- ARIA Labels: Atributos para navegación
-- Semantic HTML: Estructura semántica adecuada
+- Imágenes: Escalado responsivo
+- Texto: Tamaños adaptativos
 
 ---
 
 ## 🎯 Secciones de Contenido
 
 1. **Nuestra Historia**
-   - Imagen del equipo
-   - Texto fundacional
-   - Diseño de dos columnas
+   - Diseño: Dos columnas (imagen + texto)
+   - Imagen: Foto del equipo con efecto de sombra
+   - Contenido: Origen y propósito de FinLi
+   - Efectos: Formas curvas en los bordes inferiores
 
 2. **Nuestra Misión**
-   - Tres valores principales con iconos
-   - Diseño centrado
-   - Iconos representativos
+   - Diseño: Sección centrada con fondo gradiente
+   - Elementos: Tres valores principales con iconos
+   - Iconos: cash-stack, piggy-bank, people
+   - Layout: Flexbox responsivo para los valores
 
 3. **Nuestra Visión**
-   - Tarjeta destacada
-   - Texto inspirador
-   - Enfoque en liderazgo regional
+   - Diseño: Tarjeta circular única
+   - Efectos: Hover con escala y sombra
+   - Posicionamiento: Centrado perfecto
+   - Contenido: Texto inspirador sobre el futuro
+
+---
+
+## 🔧 Optimizaciones Implementadas
+
+**Performance**
+
+- Lazy Loading: loading="lazy" en imágenes
+- Efficient CSS: Variables y reutilización de estilos
+- CDN Resources: Dependencias optimizadas
+
+**UX/UI**
+
+- Hover Effects: Interacciones suaves en todos los elementos
+- Visual Hierarchy: Títulos y contenido bien estructurados
+- Color Psychology: Paleta que inspira confianza y crecimiento
+
+**Accesibilidad**
+
+- Alt Texts: Descripciones para imágenes
+- Semantic HTML: Estructura semántica adecuada
+- Color Contrast: Texto legible en todos los fondos
+
+---
+
+## 🎨 Efectos Visuales Especiales
+
+- **Burbujas Flotantes**: 15 burbujas de diferentes tamaños y colores
+- Posicionamiento aleatorio en la pantalla
+- Símbolos de dinero ($) como contenido
+- Efecto de flotación suave
+
+- **Formas Curvas en Secciones**: Bordes inferiores con radio elíptico
+- Crean un flujo visual único y mejoran la experiencia de scroll
+
+- **Transiciones y Hovers**: Efectos de escala en tarjetas, sombras dinámicas y transiciones suaves
 
 ---
 
 ## 📄 Mejoras Futuras Sugeridas
 
-**Animaciones Mejoradas:**
+**Animaciones Mejoradas**
 
-- Transiciones más suaves entre secciones
+- Animación más elaborada para las burbujas
 - Efectos de aparición al hacer scroll
-
-**Optimizaciones Técnicas:**
-
-- Optimización avanzada de imágenes
-- Minificación de CSS personalizado
+- Transiciones entre secciones
 
 ---
 
@@ -240,3 +285,4 @@ const navbarCollapse = document.querySelector('.navbar-collapse');
 © 2025 FinLi. Todos los derechos reservados.
 
 Documentación FinLi - Página Nosotros
+
