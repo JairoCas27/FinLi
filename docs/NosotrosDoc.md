@@ -19,15 +19,10 @@ frontend/
 │           └── nosotros.png
 └── src/
     └── pages/
-        ├── Inicio/
-        │   └── inicio.css
-        ├── Nosotros/
-        │   ├── nosotros.html
-        │   └── nosotros.css
-        ├── Servicios/
-        │   └── servicios.html
-        └── Autenticación/
-            └── login.html
+        └── Nosotros/
+            ├── nosotros.html
+            └── nosotros.css
+
 ```
 
 ---
@@ -285,4 +280,5 @@ frontend/
 © 2025 FinLi. Todos los derechos reservados.
 
 Documentación FinLi - Página Nosotros
+
 
