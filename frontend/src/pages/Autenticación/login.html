@@ -167,6 +167,8 @@ document.querySelector('form').addEventListener('submit', async (e) => {
       if (user.role === 'ADMIN') {
         window.location.href = '/frontend/src/pages/Admin/admin.html';
       } else {
+        localStorage.setItem('nombreUsuario', user.fullName);
+        localStorage.setItem('emailUsuario', user.email);;
         window.location.href = '/frontend/src/pages/Usuario/usuario.html';
       }
     } else {
@@ -176,7 +178,8 @@ document.querySelector('form').addEventListener('submit', async (e) => {
   } catch (err) {
     alert('Error de red: ' + err);
   }
-});
+})
+
 </script>
 </body>
 </html>
