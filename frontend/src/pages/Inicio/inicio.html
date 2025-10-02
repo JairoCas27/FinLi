@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinLi - Home</title>
+    <link rel="icon" href="/frontend/public/img/Logo/LogoFinLi.png" />
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Iconos de Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
+    <!-- CSS -->
+    <link rel="stylesheet" href="inicio.css">
+</head>
+<body class="antialiased text-gray-800">
+    <!-- Barra de Navegacion -->
+    <nav class="navbar navbar-expand-lg bg-white py-3">
+        <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="inicio.html">
+            <img src="LogoFinLi.png" alt="Logo FinLi" width="50" height="50">
+            <span class="fw-semibold fs-5">FinLi</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>  
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto gap-2 gap-md-4">
+            <li class="nav-item">
+                <a class="nav-link active" href="inicio.html">Inicio</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/frontend/src/pages/Nosotros/nosotros.html">Nosotros</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/frontend/src/pages/Servicios/servicios.html">Servicios</a>
+            </li>
+            </ul>
+            
+            <div class="d-flex">
+            <a href="/frontend/src/pages/Autenticación/login.html" class="btn btn-custom">Iniciar Sesión</a>
+            </div>
+        </div>
+        </div>
+    </nav>
+    <!-- Contenido principal -->
+    <main class="container-fluid px-0">
+        <!-- Sección Hero con Carrusel fullscreen -->
+        <section class="hero-section rounded-3 my-0">
+        <!-- Carrusel de imágenes de fondo (ocupa toda la pantalla) -->
+        <div id="heroCarousel" class="carousel slide hero-carousel" data-bs-ride="carousel">
+            <div class="carousel-inner">
+            <div class="carousel-item active">
+                <img src="/frontend/public/img/Contenido/principal_01.png" class="d-block w-100" alt="Control financiero">
+            </div>
+            <div class="carousel-item">
+                <img src="/frontend/public/img/Contenido/principal_02.png" class="d-block w-100" alt="Gestión de finanzas">
+            </div>
+            <div class="carousel-item">
+                <img src="/frontend/public/img/Contenido/principal_03.png" class="d-block w-100" alt="Reportes financieros">
+            </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Anterior</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Siguiente</span>
+            </button>
+        </div>
+
+        <!-- Overlay para mejorar contraste -->
+        <div class="hero-overlay"></div>
+        
+        <!-- Contenido sobre el carrusel -->
+        <div class="container-fluid hero-content">
+            <div class="row">
+            <div class="col-md-5 offset-md-1">
+                <h1 class="display-4 fw-medium">Toma el control de tu dinero,<br/>de forma sencilla</h1>
+                <a href="/frontend/src/pages/Autenticación/login.html" class="btn btn-custom">Comenzar Ahora</a>
+            </div>
+            </div>
+        </div>
+        </section>
+        <!-- Servicios -->
+        <section class="rounded-3 p-5 bg-plomo mt-5">
+        <div class="text-center mb-5">
+            <h3 class="fw-semibold">Nuestros Servicios</h3>
+            <p class="text-muted fst-italic mt-2">"Descubre cómo FinLi te ayuda a alcanzar tus metas con nuestras herramientas clave."</p>
+        </div>
+        <div class="row g-4">
+            <!-- card 1 -->
+            <div class="col-md-4">
+            <div class="card h-100 border-0 card-shadow text-center p-4">
+                <img src="/frontend/public/img/Contenido/gestion.png" alt="Gestión de Ingresos y Gastos" class="card-img-top mx-auto" style="max-width: 200px;">
+                <div class="card-body">
+                <h5 class="card-title fw-semibold">Gestión de Ingresos y Gastos</h5>
+                <a href="servicios.html#gestion" class="btn btn-custom mt-3">Ver más</a>
+                </div>
+            </div>
+            </div>
+            <!-- card 2 -->
+            <div class="col-md-4">
+            <div class="card h-100 border-0 card-shadow text-center p-4">
+                <img src="/frontend/public/img/Contenido/reporte.png" alt="Análisis y Reportes Visuales" class="card-img-top mx-auto" style="max-width: 200px;">
+                <div class="card-body">
+                <h5 class="card-title fw-semibold">Análisis y Reportes Visuales</h5>
+                <a href="servicios.html#analisis" class="btn btn-custom mt-3">Ver más</a>
+                </div>
+            </div>
+            </div>
+            <!-- card 3 -->
+            <div class="col-md-4">
+            <div class="card h-100 border-0 card-shadow text-center p-4">
+                <img src="/frontend/public/img/Contenido/pagos.png" alt="Pagos y Presupuestos Inteligentes" class="card-img-top mx-auto" style="max-width: 200px;">
+                <div class="card-body">
+                <h5 class="card-title fw-semibold">Pagos y Presupuestos Inteligentes</h5>
+                <a href="servicios.html#pagos" class="btn btn-custom mt-3">Ver más</a>
+                </div>
+            </div>
+            </div>
+        </div>
+        </section>
+        
+        <!-- Comentarios de los usuarios con Carrusel -->
+        <section class="rounded-3 p-5 bg-mint mt-5">
+        <div class="text-center mb-5">
+            <h4 class="fw-semibold">Lo que nuestros usuarios dicen de FinLi...</h4>
+            <p class="text-muted">Descubre cómo FinLi está ayudando a cientos de jóvenes a transformar su relación con el dinero.</p>
+        </div>
+        
+        <!-- Carrusel de testimonios -->
+        <div id="testimonialCarousel" class="carousel slide testimonial-carousel" data-bs-ride="carousel">
+            <div class="carousel-inner">
+            <!-- Slide 1 -->
+            <div class="carousel-item active">
+                <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card border-0 card-shadow p-4 testimonial-card">
+                    <div class="testimonial-header">
+                        <img src="/frontend/public/img/Usuarios/Usuario1.png" alt="Perfil" class="testimonial-img">
+                        <div class="testimonial-info">
+                        <div class="testimonial-name">Dina Boluarte</div>
+                        <p class="testimonial-date">Hace 5 mim</p>
+                        </div>
+                    </div>
+                    <div class="estrellas mb-2">★★★★★</div>
+                    <p class="text-muted small">FinLi me ayudó a organizar mis gastos y a ahorrar para mis metas. Interfaz clara y consejos útiles.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 card-shadow p-4 testimonial-card">
+                    <div class="testimonial-header">
+                        <img src="/frontend/public/img/Usuarios/Usuario2.png" alt="Perfil" class="testimonial-img">
+                        <div class="testimonial-info">
+                        <div class="testimonial-name">Martín Vizcarra</div>
+                        <p class="testimonial-date">Hace 20 min.</p>
+                        </div>
+                    </div>
+                    <div class="estrellas mb-2">★★★★★</div>
+                    <p class="text-muted small">Las funciones de presupuesto me permitieron distribuir mejor mi dinero y reducir gastos innecesarios.</p>
+                    </div>
+                </div>
+                </div>
+            </div>
+            
+            <!-- Slide 2 -->
+            <div class="carousel-item">
+                <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card border-0 card-shadow p-4 testimonial-card">
+                    <div class="testimonial-header">
+                        <img src="/frontend/public/img/Usuarios/Usuario3.png" alt="Perfil" class="testimonial-img">
+                        <div class="testimonial-info">
+                        <div class="testimonial-name">López Aliaga</div>
+                        <p class="testimonial-date">Hace 3 días</p>
+                        </div>
+                    </div>
+                    <div class="estrellas mb-2">★★★★★</div>
+                    <p class="text-muted small">Gracias a FinLi pude ahorrar para mis estudios y entender mejor mis finanzas personales. ¡Totalmente recomendado!</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 card-shadow p-4 testimonial-card">
+                    <div class="testimonial-header">
+                        <img src="/frontend/public/img/Usuarios/Usuario4.png" alt="Perfil" class="testimonial-img">
+                        <div class="testimonial-info">
+                        <div class="testimonial-name">Paolo Guerrero</div>
+                        <p class="testimonial-date">Hace 5 días</p>
+                        </div>
+                    </div>
+                    <div class="estrellas mb-2">★★★★☆</div>
+                    <p class="text-muted small">Muy buena aplicación, me ha ayudado a controlar mis gastos. Solo mejoraría los recordatorios de pago.</p>
+                    </div>
+                </div>
+                </div>
+            </div>
+            
+            <!-- Slide 3 -->
+            <div class="carousel-item">
+                <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card border-0 card-shadow p-4 testimonial-card">
+                    <div class="testimonial-header">
+                        <img src="/frontend/public/img/Usuarios/Usuario5.png" alt="Perfil" class="testimonial-img">
+                        <div class="testimonial-info">
+                        <div class="testimonial-name">Lamine Yamal</div>
+                        <p class="testimonial-date">Hace 1 semana</p>
+                        </div>
+                    </div>
+                    <div class="estrellas mb-2">★★★★★</div>
+                    <p class="text-muted small">Los reportes visuales son excelentes, me permiten entender rápidamente en qué gasto mi dinero cada mes.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 card-shadow p-4 testimonial-card">
+                    <div class="testimonial-header">
+                        <img src="/frontend/public/img/Usuarios/Usuario6.png" alt="Perfil" class="testimonial-img">
+                        <div class="testimonial-info">
+                        <div class="testimonial-name">Lionel Messi</div>
+                        <p class="testimonial-date">Hace 2 semanas</p>
+                        </div>
+                    </div>
+                    <div class="estrellas mb-2">★★★★☆</div>
+                    <p class="text-muted small">FinLi transformó mi manera de manejar el dinero. Ahora tengo un mejor control y he logrado ahorrar consientemente.</p>
+                    </div>
+                </div>
+                </div>
+            </div>
+            </div>
+            
+            <!-- Controles del carrusel -->
+            <button class="carousel-control-prev" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Anterior</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Siguiente</span>
+            </button>
+            
+            <!-- Indicadores -->
+            <div class="carousel-indicators position-relative mt-4">
+            <button type="button" data-bs-target="#testimonialCarousel" data-bs-slide-to="0" class="active testimonial-dot" aria-current="true"></button>
+            <button type="button" data-bs-target="#testimonialCarousel" data-bs-slide-to="1" class="testimonial-dot"></button>
+            <button type="button" data-bs-target="#testimonialCarousel" data-bs-slide-to="2" class="testimonial-dot"></button>
+            </div>
+        </div>
+        </section>
+        <!-- Ponte en contacto con nosotros -->
+        <section class="rounded-3 p-5 bg-plomo mt-5">
+        <div class="row g-4">
+            <div class="col-md-4 d-flex flex-column justify-content-center text-center">
+            <h5 class="fw-semibold">Ponte en contacto con nosotros</h5>
+            <p class="text-muted">
+                Si tienes alguna duda, necesitas ayuda o deseas más información, mándanos un mensaje. 
+                Estamos aquí para ayudarte a tomar el control.
+            </p>
+            </div>
+            <div class="col-md-8">
+            <form class="p-4">
+                <div class="mb-3">
+                <label for="nombre" class="form-label">Nombre:</label>
+                <input type="text" class="form-control" id="nombre" placeholder="Ejm. Rafael Lopez Aliaga">
+                </div>
+            <div class="mb-3">
+            <label for="correo" class="form-label">Correo Electrónico:</label>
+            <input type="email" class="form-control" id="correo" placeholder="Ejm. utepino@gmail.com">
+            </div>
+            <div class="mb-3">
+            <label for="mensaje" class="form-label">Mensaje:</label>
+            <textarea class="form-control" id="mensaje" rows="5" placeholder="Escriba su duda..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-custom">Enviar</button>
+        </form>
+        </div>
+    </div>
+    </section>
+    </main>
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+        <div class="row">
+            <div class="col-lg-4 mb-5 mb-lg-0 logo-section">
+            <div id="img" class="d-flex justify-content-center justify-content-lg-start align-items-center gap-3 mb-4">
+                <img src="/frontend/public/img/Logo/LogoFinLi2.png" alt="Logo FinLi" width="50" height="70">
+            </div>
+            <p class="footer-content text-center text-lg-start">Toma el control de tu dinero, de manera sencilla y con ayuda real.</p>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-5 mb-md-0">
+            <h5 class="footer-title text-center text-md-start">Navegación</h5>
+            <ul class="footer-links">
+                <li class="text-center text-md-start"><a href="inicio.html">Inicio</a></li>
+                <li class="text-center text-md-start"><a href="/frontend/src/pages/Nosotros/nosotros.html">Nosotros</a></li>
+                <li class="text-center text-md-start"><a href="/frontend/src/pages/Servicios/servicios.html">Servicios</a></li>
+            </ul>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-5 mb-md-0">
+            <h5 class="footer-title text-center text-md-start">Legal</h5>
+            <ul class="footer-links">
+                <li class="text-center text-md-start"><a href="#">Términos y Condiciones</a></li>
+                <li class="text-center text-md-start"><a href="#">Política de Privacidad</a></li>
+            </ul>
+            </div> 
+            <div class="col-lg-4 col-md-4">
+            <h5 class="footer-title text-center text-md-start">Conéctate con nosotros</h5>
+            <div class="social-icons mb-4 text-center text-md-start">
+                <a href="#"><i class="bi bi-facebook"></i></a>
+                <a href="#"><i class="bi bi-twitter"></i></a>
+                <a href="#"><i class="bi bi-instagram"></i></a>
+                <a href="#"><i class="bi bi-linkedin"></i></a>
+            </div>
+            <p class="footer-content text-center text-md-start">Síguenos en nuestras redes sociales para mantenerte actualizado.</p>
+            </div>
+        </div>
+        </div>
+        <div class="copyright-container">
+        <p class="copyright">© 2025 FinLi. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+        <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

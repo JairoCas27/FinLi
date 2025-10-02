@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinLi - Servicios</title>
+    <link rel="icon" href="/frontend/public/img/Logo/LogoFinLi.png" />
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Iconos de Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
+    <!-- CSS -->
+    <link rel="stylesheet" href="/frontend/src/pages/Inicio/inicio.css">
+    <link rel="stylesheet" href="/frontend/src/pages/Servicios/servicios.css">
+    <link rel="stylesheet" href="/frontend/src/pages/Nosotros/nosotros.css">
+</head>
+<body>
+    <!-- Fondo de burbujas -->
+    <div class="bubbles">
+        <div class="bubble bubble-verdeCla bubble-small" style="top: 10%; left: 5%;">$</div>
+        <div class="bubble bubble-verdeOs bubble-medium" style="top: 20%; left: 85%;">$</div>
+        <div class="bubble bubble-amarrillo bubble-large" style="top: 40%; left: 10%;">$</div>
+        <div class="bubble bubble-plomo bubble-small" style="top: 60%; left: 90%;">$</div>
+        <div class="bubble bubble-verdeCla bubble-medium" style="top: 80%; left: 15%;">$</div>
+        <div class="bubble bubble-verdeOs bubble-small" style="top: 30%; left: 70%;">$</div>
+        <div class="bubble bubble-amarrillo bubble-medium" style="top: 50%; left: 80%;">$</div>
+        <div class="bubble bubble-plomo bubble-large" style="top: 70%; left: 5%;">$</div>
+        <div class="bubble bubble-verdeCla bubble-small" style="top: 15%; left: 50%;">$</div>
+        <div class="bubble bubble-verdeOs bubble-medium" style="top: 45%; left: 30%;">$</div>
+        <div class="bubble bubble-amarrillo bubble-small" style="top: 75%; left: 60%;">$</div>
+        <div class="bubble bubble-plomo bubble-medium" style="top: 25%; left: 25%;">$</div>
+        <div class="bubble bubble-verdeCla bubble-large" style="top: 55%; left: 45%;">$</div>
+        <div class="bubble bubble-verdeOs bubble-small" style="top: 85%; left: 75%;">$</div>
+        <div class="bubble bubble-amarrillo bubble-medium" style="top: 35%; left: 95%;">$</div>
+    </div>
+    <!-- Barra de Navegación -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white py-3">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="/frontend/src/pages/Inicio/inicio.html">
+                <img src="/frontend/public/img/Logo/LogoFinLi.png" alt="Logo FinLi" width="50" height="50">
+                <span class="fw-semibold fs-5">FinLi</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto gap-2 gap-md-4">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/frontend/src/pages/Inicio/inicio.html">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/frontend/src/pages/Nosotros/nosotros.html">Nosotros</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="servicios.html">Servicios</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <a href="/frontend/src/pages/Autenticación/login.html" class="btn btn-custom">Iniciar Sesión</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-servicios">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h1 class="display-4 fw-bold mb-4">Tus metas financieras, hechas realidad.</h1>
+                    <p class="lead mb-5">Descubre todas las herramientas de FinLi diseñadas para que tomes el control de tu dinero de forma inteligente.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Servicios Section -->
+    <section id="services" class="service-section">
+        <div class="container">
+            <!-- Gestión de Ingresos y Gastos -->
+            <div id="gestion" class="row align-items-center mb-5">
+                <div class="col-lg-6">
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="bi bi-cash-coin"></i>
+                        </div>
+                        <h2>Gestión de Ingresos y Gastos</h2>
+                        <div class="divider"></div>
+                        <p class="mb-4">Registra y categoriza tus ingresos y gastos. Con nuestra aplicación digital y web, puedes capturar cada uno de tus movimientos financieros en segundos. Clasifica tus gastos necesarios para reconocer tus patrones de consumo.</p>
+                        <p class="fst-italic">"Tu dinero, bajo control y explicado para que tomes decisiones informadas. Tu historia financiera siempre organizada y el dinero de tu bolsillo mejor gestionado."</p>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <img src="/frontend/public/img/Contenido/gestion.png" alt="Gestión de Ingresos y Gastos" class="img-fluid">
+                </div>
+            </div>
+
+            <!-- Análisis y Reportes Visuales -->
+            <div id="analisis" class="row align-items-center mb-5 flex-lg-row-reverse">
+                <div class="col-lg-6">
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="bi bi-bar-chart-line"></i>
+                        </div>
+                        <h2>Análisis y Reportes Visuales</h2>
+                        <div class="divider"></div>
+                        <p class="mb-4">Descubre los patrones detrás de tus hábitos de gasto. FinLi transforma tus datos en gráficos y reportes visuales que te muestran exactamente en qué gastas tu dinero.</p>
+                        <p class="mb-4">Visualiza la distribución de gastos con diagramas claros, compara tus ingresos y gastos con gráficas de tendencias y observa la evolución de tu balance a lo largo del tiempo.</p>
+                        <p>Con esta información, puedes tomar decisiones informadas para optimizar tus finanzas.</p>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <img src="/frontend/public/img/Contenido/reporte.png" alt="Análisis y Reportes Visuales" class="img-fluid">
+                </div>
+            </div>
+
+            <!-- Pagos y Presupuestos Inteligentes -->
+            <div id="pagos" class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="bi bi-wallet2"></i>
+                        </div>
+                        <h2>Pagos y Presupuestos Inteligentes</h2>
+                        <div class="divider"></div>
+                        <p class="mb-4">Toma el control y aprovecha al máximo tu economía. Configura alertas para gastos inusuales o recurrentes, y recibe notificaciones de pagos próximos.</p>
+                        <p class="mb-4">Además, crea presupuestos personalizados para mantener un equilibrio y asegurarte de que no excedes tus límites.</p>
+                        <p>Con todo esto, podrás planificar tu futuro financiero sin estrés.</p>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <img src="/frontend/public/img/Contenido/pagos.png" alt="Pagos y Presupuestos Inteligentes" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h2 class="mb-4">¿Listo para tomar el control de tus finanzas?</h2>
+                    <p class="lead mb-4">Comienza hoy mismo a transformar tu relación con el dinero</p>
+                    <a href="/frontend/src/pages/Autenticación/login.html" class="btn btn-custom btn-lg">Comenzar Ahora</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+        <div class="row">
+            <div class="col-lg-4 mb-5 mb-lg-0 logo-section">
+            <div id="img" class="d-flex justify-content-center justify-content-lg-start align-items-center gap-3 mb-4">
+                <img src="/frontend/public/img/Logo/LogoFinLi2.png" alt="Logo FinLi" width="50" height="70">
+            </div>
+            <p class="footer-content text-center text-lg-start">Toma el control de tu dinero, de manera sencilla y con ayuda real.</p>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-5 mb-md-0">
+            <h5 class="footer-title text-center text-md-start">Navegación</h5>
+            <ul class="footer-links">
+                <li class="text-center text-md-start"><a href="#">Inicio</a></li>
+                <li class="text-center text-md-start"><a href="#">Nosotros</a></li>
+                <li class="text-center text-md-start"><a href="#">Servicios</a></li>
+            </ul>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-5 mb-md-0">
+            <h5 class="footer-title text-center text-md-start">Legal</h5>
+            <ul class="footer-links">
+                <li class="text-center text-md-start"><a href="#">Términos y Condiciones</a></li>
+                <li class="text-center text-md-start"><a href="#">Política de Privacidad</a></li>
+            </ul>
+            </div> 
+            <div class="col-lg-4 col-md-4">
+            <h5 class="footer-title text-center text-md-start">Conéctate con nosotros</h5>
+            <div class="social-icons mb-4 text-center text-md-start">
+                <a href="#"><i class="bi bi-facebook"></i></a>
+                <a href="#"><i class="bi bi-twitter"></i></a>
+                <a href="#"><i class="bi bi-instagram"></i></a>
+                <a href="#"><i class="bi bi-linkedin"></i></a>
+            </div>
+            <p class="footer-content text-center text-md-start">Síguenos en nuestras redes sociales para mantenerte actualizado.</p>
+            </div>
+        </div>
+        </div>
+        <div class="copyright-container">
+        <p class="copyright">© 2025 FinLi. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
