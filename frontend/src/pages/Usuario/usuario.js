@@ -8,6 +8,7 @@ let editingTransactionId = null; // ID de la transacción en edición
 // ---- SISTEMA DE NAVEGACIÓN ----
 // Gestión de cambios entre secciones de la aplicación
 
+
 // Elementos de navegación
 const navLinks = document.querySelectorAll('.nav-link'); // Enlaces del menú lateral
 const contentSections = document.querySelectorAll('.content-section'); // Secciones de contenido
@@ -708,4 +709,5 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Renderizar transacciones vacías inicialmente
     renderTransactions(); // Mostrar tabla vacía
+
 });
