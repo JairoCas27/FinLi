@@ -191,7 +191,7 @@ document.querySelector('form').addEventListener('submit', async (e) => {
       if (user.role === 'ADMIN') {
         window.location.href = '/frontend/src/pages/Admin/admin.html';
       } else {
-        window.location.href = '/frontend/src/pages/Inicio/inicio.html';
+        window.location.href = '/frontend/src/pages/Usuario/usuario.html';
       }
     } else {
       const msg = await res.text();
