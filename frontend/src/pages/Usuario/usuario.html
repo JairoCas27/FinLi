@@ -49,7 +49,7 @@
                 <!-- TOPBAR -->
                 <div class="topbar">
                     <div>
-                        <h2 class="mb-0" id="main-title">Bienvenido, <span class="text-gradient">Jairo</span></h2>
+                        <h2 class="mb-0" id="main-title">Bienvenido, <span class="text-gradient">Usuario</span></h2>
                         <small class="muted" id="main-subtitle">Panel de control personal</small>
                     </div>
 
@@ -83,8 +83,8 @@
                                 <span id="userInitials">JC</span>
                             </div>
                             <div class="text-end d-none d-sm-block">
-                                <div style="font-weight:600">Jairo Castillo</div>
-                                <small class="muted">jairo@utp.edu.pe</small>
+                                <div id="quickProfileName"  style="font-weight:600">Usuario</div>
+                                <small class="muted" id="quickProfileEmail">correo@ejemplo.com</small>
                             </div>
                         </div>
                     </div>
@@ -312,8 +312,8 @@
                     <div class="card-stat fade-in mb-4">
                         <div class="profile-header">
                             <div class="profile-info">
-                                <div class="profile-name">Jairo Castillo</div>
-                                <div class="profile-email">jairo@utp.edu.pe</div>
+                                <div class="profile-name" id="profileName">Usuario</div>
+                                <div class="profile-email" id="profileEmail">correo@ejemplo.com</div>
                             </div>
                             <div class="profile-avatar" id="profileAvatar">
                                 <div id="avatarPlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:2rem;">JC</div>
@@ -533,6 +533,17 @@ document.getElementById('logoutBtn').addEventListener('click', function() {
     window.location.href = '/frontend/src/pages/Autenticación/login.html';
 });
 </script>
+
+<script>
+// Obtener el nombre del usuario desde localStorage
+const nombreUsuario = localStorage.getItem('nombreUsuario') || 'Usuario';
+// Cambiar el nombre en la topbar
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelector('#main-title .text-gradient').textContent = nombreUsuario;
+    // Si quieres cambiar otros lugares, hazlo aquí también
+});
+</script>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/frontend/src/pages/Usuario/usuario.js"></script>

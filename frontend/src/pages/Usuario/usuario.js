@@ -698,6 +698,29 @@ document.getElementById('cancelEditBtn').addEventListener('click', function() {
 
 // Inicializar gráficos al cargar la página si está en sección de informes
 document.addEventListener('DOMContentLoaded', function() {
+    // ...existing code...
+
+    const nombreUsuario = localStorage.getItem('nombreUsuario') || 'Usuario';
+    const emailUsuario = localStorage.getItem('emailUsuario') || 'correo@ejemplo.com';
+
+    // Topbar principal
+    const mainTitleText = document.querySelector('#main-title .text-gradient');
+    if (mainTitleText) mainTitleText.textContent = nombreUsuario;
+
+    // Perfil
+    const profileName = document.getElementById('profileName');
+    if (profileName) profileName.textContent = nombreUsuario;
+
+    const profileEmail = document.getElementById('profileEmail');
+    if (profileEmail) profileEmail.textContent = emailUsuario;
+
+    // Topbar rápido (esquina derecha)
+    const quickProfileName = document.getElementById('quickProfileName');
+    if (quickProfileName) quickProfileName.textContent = nombreUsuario;
+
+    const quickProfileEmail = document.getElementById('quickProfileEmail');
+    if (quickProfileEmail) quickProfileEmail.textContent = emailUsuario;
+    // ...resto de tu código existente...
     if (document.getElementById('informes').classList.contains('active')) {
         initializeCharts(); // Inicializar gráficos si en informes
     }
