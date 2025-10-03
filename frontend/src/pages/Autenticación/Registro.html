@@ -98,12 +98,22 @@
                 
                 <div class="mb-3">
                     <label for="password" class="form-label">Contraseña</label>
-                    <input type="password" class="form-control" id="contrasena" placeholder="**********">
+                    <div class="password-container">
+                        <input type="password" class="form-control" id="contrasena" placeholder="**********">
+                        <button type="button" class="password-toggle" id="togglePassword">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="password" class="form-label">Confirmar Contraseña</label>
-                    <input type="password" class="form-control" id="confirmarContrasena" placeholder="**********">
+                    <div class="password-container">
+                        <input type="password" class="form-control" id="confirmarContrasena" placeholder="**********">
+                        <button type="button" class="password-toggle" id="toggleConfirmPassword">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="mb-3 form-check">
@@ -167,33 +177,55 @@
     <!-- JavaScript para conectar con el API -->
 <script>
 document.querySelector('form').addEventListener('submit', async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const data = {
-    nombre: document.getElementById('nombre').value,
-    apellido: document.getElementById('apellido').value,
-    email: document.getElementById('email').value,
-    contrasena: document.getElementById('contrasena').value,
-    confirmarContrasena: document.getElementById('confirmarContrasena').value
-    
-  };
+    const data = {
+        nombre: document.getElementById('nombre').value,
+        apellido: document.getElementById('apellido').value,
+        email: document.getElementById('email').value,
+        contrasena: document.getElementById('contrasena').value,
+        confirmarContrasena: document.getElementById('confirmarContrasena').value
+        
+    };
 
-  try {
-    const res = await fetch('http://localhost:8080/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
+    try {
+        const res = await fetch('http://localhost:8080/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+        });
 
-    const msg = await res.text();
-    alert(msg);
+        const msg = await res.text();
+        alert(msg);
 
-    if (res.ok) {
-      window.location.href = 'login.html';
+        if (res.ok) {
+        window.location.href = 'login.html';
+        }
+    } catch (err) {
+        alert('Error de red: ' + err);
     }
-  } catch (err) {
-    alert('Error de red: ' + err);
-  }
+});
+
+// Toggle para mostrar/ocultar contraseñas
+const togglePassword = document.getElementById('togglePassword');
+const passwordInput = document.getElementById('contrasena');
+const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+const confirmPasswordInput = document.getElementById('confirmarContrasena');
+
+togglePassword.addEventListener('click', function() {
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordInput.setAttribute('type', type);
+    
+    // Cambiar el icono
+    this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+});
+
+toggleConfirmPassword.addEventListener('click', function() {
+    const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    confirmPasswordInput.setAttribute('type', type);
+    
+    // Cambiar el icono
+    this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
 });
 </script>
 </body>
