@@ -78,6 +78,11 @@
                 <img src="/frontend/public/img/Logo/LogoFinLi.png" alt="Logo FinLi" width="100" height="100">
                 <h1>FinLi</h1>
                 <p>NUEVA CONTRASEÑA</p>
+                <!-- Temporizador agregado aquí -->
+                <div class="timer-container">
+                    <div class="timer" id="countdown">El código expira en <span id="time">30</span> segundos</div>
+                    <a class="resend-link" id="resendCode">Reenviar código</a>
+                </div>
                 </div>
                 
                 <form>
@@ -184,5 +189,63 @@ toggleConfirmPassword.addEventListener('click', function() {
     // Cambiar el icono
     this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
 });
+
+// Temporizador de 30 segundos 
+let timeLeft = 60;
+let countdownInterval = null;
+
+const timerElement = document.getElementById('time');
+const countdownElement = document.getElementById('countdown');
+const resendLink = document.getElementById('resendCode');
+
+if (!timerElement || !countdownElement || !resendLink) {
+  console.warn('Faltan elementos en el DOM: verifica #time, #countdown y #resendCode');
+} else {
+  // Actualiza la UI con el estado actual del temporizador
+  function render() {
+    timerElement.textContent = timeLeft;
+    countdownElement.textContent = timeLeft > 0
+      ? `El código expira en ${timeLeft} segundos`
+      : 'El código ha expirado';
+    // añadir o quitar clase de expirado según corresponda
+    countdownElement.classList.toggle('expired', timeLeft <= 0);
+    // mostrar/ocultar el link de reenvío
+    resendLink.style.display = timeLeft <= 0 ? 'inline' : 'none';
+  }
+
+  // Inicia (o reinicia) el temporizador. Si ya hay un intervalo, lo limpia.
+  function startTimer(initialSeconds = 60) {
+    clearInterval(countdownInterval);
+    timeLeft = initialSeconds;
+    render(); // actualizar inmediatamente para evitar 1s de delay
+
+    countdownInterval = setInterval(() => {
+      timeLeft--;
+      render();
+
+      if (timeLeft <= 0) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+    }, 1000);
+  }
+
+  // Función simulada para reenviar código (reemplaza con tu llamada real)
+  function resendCodeAction() {
+    console.log('Solicitud de reenvío de código enviada');
+  }
+
+  // Listener único para reenviar
+  resendLink.addEventListener('click', function (evt) {
+    evt.preventDefault();
+    resendCodeAction();
+    // reiniciar temporizador a 30s y ocultar link
+    startTimer(60);
+  });
+
+  // Arrancar al cargar la página
+  startTimer(60);
+}
+
 </script>
 </html>
