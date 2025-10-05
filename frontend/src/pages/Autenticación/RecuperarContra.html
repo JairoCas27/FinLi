@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinLi - Iniciar Sesión</title>
+    <title>FinLi - Recuperar Contraseña</title>
     <link rel="icon" href="/frontend/public/img/Logo/LogoFinLi.png">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -62,7 +62,7 @@
             </ul>
             
             <div class="d-flex">
-            <a href="Registro.html" class="btn btn-custom">Registrarse</a>
+            <a href="login.html" class="btn btn-custom">Iniciar Sesión</a>
             </div>
         </div>
         </div>
@@ -77,31 +77,23 @@
                 <div class="logo-header">
                 <img src="/frontend/public/img/Logo/LogoFinLi.png" alt="Logo FinLi" width="100" height="100">
                 <h1>FinLi</h1>
-                <p>INICIAR SESIÓN</p>
+                <p>RECUPERAR CONTRASEÑA</p>
                 </div>
                 
                 <form>
                 <div class="mb-3">
-                    <label for="email" class="form-label">Correo electrónico</label>
+                    <label for="email" class="form-label">Introduzca su correo electrónico</label>
                     <input type="email" class="form-control" id="email" placeholder="Ejm. utepino@gmail.com">
                 </div>
-                
-                <div class="mb-3">
-                    <label for="password" class="form-label">Contraseña</label>
-                    <div class="password-container">
-                        <input type="password" class="form-control" id="contrasena" placeholder="**********">
-                        <button type="button" class="password-toggle" id="togglePassword">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                    </div>
+
+                <button type="submit" class="btn btn-custom mt-3">Actualizar</button>
+
+                <div class="login-redirect">
+                    <a href="Registro.html" class="login-link">Crear Cuenta</a>
                 </div>
                 
-                <a href="RecuperarContra.html" class="login-link">¿Olvidaste tu contraseña?</a>
-                
-                <button type="submit" class="btn btn-custom mt-4">Enviar</button>
-                
                 <div class="login-redirect">
-                ¿Aún no tienes una cuenta? <a href="Registro.html" class="login-link">Registrarse aqui</a>
+                    <a href="/frontend/src/pages/Inicio/inicio.html" class="login-link">Regresar al Inicio</a>
                 </div>
             </div>
             </div>
@@ -150,50 +142,5 @@
         <p class="copyright">© 2025 FinLi. Todos los derechos reservados.</p>
         </div>
     </footer>
-    <!--Conector a la API con JavaScript-->
-<script>
-document.querySelector('form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const data = {
-        email: document.getElementById('email').value,
-        contrasena: document.getElementById('contrasena').value
-    };
-
-    try {
-        const res = await fetch('http://localhost:8080/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-        });
-
-        if (res.ok) {
-        const user = await res.json();
-        if (user.role === 'ADMIN') {
-            window.location.href = '/frontend/src/pages/Admin/admin.html';
-        } else {
-            window.location.href = '/frontend/src/pages/Usuario/usuario.html';
-        }
-        } else {
-        const msg = await res.text();
-        alert(msg);
-        }
-    } catch (err) {
-        alert('Error de red: ' + err);
-    }
-});
-
-// Toggle para mostrar/ocultar contraseña
-const togglePassword = document.getElementById('togglePassword');
-const passwordInput = document.getElementById('contrasena');
-
-togglePassword.addEventListener('click', function() {
-    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-    passwordInput.setAttribute('type', type);
-    
-    // Cambiar el icono
-    this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
-});
-</script>
 </body>
 </html>
