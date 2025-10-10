@@ -83,12 +83,23 @@
                 <form>
                 <div class="mb-3">
                     <label for="username" class="form-label">Nombres</label>
-                    <input type="text" class="form-control" id="nombre" placeholder="Ejm. Martín Alberto">
+                    <input type="text" class="form-control" id="nombre" placeholder="Nombres completos">
                 </div>
 
                 <div class="mb-3">
-                    <label for="username" class="form-label">Apellidos</label>
-                    <input type="text" class="form-control" id="apellido" placeholder="Ejm. Vizcarra Cornejo">
+                <label class="form-label">Apellidos</label>
+                <div class="two-cols">
+                    <input type="text" class="form-control" id="apellido-paterno" placeholder="Apellido paterno">
+                    <input type="text" class="form-control" id="apellido-materno" placeholder="Apellido materno">
+                </div>
+                </div>
+
+                <div class="mb-3">
+                <label class="form-label">Fecha de Nacimiento</label>
+                <div class="two-cols">
+                    <input type="date" class="form-control" id="fecha-nacimiento" placeholder="DD/MM/AAAA">
+                    <input type="number" class="form-control" id="edad" placeholder="Edad" min="0" max="150" readonly>
+                </div>
                 </div>
                 
                 <div class="mb-3">
@@ -175,6 +186,26 @@
     </footer>
 
 <script>
+const fechaInput = document.getElementById('fecha-nacimiento');
+const edadInput = document.getElementById('edad');
+
+function calcularEdad(fechaValue) {
+    if (!fechaValue) { edadInput.value = ''; return; }
+    const nacimiento = new Date(fechaValue); // fechaValue viene en formato yyyy-mm-dd
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - nacimiento.getFullYear();
+    const mesDiff = hoy.getMonth() - nacimiento.getMonth();
+    if (mesDiff < 0 || (mesDiff === 0 && hoy.getDate() < nacimiento.getDate())) edad--;
+    if (isNaN(edad) || edad < 0) { edadInput.value = ''; return; }
+    edadInput.value = edad;
+}
+
+// Actualiza al cambiar la fecha y al cargar si ya hay valor
+fechaInput.addEventListener('change', (e) => calcularEdad(e.target.value));
+window.addEventListener('DOMContentLoaded', () => {
+    if (fechaInput.value) calcularEdad(fechaInput.value);
+});
+
 // Toggle para mostrar/ocultar contraseñas
 const togglePassword = document.getElementById('togglePassword');
 const passwordInput = document.getElementById('contrasena');

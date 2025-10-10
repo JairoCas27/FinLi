@@ -364,6 +364,15 @@ a{
     font-family: 'Footlight MT Light', sans-serif; /* fuente consistente */
 }
 
+.two-cols { 
+    display:flex; 
+    gap:0.5rem; 
+}
+
+.two-cols input { 
+    flex:1; 
+}
+
 /* Estilos para el contenedor de contraseña */
 .password-container {
     position: relative;
