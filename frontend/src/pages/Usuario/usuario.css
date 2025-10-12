@@ -1715,3 +1715,118 @@ a {
         justify-content: center;
     }
 }
+
+/* Estilos para el modal de personalización de categorías */
+#customizeCategoriesModal .nav-tabs .nav-link {
+    color: var(--gris);
+    font-weight: 500;
+    border: none;
+    padding: 0.75rem 1.25rem;
+}
+
+#customizeCategoriesModal .nav-tabs .nav-link.active {
+    color: var(--verdeOs);
+    border-bottom: 2px solid var(--verdeOs);
+    background: transparent;
+}
+
+#customizeCategoriesModal .nav-tabs {
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+#customizeCategoriesModal .list-group-item {
+    border: 1px solid rgba(0,0,0,0.1);
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+#customizeCategoriesModal .list-group-item:hover {
+    background-color: rgba(14, 164, 111, 0.05);
+    transform: translateY(-1px);
+}
+
+/* Mejorar la apariencia de los botones de categorías personalizadas */
+.category-btn {
+    padding: 0.6rem 1rem;
+    border-radius: 20px;
+    border: 1px solid rgba(0,0,0,0.1);
+    background: var(--verdeCla);
+    color: var(--gris);
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.2rem;
+    font-size: 0.85rem;
+}
+
+.category-btn:hover {
+    background: rgba(14, 164, 111, 0.1);
+    color: var(--verdeOs);
+    border-color: var(--verdeOs);
+    transform: translateY(-2px);
+}
+
+.category-btn.active {
+    background: var(--verdeOs);
+    color: white;
+    border-color: var(--verdeOs);
+    box-shadow: 0 4px 8px rgba(14, 164, 111, 0.3);
+}
+
+.category-btn i {
+    font-size: 0.9rem;
+}
+
+/* Estilos para subcategorías */
+.subcategory-btn {
+    padding: 0.4rem 0.8rem;
+    border-radius: 15px;
+    border: 1px solid rgba(0,0,0,0.1);
+    background: #ffffcc;
+    color: var(--gris);
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.2rem;
+    font-size: 0.8rem;
+}
+
+.subcategory-btn:hover {
+    background: rgba(14, 164, 111, 0.1);
+    color: #c7a317;
+    border-color: #c7a317;
+    transform: translateY(-1px);
+}
+
+.subcategory-btn.active {
+    background: #c7a317;
+    color: white;
+    border-color: #c7a317;
+}
+
+.subcategory-btn i {
+    font-size: 0.8rem;
+}
+
+/* Mejorar el diseño del modal */
+#customizeCategoriesModal .modal-content {
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: var(--SombrasFlotantes);
+}
+
+#customizeCategoriesModal .modal-header {
+    background: linear-gradient(90deg, var(--verdeOs), var(--grisOs));
+    color: white;
+}
+
+#customizeCategoriesModal .modal-title i {
+    color: white;
+}

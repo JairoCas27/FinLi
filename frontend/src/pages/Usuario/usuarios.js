@@ -24,6 +24,10 @@ let userProfile = {
 // Array para notificaciones
 let notifications = [];
 
+// Categorías personalizadas
+let customCategories = [];
+let customSubcategories = {};
+
 // Mapeo de subcategorías por categoría
 const subcategoriesMap = {
     vivienda: [
@@ -125,11 +129,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Cargar datos desde localStorage
     loadDataFromLocalStorage();
     
+    // Cargar categorías personalizadas
+    loadCustomCategoriesFromLocalStorage();
+    
     // Establecer fecha y hora actual
     const now = new Date();
     const formattedNow = now.toISOString().slice(0, 16);
-    document.getElementById('transactionDateTime').value = formattedNow;
-    document.getElementById('transactionDateTimePagos').value = formattedNow;
+    
+    // Solo establecer valores si los elementos existen
+    const dateTimeInput = document.getElementById('transactionDateTime');
+    const dateTimeInputPagos = document.getElementById('transactionDateTimePagos');
+    
+    if (dateTimeInput) dateTimeInput.value = formattedNow;
+    if (dateTimeInputPagos) dateTimeInputPagos.value = formattedNow;
     
     // Inicializar componentes
     initializeNavigation();
@@ -146,8 +158,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicializar filtros dinámicos
     initializeDynamicFilters();
     
-    // Inicializar gráficos
-    initializeCharts();
+    // Inicializar gráficos (solo si estamos en la sección de informes)
+    if (document.getElementById('informes').classList.contains('active')) {
+        initializeCharts();
+    }
 });
 
 // ---- CARGAR DATOS DESDE LOCALSTORAGE ----
@@ -191,6 +205,12 @@ function initializeNavigation() {
     const mainTitle = document.getElementById('main-title');
     const mainSubtitle = document.getElementById('main-subtitle');
     const floatingAddBtn = document.getElementById('floatingAddBtn');
+
+    // Verificar que los elementos existen
+    if (!navLinks.length || !contentSections.length || !mainTitle || !mainSubtitle) {
+        console.warn('Elementos de navegación no encontrados');
+        return;
+    }
 
     const sectionData = {
         inicio: {
@@ -240,71 +260,95 @@ function initializeNavigation() {
     });
 
     // Botón flotante
-    floatingAddBtn.addEventListener('click', function() {
-        document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active'));
-        document.querySelector('[data-section="inicio"]').classList.add('active');
-        
-        document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
-        document.getElementById('inicio').classList.add('active');
-        
-        mainTitle.innerHTML = sectionData.inicio.title;
-        mainSubtitle.textContent = sectionData.inicio.subtitle;
-        
-        document.querySelector('.card-stat').scrollIntoView({ behavior: 'smooth' });
-    });
+    if (floatingAddBtn) {
+        floatingAddBtn.addEventListener('click', function() {
+            document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active'));
+            const inicioLink = document.querySelector('[data-section="inicio"]');
+            if (inicioLink) inicioLink.classList.add('active');
+            
+            document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+            document.getElementById('inicio').classList.add('active');
+            
+            mainTitle.innerHTML = sectionData.inicio.title;
+            mainSubtitle.textContent = sectionData.inicio.subtitle;
+            
+            const cardStat = document.querySelector('.card-stat');
+            if (cardStat) {
+                cardStat.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    }
 }
 
 // ---- GESTIÓN DE CATEGORÍAS Y SUBCATEGORÍAS ----
 function initializeCategoryButtons() {
+    // Cargar categorías personalizadas desde localStorage
+    loadCustomCategoriesFromLocalStorage();
+    
+    // Actualizar los botones de categorías para incluir las personalizadas
+    updateCategoryButtons();
+    
     // Categorías en Inicio
-    document.querySelectorAll('#inicio .category-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (this.id === 'personalize-categories-btn') {
-                showNotification('Función de personalizar categorías próximamente', 'info');
-                return;
-            }
-            
-            document.querySelectorAll('#inicio .category-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            selectedCategory = this.getAttribute('data-category');
-            
-            // Mostrar subcategorías
-            showSubcategories('inicio', selectedCategory);
+    const inicioCategoryBtns = document.querySelectorAll('#inicio .category-btn');
+    if (inicioCategoryBtns.length > 0) {
+        inicioCategoryBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (this.id === 'personalize-categories-btn') {
+                    showCustomizeCategoriesModal();
+                    return;
+                }
+                
+                document.querySelectorAll('#inicio .category-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedCategory = this.getAttribute('data-category');
+                
+                // Mostrar subcategorías
+                showSubcategories('inicio', selectedCategory);
+            });
         });
-    });
+    }
     
     // Categorías en Pagos
-    document.querySelectorAll('#pagos .category-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (this.id === 'personalize-categories-btn-pagos') {
-                showNotification('Función de personalizar categorías próximamente', 'info');
-                return;
-            }
-            
-            document.querySelectorAll('#pagos .category-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            selectedCategory = this.getAttribute('data-category');
-            
-            // Mostrar subcategorías
-            showSubcategories('pagos', selectedCategory);
+    const pagosCategoryBtns = document.querySelectorAll('#pagos .category-btn');
+    if (pagosCategoryBtns.length > 0) {
+        pagosCategoryBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (this.id === 'personalize-categories-btn-pagos') {
+                    showCustomizeCategoriesModal();
+                    return;
+                }
+                
+                document.querySelectorAll('#pagos .category-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedCategory = this.getAttribute('data-category');
+                
+                // Mostrar subcategorías
+                showSubcategories('pagos', selectedCategory);
+            });
         });
-    });
+    }
 }
 
+// Función para mostrar subcategorías
 function showSubcategories(section, category) {
     const containerId = section === 'inicio' ? 'subcategories-container' : 'subcategories-container-pagos';
     const container = document.getElementById(containerId);
     
-    if (subcategoriesMap[category]) {
+    if (!container) return;
+    
+    // Buscar subcategorías en categorías predefinidas y personalizadas
+    const subcategories = subcategoriesMap[category] || customSubcategories[category] || [];
+    
+    if (subcategories.length > 0) {
         let html = `
             <div class="section-divider"></div>
             <h6 class="d-flex align-items-center gap-2 mb-3 text-warning">
-                <i class="bi bi-tags"></i> Sub-Categoría ${capitalizeFirstLetter(category)}
+                <i class="bi bi-tags"></i> Sub-Categoría ${getCategoryLabel(category)}
             </h6>
             <div class="category-buttons">
         `;
         
-        subcategoriesMap[category].forEach(sub => {
+        subcategories.forEach(sub => {
             html += `
                 <button class="subcategory-btn" data-category="${sub.name}">
                     <i class="${sub.icon}"></i> ${sub.label}
@@ -333,36 +377,76 @@ function initializeDynamicFilters() {
     // Filtros para Inicio y Pagos
     initializeTransactionFilters();
     
-    // Filtros para Informes - MODIFICADO: Siempre mostrar ambos filtros
+    // Filtros para Informes
     initializeReportFilters();
 }
 
 function initializeTransactionFilters() {
     // Inicializar filtros para Inicio
-    document.querySelectorAll('#inicio .btn-group .btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('#inicio .btn-group .btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            currentPeriod = this.getAttribute('data-period');
+    const inicioFilterBtn = document.getElementById('FiltroTraProfileBtn');
+    const inicioFiltersContainer = document.querySelector('#inicio .filters-container');
+    
+    if (inicioFilterBtn && inicioFiltersContainer) {
+        inicioFilterBtn.addEventListener('click', function() {
+            inicioFiltersContainer.classList.toggle('d-none');
             
-            // Mostrar el filtro correspondiente
-            showTransactionFilter('inicio', currentPeriod);
-            renderTransactions();
+            // Cambiar el ícono del botón según el estado
+            const icon = inicioFilterBtn.querySelector('i');
+            if (inicioFiltersContainer.classList.contains('d-none')) {
+                icon.className = 'bi bi-funnel';
+                inicioFilterBtn.innerHTML = '<i class="bi bi-funnel"></i> Filtro';
+            } else {
+                icon.className = 'bi bi-funnel-fill';
+                inicioFilterBtn.innerHTML = '<i class="bi bi-funnel-fill"></i> Ocultar Filtros';
+            }
         });
-    });
+        
+        // Event listeners para los botones de periodo en Inicio
+        document.querySelectorAll('#inicio .btn-group .btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#inicio .btn-group .btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentPeriod = this.getAttribute('data-period');
+                
+                // Mostrar el filtro correspondiente
+                showTransactionFilter('inicio', currentPeriod);
+                renderTransactions();
+            });
+        });
+    }
     
     // Inicializar filtros para Pagos
-    document.querySelectorAll('#pagos .btn-group .btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('#pagos .btn-group .btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            currentPeriod = this.getAttribute('data-period');
+    const pagosFilterBtn = document.getElementById('FiltroTraProfileBtnPagos');
+    const pagosFiltersContainer = document.getElementById('filters-container-pagos');
+    
+    if (pagosFilterBtn && pagosFiltersContainer) {
+        pagosFilterBtn.addEventListener('click', function() {
+            pagosFiltersContainer.classList.toggle('d-none');
             
-            // Mostrar el filtro correspondiente
-            showTransactionFilter('pagos', currentPeriod);
-            renderTransactionsPagos();
+            // Cambiar el ícono del botón según el estado
+            const icon = pagosFilterBtn.querySelector('i');
+            if (pagosFiltersContainer.classList.contains('d-none')) {
+                icon.className = 'bi bi-funnel';
+                pagosFilterBtn.innerHTML = '<i class="bi bi-funnel"></i> Filtro';
+            } else {
+                icon.className = 'bi bi-funnel-fill';
+                pagosFilterBtn.innerHTML = '<i class="bi bi-funnel-fill"></i> Ocultar Filtros';
+            }
         });
-    });
+        
+        // Event listeners para los botones de periodo en Pagos
+        document.querySelectorAll('#pagos .btn-group .btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#pagos .btn-group .btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentPeriod = this.getAttribute('data-period');
+                
+                // Mostrar el filtro correspondiente
+                showTransactionFilter('pagos', currentPeriod);
+                renderTransactionsPagos();
+            });
+        });
+    }
     
     // Mostrar filtro inicial
     showTransactionFilter('inicio', 'mensual');
@@ -375,7 +459,13 @@ function showTransactionFilter(section, period) {
     
     // Si no existe el contenedor, crearlo
     if (!container) {
-        const filterRow = document.querySelector(`#${section} .row.mb-4`);
+        let filterRow;
+        if (section === 'inicio') {
+            filterRow = document.querySelector(`#${section} .filters-container`);
+        } else {
+            filterRow = document.getElementById('filters-container-pagos');
+        }
+        
         if (filterRow) {
             const newCol = document.createElement('div');
             newCol.className = 'col-12 col-md-6 mt-2';
@@ -459,126 +549,67 @@ function showTransactionFilter(section, period) {
     }
 }
 
-// MODIFICADA: Inicialización de filtros de informes
+// Inicialización de filtros de informes
 function initializeReportFilters() {
-    // Filtros de periodo para Informes - MODIFICADO: No ocultar
-    document.querySelectorAll('#informes .btn-group .btn[data-period]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('#informes .btn-group .btn[data-period]').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            currentPeriod = this.getAttribute('data-period');
-            
-            // MODIFICADO: Siempre mostrar filtro de periodo
-            showReportPeriodFilter();
-            
-            // MODIFICADO: Mostrar todos los gráficos siempre
-            showAllCharts();
-            
-            // Actualizar gráficos
-            updateCharts();
+    // Filtros de periodo para Informes
+    const periodBtns = document.querySelectorAll('#informes .btn-group .btn[data-period]');
+    if (periodBtns.length > 0) {
+        periodBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#informes .btn-group .btn[data-period]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentPeriod = this.getAttribute('data-period');
+                
+                // Mostrar filtro de periodo
+                showReportPeriodFilter();
+                
+                // Mostrar todos los gráficos
+                showAllCharts();
+                
+                // Actualizar gráficos
+                updateCharts();
+            });
         });
-    });
+    }
     
-    // Filtros de categoría para Informes - MODIFICADO: No ocultar
-    document.querySelectorAll('#informes .btn-group .btn[data-filter]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('#informes .btn-group .btn[data-filter]').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            currentFilter = this.getAttribute('data-filter');
-            
-            // MODIFICADO: Si es "Limpiar", resetear filtros
-            if (currentFilter === 'subcategorias') {
-                resetReportFilters();
-                return;
-            }
-            
-            // MODIFICADO: Siempre mostrar filtro de categorías
-            showReportCategoryFilter();
-            
-            // MODIFICADO: Mostrar todos los gráficos siempre
-            showAllCharts();
-            
-            // Actualizar gráficos
-            updateCharts();
+    // Filtros de categoría para Informes
+    const filterBtns = document.querySelectorAll('#informes .btn-group .btn[data-filter]');
+    if (filterBtns.length > 0) {
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#informes .btn-group .btn[data-filter]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.getAttribute('data-filter');
+                
+                // Si es "Limpiar", resetear filtros
+                if (currentFilter === 'limpiar') {
+                    resetReportFilters();
+                    return;
+                }
+                
+                // Mostrar filtro de categorías
+                showReportCategoryFilter();
+                
+                // Mostrar todos los gráficos
+                showAllCharts();
+                
+                // Actualizar gráficos
+                updateCharts();
+            });
         });
-    });
+    }
     
-    // MODIFICADO: Mostrar ambos filtros inicialmente
+    // Mostrar ambos filtros inicialmente
     showReportPeriodFilter();
     showReportCategoryFilter();
 }
 
-// NUEVA FUNCIÓN: Resetear filtros de informes
-function resetReportFilters() {
-    // Resetear periodo a mensual
-    currentPeriod = 'mensual';
-    document.querySelectorAll('#informes .btn-group .btn[data-period]').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.getAttribute('data-period') === 'mensual') {
-            btn.classList.add('active');
-        }
-    });
-    
-    // Resetear filtro a categorías
-    currentFilter = 'categorias';
-    document.querySelectorAll('#informes .btn-group .btn[data-filter]').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.getAttribute('data-filter') === 'categorias') {
-            btn.classList.add('active');
-        }
-    });
-    
-    // Resetear categorías y subcategorías seleccionadas
-    selectedCategories = [];
-    selectedSubCategories = [];
-    selectedCategory = null;
-    selectedSubCategory = null;
-    
-    // Limpiar selecciones de categorías
-    document.querySelectorAll('#informes-category-filter .category-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    document.querySelectorAll('#informes-subcategories-container .subcategory-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    // Limpiar contenedor de subcategorías
-    const subcontainer = document.getElementById('informes-subcategories-container');
-    if (subcontainer) {
-        subcontainer.innerHTML = '';
-        subcontainer.style.display = 'none';
-    }
-    
-    // Resetear botón de subcategorías
-    const showSubcategoriesBtn = document.getElementById('show-subcategories-btn');
-    if (showSubcategoriesBtn) {
-        showSubcategoriesBtn.innerHTML = '<i class="bi bi-arrow-down"></i> Ver Subcategorías';
-    }
-    
-    // Resetear filtros de fecha
-    const now = new Date();
-    const currentMonth = now.toISOString().slice(0, 7);
-    const monthFilter = document.getElementById('informes-month-filter');
-    if (monthFilter) {
-        monthFilter.value = currentMonth;
-    }
-    
-    // Mostrar todos los gráficos
-    showAllCharts();
-    
-    // Actualizar gráficos
-    updateCharts();
-    
-    showNotification('Filtros reiniciados', 'info');
-}
-
-// MODIFICADA: Siempre mostrar el filtro de periodo
+// Mostrar el filtro de periodo
 function showReportPeriodFilter() {
     let container = document.getElementById('informes-period-filter');
     
     if (!container) {
-        const filterRow = document.querySelector('#informes .row.mb-4');
+        const filterRow = document.querySelector('#informes .filters-container');
         if (filterRow) {
             const newCol = document.createElement('div');
             newCol.className = 'col-md-4 mt-2';
@@ -587,6 +618,8 @@ function showReportPeriodFilter() {
             container = newCol;
         }
     }
+    
+    if (!container) return;
     
     container.style.display = 'block';
     
@@ -627,11 +660,11 @@ function showReportPeriodFilter() {
                     <div class="row g-2">
                         <div class="col-6">
                             <input type="date" class="form-control" id="informes-start-date" 
-                                   value="${startDate.toISOString().slice(0, 10)}">
+                                value="${startDate.toISOString().slice(0, 10)}">
                         </div>
                         <div class="col-6">
                             <input type="date" class="form-control" id="informes-end-date" 
-                                   value="${endDate.toISOString().slice(0, 10)}">
+                                value="${endDate.toISOString().slice(0, 10)}">
                         </div>
                     </div>
                 </div>
@@ -639,27 +672,24 @@ function showReportPeriodFilter() {
             break;
     }
     
-    if (container) {
-        container.innerHTML = html;
-        
-        // Agregar event listeners
-        const inputs = container.querySelectorAll('input');
-        inputs.forEach(input => {
-            input.addEventListener('change', function() {
-                // MODIFICADO: Mostrar todos los gráficos al cambiar filtros
-                showAllCharts();
-                updateCharts();
-            });
+    container.innerHTML = html;
+    
+    // Agregar event listeners
+    const inputs = container.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('change', function() {
+            showAllCharts();
+            updateCharts();
         });
-    }
+    });
 }
 
-// MODIFICADA: Siempre mostrar el filtro de categoría con selección múltiple
+// Mostrar el filtro de categoría con selección múltiple
 function showReportCategoryFilter() {
     let container = document.getElementById('informes-category-filter');
     
     if (!container) {
-        const filterRow = document.querySelector('#informes .row.mb-4');
+        const filterRow = document.querySelector('#informes .filters-container');
         if (filterRow) {
             const newCol = document.createElement('div');
             newCol.className = 'col-md-8 mt-2';
@@ -669,56 +699,52 @@ function showReportCategoryFilter() {
         }
     }
     
+    if (!container) return;
+    
     container.style.display = 'block';
     
     let html = `
-        <div class="card-stat">
-            <h6 class="d-flex align-items-center gap-2 mb-3">
-                <i class="bi bi-tags"></i> Selecciona Categorías (Múltiple)
-            </h6>
-            
-            <div class="category-buttons" id="informes-category-buttons">
-                <button class="category-btn" data-category="vivienda">
-                    <i class="bi bi-house"></i> Vivienda
-                </button>   
-                <button class="category-btn" data-category="transporte">
-                    <i class="bi bi-car-front"></i> Transporte
-                </button>                         
-                <button class="category-btn" data-category="alimentacion">
-                    <i class="bi bi-cup-straw"></i> Alimentacion
-                </button>
-                <button class="category-btn" data-category="finanzas">
-                    <i class="bi bi-cash-coin"></i> Finanzas Personales
-                </button>
-                <button class="category-btn" data-category="salud">
-                    <i class="bi bi-heart-pulse"></i> Cuidado Personal y Salud
-                </button>
-                <button class="category-btn" data-category="entretenimiento">
-                    <i class="bi bi-controller"></i> Entretenimiento y Ocio
-                </button>
-                <button class="category-btn" data-category="ropa">
-                    <i class="bi bi-bag"></i> Ropa
-                </button>
-                <button class="category-btn" data-category="electronica">
-                    <i class="bi bi-pc-display"></i> Electrónica
-                </button>
-                <button class="category-btn" data-category="hogar">
-                    <i class="bi bi-houses"></i> Artículos del Hogar
-                </button>
-                <button class="category-btn" data-category="educacion">
-                    <i class="bi bi-book"></i> Educación
-                </button>
-            </div>
+        <div class="category-buttons" id="informes-category-buttons">
+            <button class="category-btn" data-category="vivienda">
+                <i class="bi bi-house"></i> Vivienda
+            </button>   
+            <button class="category-btn" data-category="transporte">
+                <i class="bi bi-car-front"></i> Transporte
+            </button>                         
+            <button class="category-btn" data-category="alimentacion">
+                <i class="bi bi-cup-straw"></i> Alimentacion
+            </button>
+            <button class="category-btn" data-category="finanzas">
+                <i class="bi bi-cash-coin"></i> Finanzas Personales
+            </button>
+            <button class="category-btn" data-category="salud">
+                <i class="bi bi-heart-pulse"></i> Cuidado Personal y Salud
+            </button>
+            <button class="category-btn" data-category="entretenimiento">
+                <i class="bi bi-controller"></i> Entretenimiento y Ocio
+            </button>
+            <button class="category-btn" data-category="ropa">
+                <i class="bi bi-bag"></i> Ropa
+            </button>
+            <button class="category-btn" data-category="electronica">
+                <i class="bi bi-pc-display"></i> Electrónica
+            </button>
+            <button class="category-btn" data-category="hogar">
+                <i class="bi bi-houses"></i> Artículos del Hogar
+            </button>
+            <button class="category-btn" data-category="educacion">
+                <i class="bi bi-book"></i> Educación
+            </button>
+        </div>
 
-            <div class="mt-3">
-                <button class="btn btn-sm btn-outline-primary" id="show-subcategories-btn">
-                    <i class="bi bi-arrow-down"></i> Ver Subcategorías
-                </button>
-            </div>
+        <div class="mt-3">
+            <button class="btn btn-sm btn-outline-primary" id="show-subcategories-btn">
+                <i class="bi bi-arrow-down"></i> Ver Subcategorías
+            </button>
+        </div>
 
-            <div id="informes-subcategories-container" style="display: none;">
-                <!-- Las subcategorías se cargarán aquí dinámicamente -->
-            </div>
+        <div id="informes-subcategories-container" style="display: none;">
+            <!-- Las subcategorías se cargarán aquí dinámicamente -->
         </div>
     `;
     
@@ -729,7 +755,7 @@ function showReportCategoryFilter() {
         btn.addEventListener('click', function() {
             const category = this.getAttribute('data-category');
             
-            // MODIFICADO: Permitir selección múltiple de categorías
+            // Permitir selección múltiple de categorías
             if (this.classList.contains('active')) {
                 this.classList.remove('active');
                 selectedCategories = selectedCategories.filter(cat => cat !== category);
@@ -738,7 +764,7 @@ function showReportCategoryFilter() {
                 selectedCategories.push(category);
             }
             
-            // MODIFICADO: Mostrar todos los gráficos al filtrar
+            // Mostrar todos los gráficos al filtrar
             showAllCharts();
             
             // Actualizar gráficos
@@ -747,24 +773,28 @@ function showReportCategoryFilter() {
     });
     
     // Botón para mostrar subcategorías
-    document.getElementById('show-subcategories-btn').addEventListener('click', function() {
-        const subcontainer = document.getElementById('informes-subcategories-container');
-        if (subcontainer.style.display === 'none') {
-            subcontainer.style.display = 'block';
-            this.innerHTML = '<i class="bi bi-arrow-up"></i> Ocultar Subcategorías';
-            
-            // Mostrar subcategorías de las categorías seleccionadas
-            showInformesSubcategories();
-        } else {
-            subcontainer.style.display = 'none';
-            this.innerHTML = '<i class="bi bi-arrow-down"></i> Ver Subcategorías';
-        }
-    });
+    const showSubcategoriesBtn = document.getElementById('show-subcategories-btn');
+    if (showSubcategoriesBtn) {
+        showSubcategoriesBtn.addEventListener('click', function() {
+            const subcontainer = document.getElementById('informes-subcategories-container');
+            if (subcontainer.style.display === 'none') {
+                subcontainer.style.display = 'block';
+                this.innerHTML = '<i class="bi bi-arrow-up"></i> Ocultar Subcategorías';
+                
+                // Mostrar subcategorías de las categorías seleccionadas
+                showInformesSubcategories();
+            } else {
+                subcontainer.style.display = 'none';
+                this.innerHTML = '<i class="bi bi-arrow-down"></i> Ver Subcategorías';
+            }
+        });
+    }
 }
 
-// MODIFICADA: Función para mostrar subcategorías en informes con selección múltiple
+// Función para mostrar subcategorías en informes con selección múltiple
 function showInformesSubcategories() {
     const container = document.getElementById('informes-subcategories-container');
+    if (!container) return;
     
     if (selectedCategories.length === 0) {
         container.innerHTML = `
@@ -784,14 +814,15 @@ function showInformesSubcategories() {
     
     // Mostrar subcategorías de todas las categorías seleccionadas
     selectedCategories.forEach(category => {
-        if (subcategoriesMap[category]) {
+        const subcategories = subcategoriesMap[category] || customSubcategories[category] || [];
+        if (subcategories.length > 0) {
             html += `
                 <div class="mb-3">
-                    <h6 class="text-info">${capitalizeFirstLetter(category)}</h6>
+                    <h6 class="text-info">${getCategoryLabel(category)}</h6>
                     <div class="category-buttons">
             `;
             
-            subcategoriesMap[category].forEach(sub => {
+            subcategories.forEach(sub => {
                 const isActive = selectedSubCategories.includes(sub.name);
                 html += `
                     <button class="subcategory-btn ${isActive ? 'active' : ''}" data-category="${sub.name}">
@@ -811,7 +842,7 @@ function showInformesSubcategories() {
         btn.addEventListener('click', function() {
             const subcategory = this.getAttribute('data-category');
             
-            // MODIFICADO: Permitir selección múltiple de subcategorías
+            // Permitir selección múltiple de subcategorías
             if (this.classList.contains('active')) {
                 this.classList.remove('active');
                 selectedSubCategories = selectedSubCategories.filter(sub => sub !== subcategory);
@@ -820,7 +851,7 @@ function showInformesSubcategories() {
                 selectedSubCategories.push(subcategory);
             }
             
-            // MODIFICADO: Mostrar todos los gráficos al filtrar
+            // Mostrar todos los gráficos al filtrar
             showAllCharts();
             
             // Actualizar gráficos
@@ -848,11 +879,11 @@ function showSingleChart(chartId) {
     
     if (targetCard) {
         targetCard.style.display = 'block';
-        // MEJORADO: Hacer que el gráfico ocupe más espacio para mejor visualización
+        // Hacer que el gráfico ocupe más espacio para mejor visualización
         targetCard.classList.add('mx-auto');
         targetCard.classList.add('col-lg-10');
         
-        // MEJORADO: Aumentar el tamaño del canvas del gráfico
+        // Aumentar el tamaño del canvas del gráfico
         const canvas = targetCard.querySelector('canvas');
         if (canvas) {
             canvas.style.height = '400px';
@@ -861,7 +892,7 @@ function showSingleChart(chartId) {
     }
 }
 
-// MODIFICADA: Función para mostrar todos los gráficos con mejor visualización
+// Función para mostrar todos los gráficos con mejor visualización
 function showAllCharts() {
     // Mostrar todos los gráficos
     document.querySelectorAll('.card-report').forEach(card => {
@@ -869,22 +900,22 @@ function showAllCharts() {
         card.classList.remove('mx-auto', 'col-lg-6', 'col-lg-8', 'col-lg-10');
     });
     
-    // MEJORADO: Restaurar layout original pero con mejor tamaño para gráficos
-    const incomeExpensesCard = document.querySelector('#incomeExpensesChart').closest('.card-report').parentElement;
-    const expensesCard = document.querySelector('#expensesChart').closest('.card-report').parentElement;
-    const balanceCard = document.querySelector('#balanceChart').closest('.card-report').parentElement;
+    // Restaurar layout original pero con mejor tamaño para gráficos
+    const incomeExpensesCard = document.querySelector('#incomeExpensesChart')?.closest('.card-report')?.parentElement;
+    const expensesCard = document.querySelector('#expensesChart')?.closest('.card-report')?.parentElement;
+    const balanceCard = document.querySelector('#balanceChart')?.closest('.card-report')?.parentElement;
     
-    incomeExpensesCard.className = 'col-lg-6 mb-4';
-    expensesCard.className = 'col-lg-6 mb-4';
-    balanceCard.className = 'col-lg-12 mb-4';
+    if (incomeExpensesCard) incomeExpensesCard.className = 'col-lg-6 mb-4';
+    if (expensesCard) expensesCard.className = 'col-lg-6 mb-4';
+    if (balanceCard) balanceCard.className = 'col-lg-12 mb-4';
     
-    // MEJORADO: Aumentar tamaño de todos los gráficos para mejor visualización
+    // Aumentar tamaño de todos los gráficos para mejor visualización
     document.querySelectorAll('.chart-container canvas').forEach(canvas => {
         canvas.style.height = '300px';
         canvas.style.width = '100%';
     });
     
-    // MEJORADO: Gráfico de balance más grande
+    // Gráfico de balance más grande
     const balanceCanvas = document.querySelector('#balanceChart');
     if (balanceCanvas) {
         balanceCanvas.style.height = '350px';
@@ -894,39 +925,64 @@ function showAllCharts() {
 // ---- INICIALIZACIÓN DE EVENT LISTENERS ----
 function initializeEventListeners() {
     // Carga de imágenes
-    document.getElementById('imageInput').addEventListener('change', function(e) {
-        handleImageUpload(e, 'imagePreview');
-    });
+    const imageInput = document.getElementById('imageInput');
+    const imageInputPagos = document.getElementById('imageInputPagos');
     
-    document.getElementById('imageInputPagos').addEventListener('change', function(e) {
-        handleImageUpload(e, 'imagePreviewPagos');
-    });
+    if (imageInput) {
+        imageInput.addEventListener('change', function(e) {
+            handleImageUpload(e, 'imagePreview');
+        });
+    }
+    
+    if (imageInputPagos) {
+        imageInputPagos.addEventListener('change', function(e) {
+            handleImageUpload(e, 'imagePreviewPagos');
+        });
+    }
     
     // Agregar transacciones
-    document.getElementById('addTransactionBtn').addEventListener('click', addTransaction);
-    document.getElementById('addTransactionBtnPagos').addEventListener('click', addTransactionPagos);
+    const addTransactionBtn = document.getElementById('addTransactionBtn');
+    const addTransactionBtnPagos = document.getElementById('addTransactionBtnPagos');
     
-    // Filtros
-    initializeFilters();
+    if (addTransactionBtn) {
+        addTransactionBtn.addEventListener('click', addTransaction);
+    }
+    
+    if (addTransactionBtnPagos) {
+        addTransactionBtnPagos.addEventListener('click', addTransactionPagos);
+    }
     
     // Perfil
     initializeProfileEvents();
     
     // Modales
-    document.getElementById('saveTransactionBtn').addEventListener('click', saveEditedTransaction);
+    const saveTransactionBtn = document.getElementById('saveTransactionBtn');
+    if (saveTransactionBtn) {
+        saveTransactionBtn.addEventListener('click', saveEditedTransaction);
+    }
     
     // Cerrar sesión
-    document.getElementById('logoutBtn').addEventListener('click', handleLogout);
-    document.getElementById('logoutProfileBtn').addEventListener('click', handleLogout);
+    const logoutBtn = document.getElementById('logoutBtn');
+    const logoutProfileBtn = document.getElementById('logoutProfileBtn');
+    
+    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+    if (logoutProfileBtn) logoutProfileBtn.addEventListener('click', handleLogout);
     
     // Agregar event listeners para imágenes
-    document.getElementById('imagePreview').addEventListener('click', function() {
-        document.getElementById('imageInput').click();
-    });
+    const imagePreview = document.getElementById('imagePreview');
+    const imagePreviewPagos = document.getElementById('imagePreviewPagos');
     
-    document.getElementById('imagePreviewPagos').addEventListener('click', function() {
-        document.getElementById('imageInputPagos').click();
-    });
+    if (imagePreview) {
+        imagePreview.addEventListener('click', function() {
+            if (imageInput) imageInput.click();
+        });
+    }
+    
+    if (imagePreviewPagos) {
+        imagePreviewPagos.addEventListener('click', function() {
+            if (imageInputPagos) imageInputPagos.click();
+        });
+    }
 }
 
 function handleImageUpload(e, previewId) {
@@ -936,10 +992,12 @@ function handleImageUpload(e, previewId) {
         reader.onload = function(event) {
             selectedImage = event.target.result;
             const preview = document.getElementById(previewId);
-            preview.innerHTML = '';
-            const img = document.createElement('img');
-            img.src = selectedImage;
-            preview.appendChild(img);
+            if (preview) {
+                preview.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = selectedImage;
+                preview.appendChild(img);
+            }
         };
         reader.readAsDataURL(file);
     }
@@ -1090,8 +1148,8 @@ function renderTransactions() {
         
         // Obtener el nombre de la subcategoría
         let subcategoryLabel = '';
-        if (transaction.subcategory && subcategoriesMap[transaction.category]) {
-            const subcat = subcategoriesMap[transaction.category].find(s => s.name === transaction.subcategory);
+        if (transaction.subcategory) {
+            const subcat = findSubcategory(transaction.category, transaction.subcategory);
             subcategoryLabel = subcat ? subcat.label : transaction.subcategory;
         }
         
@@ -1099,7 +1157,7 @@ function renderTransactions() {
             <td>
                 <div class="d-flex flex-column">
                     <span class="category-badge text-center" style="background-color: ${categoryStyle.bg}; color: ${categoryStyle.color};">
-                        ${capitalizeFirstLetter(transaction.category)}
+                        ${getCategoryLabel(transaction.category)}
                     </span>
                     ${subcategoryLabel ? `
                         <small class="text-muted mt-1 text-center">${subcategoryLabel}</small>
@@ -1186,8 +1244,8 @@ function renderTransactionsPagos() {
         
         // Obtener el nombre de la subcategoría
         let subcategoryLabel = '';
-        if (transaction.subcategory && subcategoriesMap[transaction.category]) {
-            const subcat = subcategoriesMap[transaction.category].find(s => s.name === transaction.subcategory);
+        if (transaction.subcategory) {
+            const subcat = findSubcategory(transaction.category, transaction.subcategory);
             subcategoryLabel = subcat ? subcat.label : transaction.subcategory;
         }
         
@@ -1196,7 +1254,7 @@ function renderTransactionsPagos() {
             <td>
                 <div class="d-flex flex-column">
                     <span class="category-badge text-center" style="background-color: ${categoryStyle.bg}; color: ${categoryStyle.color};">
-                        ${capitalizeFirstLetter(transaction.category)}
+                        ${getCategoryLabel(transaction.category)}
                     </span>
                     ${subcategoryLabel ? `
                         <small class="text-muted mt-1 text-center">${subcategoryLabel}</small>
@@ -1357,12 +1415,22 @@ let expensesChart = null;
 let balanceChart = null;
 
 function initializeCharts() {
+    // Solo inicializar si estamos en la sección de informes
+    if (!document.getElementById('informes').classList.contains('active')) {
+        return;
+    }
+    
     updateCharts();
 }
 
-// MODIFICADA: Función para actualizar gráficos con mejoras visuales
+// Función para actualizar gráficos con mejoras visuales
 function updateCharts() {
-    // MEJORADO: Forzar resize de los gráficos después de actualizar
+    // Solo actualizar si estamos en la sección de informes
+    if (!document.getElementById('informes') || !document.getElementById('informes').classList.contains('active')) {
+        return;
+    }
+    
+    // Forzar resize de los gráficos después de actualizar
     setTimeout(() => {
         if (incomeExpensesChart) {
             incomeExpensesChart.resize();
@@ -1380,7 +1448,7 @@ function updateCharts() {
     updateBalanceChart();
 }
 
-// MODIFICADA: Función para actualizar gráfico de ingresos vs gastos
+// Función para actualizar gráfico de ingresos vs gastos
 function updateIncomeExpensesChart() {
     const ctx = document.getElementById('incomeExpensesChart');
     if (!ctx) return;
@@ -1429,7 +1497,7 @@ function updateIncomeExpensesChart() {
         incomeExpensesChart.destroy();
     }
     
-    // MEJORADO: Configuración mejorada del gráfico
+    // Configuración mejorada del gráfico
     incomeExpensesChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -1517,7 +1585,7 @@ function updateIncomeExpensesChart() {
     });
 }
 
-// MODIFICADA: Función para actualizar gráfico de distribución de gastos con selección múltiple
+// Función para actualizar gráfico de distribución de gastos con selección múltiple
 function updateExpensesChart() {
     const ctx = document.getElementById('expensesChart');
     if (!ctx) return;
@@ -1542,8 +1610,7 @@ function updateExpensesChart() {
         
         // Obtener etiquetas de subcategorías
         labels = Object.keys(data).map(sub => {
-            const category = expenses.find(e => e.subcategory === sub)?.category;
-            const subcat = subcategoriesMap[category]?.find(s => s.name === sub);
+            const subcat = findSubcategory(expenses.find(e => e.subcategory === sub)?.category, sub);
             return subcat ? subcat.label : sub;
         });
     } else if (selectedCategories.length > 0) {
@@ -1557,7 +1624,7 @@ function updateExpensesChart() {
             }
         });
         
-        labels = Object.keys(data).map(cat => capitalizeFirstLetter(cat));
+        labels = Object.keys(data).map(cat => getCategoryLabel(cat));
     } else {
         // Mostrar todas las categorías
         expenses.forEach(expense => {
@@ -1567,7 +1634,7 @@ function updateExpensesChart() {
             data[expense.category] += expense.amount;
         });
         
-        labels = Object.keys(data).map(cat => capitalizeFirstLetter(cat));
+        labels = Object.keys(data).map(cat => getCategoryLabel(cat));
     }
     
     const chartData = Object.values(data);
@@ -1713,7 +1780,7 @@ function updateBalanceChart() {
     });
 }
 
-// MODIFICADA: Función auxiliar para filtrar transacciones en gráficos con selección múltiple
+// Función auxiliar para filtrar transacciones en gráficos con selección múltiple
 function getFilteredTransactionsForCharts() {
     let filtered = [...transactions];
     
@@ -1762,15 +1829,15 @@ function viewTransaction(id) {
         
         // Obtener el nombre de la subcategoría
         let subcategoryLabel = '';
-        if (transaction.subcategory && subcategoriesMap[transaction.category]) {
-            const subcat = subcategoriesMap[transaction.category].find(s => s.name === transaction.subcategory);
+        if (transaction.subcategory) {
+            const subcat = findSubcategory(transaction.category, transaction.subcategory);
             subcategoryLabel = subcat ? subcat.label : transaction.subcategory;
         }
         
         modalBody.innerHTML = `
             <div class="transaction-detail-item">
                 <div class="transaction-detail-label">Categoría</div>
-                <div class="transaction-detail-value">${capitalizeFirstLetter(transaction.category)}</div>
+                <div class="transaction-detail-value">${getCategoryLabel(transaction.category)}</div>
             </div>
             ${subcategoryLabel ? `
             <div class="transaction-detail-item">
@@ -1826,6 +1893,9 @@ function editTransaction(id) {
         
         const modalBody = document.getElementById('editTransactionModalBody');
         
+        // Determinar si estamos en la sección de Pagos
+        const isPagosSection = document.getElementById('pagos').classList.contains('active');
+        
         modalBody.innerHTML = `
             <div class="transaction-form-grid">
                 <div class="transaction-form-item">
@@ -1871,8 +1941,9 @@ function editTransaction(id) {
                     <input type="datetime-local" class="form-control" id="editTransactionDateTime" value="${transaction.dateTime}">
                 </div>
                 <div class="transaction-form-item">
-                    <label class="form-label fw-semibold">Descripción</label>
-                    <input type="text" class="form-control" id="editTransactionDescription" value="${transaction.description || ''}" placeholder="Descripción de la transacción...">
+                    <label class="form-label fw-semibold">${isPagosSection ? 'Nombre de Pago' : 'Descripción'}</label>
+                    <input type="text" class="form-control" id="editTransactionDescription" value="${transaction.description || ''}" 
+                           placeholder="${isPagosSection ? 'Nombre de pago...' : 'Descripción de la transacción...'}">
                 </div>
             </div>
 
@@ -1883,36 +1954,7 @@ function editTransaction(id) {
             </h6>
             
             <div class="category-buttons" id="editCategoryButtons">
-                <button class="category-btn ${transaction.category === 'vivienda' ? 'active' : ''}" data-category="vivienda">
-                    <i class="bi bi-house"></i> Vivienda
-                </button>
-                <button class="category-btn ${transaction.category === 'transporte' ? 'active' : ''}" data-category="transporte">
-                    <i class="bi bi-car-front"></i> Transporte
-                </button>
-                <button class="category-btn ${transaction.category === 'alimentacion' ? 'active' : ''}" data-category="alimentacion">
-                    <i class="bi bi-cup-straw"></i> Alimentación
-                </button>
-                <button class="category-btn ${transaction.category === 'finanzas' ? 'active' : ''}" data-category="finanzas">
-                    <i class="bi bi-cash-coin"></i> Finanzas Personales
-                </button>
-                <button class="category-btn ${transaction.category === 'salud' ? 'active' : ''}" data-category="salud">
-                    <i class="bi bi-heart-pulse"></i> Cuidado Personal y Salud
-                </button>
-                <button class="category-btn ${transaction.category === 'entretenimiento' ? 'active' : ''}" data-category="entretenimiento">
-                    <i class="bi bi-controller"></i> Entretenimiento y Ocio
-                </button>
-                <button class="category-btn ${transaction.category === 'ropa' ? 'active' : ''}" data-category="ropa">
-                    <i class="bi bi-bag"></i> Ropa
-                </button>
-                <button class="category-btn ${transaction.category === 'electronica' ? 'active' : ''}" data-category="electronica">
-                    <i class="bi bi-pc-display"></i> Electrónica
-                </button>
-                <button class="category-btn ${transaction.category === 'hogar' ? 'active' : ''}" data-category="hogar">
-                    <i class="bi bi-houses"></i> Artículos del Hogar
-                </button>
-                <button class="category-btn ${transaction.category === 'educacion' ? 'active' : ''}" data-category="educacion">
-                    <i class="bi bi-book"></i> Educación
-                </button>
+                ${generateCategoryButtonsHTML(transaction.category)}
             </div>
             
             <div id="editSubcategoryContainer">
@@ -1968,23 +2010,57 @@ function editTransaction(id) {
             }
         });
         
+        // Configurar vista previa de imagen
+        document.getElementById('editImagePreview').addEventListener('click', function() {
+            document.getElementById('editImageInput').click();
+        });
+        
         const editModal = new bootstrap.Modal(document.getElementById('editTransactionModal'));
         editModal.show();
     }
 }
 
+// Función auxiliar para generar botones de categoría
+function generateCategoryButtonsHTML(selectedCategory) {
+    let html = '';
+    const categories = Object.keys(subcategoriesMap);
+    
+    categories.forEach(category => {
+        html += `
+            <button class="category-btn ${selectedCategory === category ? 'active' : ''}" data-category="${category}">
+                <i class="bi bi-${getCategoryIcon(category)}"></i> ${getCategoryLabel(category)}
+            </button>
+        `;
+    });
+    
+    // Agregar categorías personalizadas si existen
+    if (customCategories && customCategories.length > 0) {
+        customCategories.forEach(category => {
+            html += `
+                <button class="category-btn ${selectedCategory === category.name ? 'active' : ''}" data-category="${category.name}">
+                    <i class="${category.icon}"></i> ${category.label}
+                </button>
+            `;
+        });
+    }
+    
+    return html;
+}
+
 function getEditSubcategoryHTML(category, currentSubcategory) {
-    if (!subcategoriesMap[category]) return '';
+    const subcategories = subcategoriesMap[category] || customSubcategories[category] || [];
+    
+    if (subcategories.length === 0) return '';
     
     let html = `
         <div class="section-divider"></div>
         <h6 class="d-flex align-items-center gap-2 mb-3 text-warning">
-            <i class="bi bi-tags"></i> Sub-Categoría ${capitalizeFirstLetter(category)}
+            <i class="bi bi-tags"></i> Sub-Categoría ${getCategoryLabel(category)}
         </h6>
         <div class="category-buttons">
     `;
     
-    subcategoriesMap[category].forEach(sub => {
+    subcategories.forEach(sub => {
         html += `
             <button class="subcategory-btn ${currentSubcategory === sub.name ? 'active' : ''}" data-category="${sub.name}">
                 <i class="${sub.icon}"></i> ${sub.label}
@@ -2060,9 +2136,12 @@ function deleteTransaction(id) {
 }
 
 function viewImage(imageSrc) {
-    document.getElementById('modalImage').src = imageSrc;
-    const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
-    imageModal.show();
+    const modalImage = document.getElementById('modalImage');
+    if (modalImage) {
+        modalImage.src = imageSrc;
+        const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+        imageModal.show();
+    }
 }
 
 // ---- SISTEMA DE NOTIFICACIONES ----
@@ -2215,140 +2294,188 @@ function initializeProfile() {
 
 function initializeProfileEvents() {
     // Gestión de edición del perfil
-    document.getElementById('editProfileBtn').addEventListener('click', function() {
-        const profileForm = document.getElementById('profileForm');
-        if (profileForm.style.display === 'none') {
-            profileForm.style.display = 'block';
-            this.innerHTML = '<i class="bi bi-x me-1"></i> Cancelar';
-            
-            // Cargar datos actuales en el formulario
-            loadProfileFormData();
-        } else {
-            profileForm.style.display = 'none';
-            this.innerHTML = '<i class="bi bi-pencil me-1"></i> Editar';
-            // Restaurar valores originales en caso de cancelar
-            resetProfileForm();
-        }
-    });
+    const editProfileBtn = document.getElementById('editProfileBtn');
+    if (editProfileBtn) {
+        editProfileBtn.addEventListener('click', function() {
+            const profileForm = document.getElementById('profileForm');
+            if (profileForm.style.display === 'none') {
+                profileForm.style.display = 'block';
+                this.innerHTML = '<i class="bi bi-x me-1"></i> Cancelar';
+                
+                // Cargar datos actuales en el formulario
+                loadProfileFormData();
+            } else {
+                profileForm.style.display = 'none';
+                this.innerHTML = '<i class="bi bi-pencil me-1"></i> Editar';
+                // Restaurar valores originales en caso de cancelar
+                resetProfileForm();
+            }
+        });
+    }
 
-    document.getElementById('cancelEditBtn').addEventListener('click', function() {
-        document.getElementById('profileForm').style.display = 'none';
-        document.getElementById('editProfileBtn').innerHTML = '<i class="bi bi-pencil me-1"></i> Editar';
-        resetProfileForm();
-    });
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', function() {
+            const profileForm = document.getElementById('profileForm');
+            if (profileForm) {
+                profileForm.style.display = 'none';
+            }
+            const editProfileBtn = document.getElementById('editProfileBtn');
+            if (editProfileBtn) {
+                editProfileBtn.innerHTML = '<i class="bi bi-pencil me-1"></i> Editar';
+            }
+            resetProfileForm();
+        });
+    }
 
     // Cambio de foto de perfil
-    document.getElementById('changeProfilePictureBtn').addEventListener('click', function() {
-        document.getElementById('avatarInput').click();
-    });
+    const changeProfilePictureBtn = document.getElementById('changeProfilePictureBtn');
+    const avatarInput = document.getElementById('avatarInput');
+    
+    if (changeProfilePictureBtn && avatarInput) {
+        changeProfilePictureBtn.addEventListener('click', function() {
+            avatarInput.click();
+        });
 
-    document.getElementById('avatarInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            // Validar tipo de archivo
-            if (!file.type.startsWith('image/')) {
-                showNotification('Por favor, selecciona un archivo de imagen válido', 'error');
-                return;
+        avatarInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validar tipo de archivo
+                if (!file.type.startsWith('image/')) {
+                    showNotification('Por favor, selecciona un archivo de imagen válido', 'error');
+                    return;
+                }
+                
+                // Validar tamaño (máximo 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    showNotification('La imagen no debe superar los 5MB', 'error');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const imageData = event.target.result;
+                    
+                    // Actualizar vista previa
+                    const profilePicturePreview = document.getElementById('profilePicturePreview');
+                    if (profilePicturePreview) {
+                        profilePicturePreview.innerHTML = `<img src="${imageData}" alt="Foto de perfil">`;
+                    }
+                    
+                    // Mostrar botón de eliminar foto
+                    const removeProfilePhotoBtn = document.getElementById('removeProfilePhotoBtn');
+                    if (removeProfilePhotoBtn) {
+                        removeProfilePhotoBtn.style.display = 'block';
+                    }
+                    
+                    // Guardar temporalmente para aplicar al guardar
+                    userProfile.tempAvatar = imageData;
+                };
+                reader.readAsDataURL(file);
             }
-            
-            // Validar tamaño (máximo 5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                showNotification('La imagen no debe superar los 5MB', 'error');
-                return;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const imageData = event.target.result;
-                
-                // Actualizar vista previa
-                document.getElementById('profilePicturePreview').innerHTML = `<img src="${imageData}" alt="Foto de perfil">`;
-                
-                // Mostrar botón de eliminar foto
-                document.getElementById('removeProfilePhotoBtn').style.display = 'block';
-                
-                // Guardar temporalmente para aplicar al guardar
-                userProfile.tempAvatar = imageData;
-            };
-            reader.readAsDataURL(file);
-        }
-    });
+        });
+    }
 
     // Eliminar foto de perfil
-    document.getElementById('removeProfilePhotoBtn').addEventListener('click', function() {
-        resetProfilePhoto();
-        userProfile.tempAvatar = null;
-        userProfile.avatar = null;
-        
-        // Limpiar input de archivo
-        document.getElementById('avatarInput').value = '';
-        
-        showNotification('Foto de perfil eliminada', 'info');
-    });
+    const removeProfilePhotoBtn = document.getElementById('removeProfilePhotoBtn');
+    if (removeProfilePhotoBtn) {
+        removeProfilePhotoBtn.addEventListener('click', function() {
+            resetProfilePhoto();
+            userProfile.tempAvatar = null;
+            userProfile.avatar = null;
+            
+            // Limpiar input de archivo
+            if (avatarInput) {
+                avatarInput.value = '';
+            }
+            
+            showNotification('Foto de perfil eliminada', 'info');
+        });
+    }
 
     // Guardar cambios del perfil
-    document.getElementById('profileForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Validar formulario
-        if (!validateProfileForm()) {
-            return;
-        }
-        
-        // Obtener valores del formulario
-        const firstName = document.getElementById('firstName').value.trim();
-        const lastName = document.getElementById('lastName').value.trim();
-        const email = document.getElementById('userEmail').value.trim();
-        const age = document.getElementById('userEdad').value;
-        
-        // Actualizar perfil
-        const fullName = `${firstName} ${lastName}`;
-        updateUserProfile(fullName, email, age);
-        
-        // Actualizar avatar si hay uno temporal
-        if (userProfile.tempAvatar) {
-            userProfile.avatar = userProfile.tempAvatar;
-            userProfile.tempAvatar = null;
-        }
-        
-        // Guardar en localStorage
-        saveProfileToLocalStorage();
-        
-        // MOSTRAR NOTIFICACIÓN Y RECARGAR LA PÁGINA
-        showNotification('Perfil actualizado correctamente', 'success');
-        
-        // Recargar la página después de un breve delay para que se vea la notificación
-        setTimeout(() => {
-            location.reload();
-        }, 1500);
-    });
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+        profileForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validar formulario
+            if (!validateProfileForm()) {
+                return;
+            }
+            
+            // Obtener valores del formulario
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('userEmail').value.trim();
+            const age = document.getElementById('userEdad').value;
+            
+            // Actualizar perfil
+            const fullName = `${firstName} ${lastName}`;
+            updateUserProfile(fullName, email, age);
+            
+            // Actualizar avatar si hay uno temporal
+            if (userProfile.tempAvatar) {
+                userProfile.avatar = userProfile.tempAvatar;
+                userProfile.tempAvatar = null;
+            }
+            
+            // Guardar en localStorage
+            saveProfileToLocalStorage();
+            
+            // MOSTRAR NOTIFICACIÓN Y RECARGAR LA PÁGINA
+            showNotification('Perfil actualizado correctamente', 'success');
+            
+            // Recargar la página después de un breve delay para que se vea la notificación
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        });
+    }
 }
 
 function loadProfileFormData() {
-    document.getElementById('firstName').value = userProfile.firstName || 'Jairo';
-    document.getElementById('lastName').value = userProfile.lastName || 'Castillo';
-    document.getElementById('userEmail').value = userProfile.email || 'jairo@utp.edu.pe';
-    document.getElementById('userEdad').value = userProfile.age || '20';
+    const firstName = document.getElementById('firstName');
+    const lastName = document.getElementById('lastName');
+    const userEmail = document.getElementById('userEmail');
+    const userEdad = document.getElementById('userEdad');
+    
+    if (firstName) firstName.value = userProfile.firstName || 'Jairo';
+    if (lastName) lastName.value = userProfile.lastName || 'Castillo';
+    if (userEmail) userEmail.value = userProfile.email || 'jairo@utp.edu.pe';
+    if (userEdad) userEdad.value = userProfile.age || '20';
     
     // Cargar foto de perfil si existe
-    if (userProfile.avatar) {
-        document.getElementById('profilePicturePreview').innerHTML = `<img src="${userProfile.avatar}" alt="Foto de perfil">`;
+    const profilePicturePreview = document.getElementById('profilePicturePreview');
+    if (userProfile.avatar && profilePicturePreview) {
+        profilePicturePreview.innerHTML = `<img src="${userProfile.avatar}" alt="Foto de perfil">`;
         // Mostrar botón de eliminar foto
-        document.getElementById('removeProfilePhotoBtn').style.display = 'block';
+        const removeProfilePhotoBtn = document.getElementById('removeProfilePhotoBtn');
+        if (removeProfilePhotoBtn) {
+            removeProfilePhotoBtn.style.display = 'block';
+        }
     } else {
         resetProfilePhoto();
     }
 }
 
 function resetProfileForm() {
-    document.getElementById('firstName').value = userProfile.firstName || 'Jairo';
-    document.getElementById('lastName').value = userProfile.lastName || 'Castillo';
-    document.getElementById('userEmail').value = userProfile.email || 'jairo@utp.edu.pe';
-    document.getElementById('userEdad').value = userProfile.age || '20';
+    const firstName = document.getElementById('firstName');
+    const lastName = document.getElementById('lastName');
+    const userEmail = document.getElementById('userEmail');
+    const userEdad = document.getElementById('userEdad');
+    
+    if (firstName) firstName.value = userProfile.firstName || 'Jairo';
+    if (lastName) lastName.value = userProfile.lastName || 'Castillo';
+    if (userEmail) userEmail.value = userProfile.email || 'jairo@utp.edu.pe';
+    if (userEdad) userEdad.value = userProfile.age || '20';
     
     // Restablecer foto de perfil
     if (userProfile.avatar) {
-        document.getElementById('profilePicturePreview').innerHTML = `<img src="${userProfile.avatar}" alt="Foto de perfil">`;
+        const profilePicturePreview = document.getElementById('profilePicturePreview');
+        if (profilePicturePreview) {
+            profilePicturePreview.innerHTML = `<img src="${userProfile.avatar}" alt="Foto de perfil">`;
+        }
     } else {
         resetProfilePhoto();
     }
@@ -2356,52 +2483,64 @@ function resetProfileForm() {
 
 function resetProfilePhoto() {
     const initials = getInitials(userProfile.name);
-    document.getElementById('profilePicturePreview').innerHTML = 
-        `<div id="profilePicturePlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:3rem;">${initials}</div>`;
-    document.getElementById('removeProfilePhotoBtn').style.display = 'none';
+    const profilePicturePreview = document.getElementById('profilePicturePreview');
+    if (profilePicturePreview) {
+        profilePicturePreview.innerHTML = 
+            `<div id="profilePicturePlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:3rem;">${initials}</div>`;
+    }
+    const removeProfilePhotoBtn = document.getElementById('removeProfilePhotoBtn');
+    if (removeProfilePhotoBtn) {
+        removeProfilePhotoBtn.style.display = 'none';
+    }
 }
 
 function validateProfileForm() {
     let isValid = true;
     
     // Validar nombre
-    const firstName = document.getElementById('firstName').value.trim();
-    if (!firstName) {
+    const firstName = document.getElementById('firstName');
+    if (firstName && !firstName.value.trim()) {
         markFieldInvalid('firstName', 'El nombre es obligatorio');
         isValid = false;
-    } else {
+    } else if (firstName) {
         markFieldValid('firstName');
     }
     
     // Validar apellido
-    const lastName = document.getElementById('lastName').value.trim();
-    if (!lastName) {
+    const lastName = document.getElementById('lastName');
+    if (lastName && !lastName.value.trim()) {
         markFieldInvalid('lastName', 'El apellido es obligatorio');
         isValid = false;
-    } else {
+    } else if (lastName) {
         markFieldValid('lastName');
     }
     
     // Validar email
-    const email = document.getElementById('userEmail').value.trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email) {
-        markFieldInvalid('userEmail', 'El correo electrónico es obligatorio');
-        isValid = false;
-    } else if (!emailRegex.test(email)) {
-        markFieldInvalid('userEmail', 'Ingresa un correo electrónico válido');
-        isValid = false;
-    } else {
-        markFieldValid('userEmail');
+    const userEmail = document.getElementById('userEmail');
+    if (userEmail) {
+        const email = userEmail.value.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email) {
+            markFieldInvalid('userEmail', 'El correo electrónico es obligatorio');
+            isValid = false;
+        } else if (!emailRegex.test(email)) {
+            markFieldInvalid('userEmail', 'Ingresa un correo electrónico válido');
+            isValid = false;
+        } else {
+            markFieldValid('userEmail');
+        }
     }
     
     // Validar edad
-    const age = document.getElementById('userEdad').value;
-    if (!age || age < 1 || age > 120) {
-        markFieldInvalid('userEdad', 'Ingresa una edad válida');
-        isValid = false;
-    } else {
-        markFieldValid('userEdad');
+    const userEdad = document.getElementById('userEdad');
+    if (userEdad) {
+        const age = userEdad.value;
+        if (!age || age < 1 || age > 120) {
+            markFieldInvalid('userEdad', 'Ingresa una edad válida');
+            isValid = false;
+        } else {
+            markFieldValid('userEdad');
+        }
     }
     
     return isValid;
@@ -2409,29 +2548,33 @@ function validateProfileForm() {
 
 function markFieldInvalid(fieldId, message) {
     const field = document.getElementById(fieldId);
-    field.classList.add('is-invalid');
-    field.classList.remove('is-valid');
-    
-    // Mostrar mensaje de error
-    let feedback = field.nextElementSibling;
-    if (!feedback || !feedback.classList.contains('invalid-feedback')) {
-        feedback = document.createElement('div');
-        feedback.className = 'invalid-feedback';
-        field.parentNode.appendChild(feedback);
+    if (field) {
+        field.classList.add('is-invalid');
+        field.classList.remove('is-valid');
+        
+        // Mostrar mensaje de error
+        let feedback = field.nextElementSibling;
+        if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+            feedback = document.createElement('div');
+            feedback.className = 'invalid-feedback';
+            field.parentNode.appendChild(feedback);
+        }
+        feedback.textContent = message;
+        feedback.style.display = 'block';
     }
-    feedback.textContent = message;
-    feedback.style.display = 'block';
 }
 
 function markFieldValid(fieldId) {
     const field = document.getElementById(fieldId);
-    field.classList.remove('is-invalid');
-    field.classList.add('is-valid');
-    
-    // Ocultar mensaje de error
-    const feedback = field.nextElementSibling;
-    if (feedback && feedback.classList.contains('invalid-feedback')) {
-        feedback.style.display = 'none';
+    if (field) {
+        field.classList.remove('is-invalid');
+        field.classList.add('is-valid');
+        
+        // Ocultar mensaje de error
+        const feedback = field.nextElementSibling;
+        if (feedback && feedback.classList.contains('invalid-feedback')) {
+            feedback.style.display = 'none';
+        }
     }
 }
 
@@ -2451,34 +2594,48 @@ function updateUserProfile(name, email, age) {
 
 function updateProfileInApp() {
     // Actualizar barra superior
-    document.getElementById('user-name').textContent = userProfile.name;
-    document.getElementById('user-email').textContent = userProfile.email;
-    document.getElementById('userInitials').textContent = getInitials(userProfile.name);
+    const userName = document.getElementById('user-name');
+    const userEmail = document.getElementById('user-email');
+    const userInitials = document.getElementById('userInitials');
+    
+    if (userName) userName.textContent = userProfile.name;
+    if (userEmail) userEmail.textContent = userProfile.email;
+    if (userInitials) userInitials.textContent = getInitials(userProfile.name);
     
     // Actualizar avatar en barra superior
     const userAvatar = document.querySelector('.avatar-sm');
-    if (userProfile.avatar) {
-        userAvatar.innerHTML = `<img src="${userProfile.avatar}" alt="Avatar">`;
-    } else {
-        userAvatar.innerHTML = `<span>${getInitials(userProfile.name)}</span>`;
+    if (userAvatar) {
+        if (userProfile.avatar) {
+            userAvatar.innerHTML = `<img src="${userProfile.avatar}" alt="Avatar">`;
+        } else {
+            userAvatar.innerHTML = `<span>${getInitials(userProfile.name)}</span>`;
+        }
     }
     
     // Actualizar sección de perfil
-    document.querySelector('.profile-name').textContent = userProfile.name;
-    document.querySelector('.profile-email').textContent = userProfile.email;
+    const profileName = document.querySelector('.profile-name');
+    const profileEmail = document.querySelector('.profile-email');
+    
+    if (profileName) profileName.textContent = userProfile.name;
+    if (profileEmail) profileEmail.textContent = userProfile.email;
     
     // Actualizar avatar en perfil
     const profileAvatar = document.getElementById('profileAvatar');
-    if (userProfile.avatar) {
-        profileAvatar.innerHTML = `<img src="${userProfile.avatar}" alt="Avatar">`;
-        document.getElementById('avatarPlaceholder').style.display = 'none';
-    } else {
-        profileAvatar.innerHTML = `<div id="avatarPlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:2rem;">${getInitials(userProfile.name)}</div>`;
+    if (profileAvatar) {
+        if (userProfile.avatar) {
+            profileAvatar.innerHTML = `<img src="${userProfile.avatar}" alt="Avatar">`;
+            const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+            if (avatarPlaceholder) {
+                avatarPlaceholder.style.display = 'none';
+            }
+        } else {
+            profileAvatar.innerHTML = `<div id="avatarPlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:2rem;">${getInitials(userProfile.name)}</div>`;
+        }
     }
     
     // Actualizar título principal si contiene el nombre
     const mainTitle = document.getElementById('main-title');
-    if (mainTitle.innerHTML.includes('Jairo')) {
+    if (mainTitle && mainTitle.innerHTML.includes('Jairo')) {
         mainTitle.innerHTML = mainTitle.innerHTML.replace('Jairo', userProfile.firstName);
     }
 }
@@ -2487,15 +2644,379 @@ function getInitials(name) {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
 }
 
+// ---- PERSONALIZACIÓN DE CATEGORÍAS ----
+
+// Función para mostrar el modal de personalización de categorías
+function showCustomizeCategoriesModal() {
+    // Actualizar el contenido del modal
+    updateCustomizeCategoriesModal();
+    
+    // Mostrar el modal
+    const modalElement = document.getElementById('customizeCategoriesModal');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
+}
+
+// Función para actualizar el contenido del modal
+function updateCustomizeCategoriesModal() {
+    updateParentCategoryOptions();
+    updateCustomCategoriesList();
+}
+
+// Función para actualizar las opciones de categorías padre
+function updateParentCategoryOptions() {
+    const parentCategorySelect = document.getElementById('parentCategory');
+    if (!parentCategorySelect) return;
+    
+    parentCategorySelect.innerHTML = '';
+    
+    // Agregar categorías predefinidas
+    Object.keys(subcategoriesMap).forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = getCategoryLabel(category);
+        parentCategorySelect.appendChild(option);
+    });
+    
+    // Agregar categorías personalizadas
+    if (customCategories && customCategories.length > 0) {
+        customCategories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.name;
+            option.textContent = category.label;
+            parentCategorySelect.appendChild(option);
+        });
+    }
+}
+
+// Función para actualizar la lista de categorías personalizadas
+function updateCustomCategoriesList() {
+    const categoriesList = document.getElementById('customCategoriesList');
+    if (!categoriesList) return;
+    
+    if (!customCategories || customCategories.length === 0) {
+        categoriesList.innerHTML = '<p class="text-muted">No hay categorías personalizadas.</p>';
+        return;
+    }
+    
+    let html = '<h6>Categorías Personalizadas</h6><div class="list-group">';
+    
+    customCategories.forEach((category, index) => {
+        html += `
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="${category.icon} me-2"></i>
+                    <span>${category.label}</span>
+                </div>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteCustomCategory(${index})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    
+    categoriesList.innerHTML = html;
+}
+
+// Función para agregar nueva categoría
+function addNewCategory() {
+    const nameInput = document.getElementById('newCategoryName');
+    const iconSelect = document.getElementById('newCategoryIcon');
+    
+    if (!nameInput || !iconSelect) return;
+    
+    const name = nameInput.value.trim();
+    const icon = iconSelect.value;
+    
+    if (!name) {
+        showNotification('Por favor ingresa un nombre para la categoría', 'error');
+        return;
+    }
+    
+    // Verificar si la categoría ya existe
+    const categoryExists = customCategories.some(cat => cat.name === name.toLowerCase()) || 
+                          Object.keys(subcategoriesMap).includes(name.toLowerCase());
+    
+    if (categoryExists) {
+        showNotification('Ya existe una categoría con ese nombre', 'error');
+        return;
+    }
+    
+    // Agregar la nueva categoría
+    const newCategory = {
+        name: name.toLowerCase(),
+        label: name,
+        icon: icon
+    };
+    
+    customCategories.push(newCategory);
+    
+    // Inicializar array de subcategorías para esta categoría
+    customSubcategories[name.toLowerCase()] = [];
+    
+    // Guardar en localStorage
+    saveCustomCategoriesToLocalStorage();
+    
+    // Limpiar formulario
+    nameInput.value = '';
+    
+    // Actualizar la lista de categorías
+    updateCustomCategoriesList();
+    
+    // Actualizar botones de categorías en la interfaz
+    updateCategoryButtons();
+    
+    // Cerrar el modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('customizeCategoriesModal'));
+    if (modal) {
+        modal.hide();
+    }
+    
+    showNotification('Categoría agregada exitosamente', 'success');
+}
+
+// Función para agregar nueva subcategoría
+function addNewSubcategory() {
+    const parentCategorySelect = document.getElementById('parentCategory');
+    const nameInput = document.getElementById('newSubcategoryName');
+    const iconSelect = document.getElementById('newSubcategoryIcon');
+    
+    if (!parentCategorySelect || !nameInput || !iconSelect) return;
+    
+    const parentCategory = parentCategorySelect.value;
+    const name = nameInput.value.trim();
+    const icon = iconSelect.value;
+    
+    if (!name) {
+        showNotification('Por favor ingresa un nombre para la subcategoría', 'error');
+        return;
+    }
+    
+    if (!parentCategory) {
+        showNotification('Por favor selecciona una categoría padre', 'error');
+        return;
+    }
+    
+    // Verificar si la subcategoría ya existe
+    const existingSubcategories = subcategoriesMap[parentCategory] || customSubcategories[parentCategory] || [];
+    const subcategoryExists = existingSubcategories.some(sub => sub.name === name.toLowerCase());
+    
+    if (subcategoryExists) {
+        showNotification('Ya existe una subcategoría con ese nombre', 'error');
+        return;
+    }
+    
+    // Agregar la nueva subcategoría
+    const newSubcategory = {
+        name: name.toLowerCase(),
+        label: name,
+        icon: icon
+    };
+    
+    // Determinar si es una categoría predefinida o personalizada
+    if (subcategoriesMap[parentCategory]) {
+        subcategoriesMap[parentCategory].push(newSubcategory);
+    } else if (customSubcategories[parentCategory]) {
+        customSubcategories[parentCategory].push(newSubcategory);
+    } else {
+        // Si no existe, crear el array
+        customSubcategories[parentCategory] = [newSubcategory];
+    }
+    
+    // Guardar en localStorage
+    saveCustomCategoriesToLocalStorage();
+    
+    // Limpiar formulario
+    nameInput.value = '';
+    
+    // Cerrar el modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('customizeCategoriesModal'));
+    if (modal) {
+        modal.hide();
+    }
+    
+    showNotification('Subcategoría agregada exitosamente', 'success');
+}
+
+// Función para eliminar categoría personalizada
+function deleteCustomCategory(index) {
+    if (confirm('¿Estás seguro de que deseas eliminar esta categoría? También se eliminarán todas sus subcategorías.')) {
+        const category = customCategories[index];
+        
+        // Eliminar la categoría
+        customCategories.splice(index, 1);
+        
+        // Eliminar sus subcategorías
+        delete customSubcategories[category.name];
+        
+        // Guardar en localStorage
+        saveCustomCategoriesToLocalStorage();
+        
+        // Actualizar la lista de categorías
+        updateCustomCategoriesList();
+        
+        // Actualizar botones de categorías en la interfaz
+        updateCategoryButtons();
+        
+        showNotification('Categoría eliminada exitosamente', 'success');
+    }
+}
+
+// Función para actualizar botones de categorías en la interfaz
+function updateCategoryButtons() {
+    // Actualizar en Inicio
+    updateCategoryButtonsInSection('inicio');
+    
+    // Actualizar en Pagos
+    updateCategoryButtonsInSection('pagos');
+}
+
+// Función para actualizar botones de categorías en una sección específica
+function updateCategoryButtonsInSection(sectionId) {
+    const container = document.querySelector(`#${sectionId} .category-buttons`);
+    if (!container) return;
+    
+    let html = '';
+    
+    // Agregar categorías predefinidas
+    Object.keys(subcategoriesMap).forEach(category => {
+        const isActive = selectedCategory === category;
+        html += `
+            <button class="category-btn ${isActive ? 'active' : ''}" data-category="${category}">
+                <i class="bi bi-${getCategoryIcon(category)}"></i> ${getCategoryLabel(category)}
+            </button>
+        `;
+    });
+    
+    // Agregar categorías personalizadas
+    if (customCategories && customCategories.length > 0) {
+        customCategories.forEach(category => {
+            const isActive = selectedCategory === category.name;
+            html += `
+                <button class="category-btn ${isActive ? 'active' : ''}" data-category="${category.name}">
+                    <i class="${category.icon}"></i> ${category.label}
+                </button>
+            `;
+        });
+    }
+    
+    // Agregar botón de personalizar
+    const personalizeId = sectionId === 'inicio' ? 'personalize-categories-btn' : 'personalize-categories-btn-pagos';
+    html += `
+        <button class="category-btn" id="${personalizeId}">
+            <i class="bi bi-sliders"></i> Personalizar
+        </button>
+    `;
+    
+    container.innerHTML = html;
+    
+    // Reconfigurar event listeners
+    document.querySelectorAll(`#${sectionId} .category-btn`).forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (this.id.startsWith('personalize-categories-btn')) {
+                showCustomizeCategoriesModal();
+                return;
+            }
+            
+            document.querySelectorAll(`#${sectionId} .category-btn`).forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            selectedCategory = this.getAttribute('data-category');
+            
+            // Mostrar subcategorías
+            showSubcategories(sectionId, selectedCategory);
+        });
+    });
+}
+
+// Función auxiliar para obtener icono de categoría
+function getCategoryIcon(category) {
+    const iconMap = {
+        vivienda: 'house',
+        transporte: 'car-front',
+        alimentacion: 'cup-straw',
+        finanzas: 'cash-coin',
+        salud: 'heart-pulse',
+        entretenimiento: 'controller',
+        ropa: 'bag',
+        electronica: 'pc-display',
+        hogar: 'houses',
+        educacion: 'book'
+    };
+    
+    return iconMap[category] || 'tag';
+}
+
+// Función para cargar categorías personalizadas desde localStorage
+function loadCustomCategoriesFromLocalStorage() {
+    const savedCustomCategories = localStorage.getItem('finli-custom-categories');
+    const savedCustomSubcategories = localStorage.getItem('finli-custom-subcategories');
+    
+    if (savedCustomCategories) {
+        customCategories = JSON.parse(savedCustomCategories);
+    }
+    
+    if (savedCustomSubcategories) {
+        customSubcategories = JSON.parse(savedCustomSubcategories);
+    }
+}
+
+// Función para guardar categorías personalizadas en localStorage
+function saveCustomCategoriesToLocalStorage() {
+    localStorage.setItem('finli-custom-categories', JSON.stringify(customCategories));
+    localStorage.setItem('finli-custom-subcategories', JSON.stringify(customSubcategories));
+}
+
+// Función auxiliar para obtener etiqueta de categoría
+function getCategoryLabel(category) {
+    // Buscar en categorías predefinidas
+    const predefinedCategories = {
+        vivienda: 'Vivienda',
+        transporte: 'Transporte',
+        alimentacion: 'Alimentación',
+        finanzas: 'Finanzas Personales',
+        salud: 'Cuidado Personal y Salud',
+        entretenimiento: 'Entretenimiento y Ocio',
+        ropa: 'Ropa',
+        electronica: 'Electrónica',
+        hogar: 'Artículos del Hogar',
+        educacion: 'Educación'
+    };
+    
+    if (predefinedCategories[category]) {
+        return predefinedCategories[category];
+    }
+    
+    // Buscar en categorías personalizadas
+    const customCategory = customCategories.find(cat => cat.name === category);
+    if (customCategory) {
+        return customCategory.label;
+    }
+    
+    return capitalizeFirstLetter(category);
+}
+
+// Función auxiliar para encontrar una subcategoría
+function findSubcategory(category, subcategoryName) {
+    if (!category || !subcategoryName) return null;
+    
+    const subcategories = subcategoriesMap[category] || customSubcategories[category] || [];
+    return subcategories.find(sub => sub.name === subcategoryName) || null;
+}
+
 // ---- FUNCIONES UTILITARIAS ----
 function showNotification(message, type = 'success') {
     // Crear notificación toast de Bootstrap
-    const toastContainer = document.querySelector('.toast-container');
+    let toastContainer = document.querySelector('.toast-container');
     if (!toastContainer) {
         // Si no existe, crear el contenedor
         const container = document.createElement('div');
         container.className = 'toast-container position-fixed top-0 end-0 p-3';
         document.body.appendChild(container);
+        toastContainer = container;
     }
     
     const toastId = 'toast-' + Date.now();
@@ -2563,40 +3084,64 @@ function capitalizeFirstLetter(string) {
 }
 
 function resetForm() {
-    document.getElementById('transactionAmount').value = '';
-    document.getElementById('transactionDescription').value = '';
-    document.getElementById('transactionDateTime').value = '';
-    document.getElementById('paymentMethod').value = 'seleccion';
-    document.getElementById('transactionType').value = 'seleccion';
-    document.getElementById('imagePreview').innerHTML = `
-        <div class="image-preview-placeholder">
-            <small>Selecciona imagen</small>
-        </div>
-    `;
+    const transactionAmount = document.getElementById('transactionAmount');
+    const transactionDescription = document.getElementById('transactionDescription');
+    const transactionDateTime = document.getElementById('transactionDateTime');
+    const paymentMethod = document.getElementById('paymentMethod');
+    const transactionType = document.getElementById('transactionType');
+    const imagePreview = document.getElementById('imagePreview');
+    
+    if (transactionAmount) transactionAmount.value = '';
+    if (transactionDescription) transactionDescription.value = '';
+    if (transactionDateTime) transactionDateTime.value = '';
+    if (paymentMethod) paymentMethod.value = 'seleccion';
+    if (transactionType) transactionType.value = 'seleccion';
+    if (imagePreview) {
+        imagePreview.innerHTML = `
+            <div class="image-preview-placeholder">
+                <small>Selecciona imagen</small>
+            </div>
+        `;
+    }
     selectedImage = null;
     document.querySelectorAll('#inicio .category-btn').forEach(i => i.classList.remove('active'));
     document.querySelectorAll('#inicio .subcategory-btn').forEach(i => i.classList.remove('active'));
-    document.getElementById('subcategories-container').innerHTML = '';
+    const subcategoriesContainer = document.getElementById('subcategories-container');
+    if (subcategoriesContainer) {
+        subcategoriesContainer.innerHTML = '';
+    }
     selectedCategory = null;
     selectedSubCategory = null;
     editingTransactionId = null;
 }
 
 function resetFormPagos() {
-    document.getElementById('transactionAmountPagos').value = '';
-    document.getElementById('NamePago').value = '';
-    document.getElementById('transactionDateTimePagos').value = '';
-    document.getElementById('paymentMethodPagos').value = 'seleccion';
-    document.getElementById('transactionTypePagos').value = 'seleccion';
-    document.getElementById('imagePreviewPagos').innerHTML = `
-        <div class="image-preview-placeholder">
-            <small>Selecciona imagen</small>
-        </div>
-    `;
+    const transactionAmountPagos = document.getElementById('transactionAmountPagos');
+    const NamePago = document.getElementById('NamePago');
+    const transactionDateTimePagos = document.getElementById('transactionDateTimePagos');
+    const paymentMethodPagos = document.getElementById('paymentMethodPagos');
+    const transactionTypePagos = document.getElementById('transactionTypePagos');
+    const imagePreviewPagos = document.getElementById('imagePreviewPagos');
+    
+    if (transactionAmountPagos) transactionAmountPagos.value = '';
+    if (NamePago) NamePago.value = '';
+    if (transactionDateTimePagos) transactionDateTimePagos.value = '';
+    if (paymentMethodPagos) paymentMethodPagos.value = 'seleccion';
+    if (transactionTypePagos) transactionTypePagos.value = 'seleccion';
+    if (imagePreviewPagos) {
+        imagePreviewPagos.innerHTML = `
+            <div class="image-preview-placeholder">
+                <small>Selecciona imagen</small>
+            </div>
+        `;
+    }
     selectedImage = null;
     document.querySelectorAll('#pagos .category-btn').forEach(i => i.classList.remove('active'));
     document.querySelectorAll('#pagos .subcategory-btn').forEach(i => i.classList.remove('active'));
-    document.getElementById('subcategories-container-pagos').innerHTML = '';
+    const subcategoriesContainerPagos = document.getElementById('subcategories-container-pagos');
+    if (subcategoriesContainerPagos) {
+        subcategoriesContainerPagos.innerHTML = '';
+    }
     selectedCategory = null;
     selectedSubCategory = null;
     editingTransactionId = null;
@@ -2613,3 +3158,103 @@ function handleLogout() {
         }, 1000);
     }
 }
+
+// Función: Resetear filtros de informes
+function resetReportFilters() {
+    // Resetear periodo a mensual
+    currentPeriod = 'mensual';
+    document.querySelectorAll('#informes .btn-group .btn[data-period]').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-period') === 'mensual') {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Resetear filtro a categorías
+    currentFilter = 'categorias';
+    document.querySelectorAll('#informes .btn-group .btn[data-filter]').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-filter') === 'categorias') {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Resetear categorías y subcategorías seleccionadas
+    selectedCategories = [];
+    selectedSubCategories = [];
+    selectedCategory = null;
+    selectedSubCategory = null;
+    
+    // Limpiar selecciones de categorías
+    document.querySelectorAll('#informes-category-filter .category-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    document.querySelectorAll('#informes-subcategories-container .subcategory-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Limpiar contenedor de subcategorías
+    const subcontainer = document.getElementById('informes-subcategories-container');
+    if (subcontainer) {
+        subcontainer.innerHTML = '';
+        subcontainer.style.display = 'none';
+    }
+    
+    // Resetear botón de subcategorías
+    const showSubcategoriesBtn = document.getElementById('show-subcategories-btn');
+    if (showSubcategoriesBtn) {
+        showSubcategoriesBtn.innerHTML = '<i class="bi bi-arrow-down"></i> Ver Subcategorías';
+    }
+    
+    // Resetear filtros de fecha
+    const now = new Date();
+    const currentMonth = now.toISOString().slice(0, 7);
+    const monthFilter = document.getElementById('informes-month-filter');
+    if (monthFilter) {
+        monthFilter.value = currentMonth;
+    }
+    
+    // Mostrar todos los gráficos
+    showAllCharts();
+    
+    // Actualizar gráficos
+    updateCharts();
+    
+    showNotification('Filtros reiniciados', 'info');
+}
+
+// Configurar event listeners para el modal de personalización
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar botones del modal de personalización
+    const addNewCategoryBtn = document.getElementById('addNewCategoryBtn');
+    const addNewSubcategoryBtn = document.getElementById('addNewSubcategoryBtn');
+    
+    if (addNewCategoryBtn) {
+        addNewCategoryBtn.addEventListener('click', addNewCategory);
+    }
+    
+    if (addNewSubcategoryBtn) {
+        addNewSubcategoryBtn.addEventListener('click', addNewSubcategory);
+    }
+    
+    // Configurar filtro de informes
+    const informesFilterBtn = document.getElementById('FiltroProfileBtn');
+    const informesFiltersContainer = document.querySelector('#informes .filters-container');
+    
+    if (informesFilterBtn && informesFiltersContainer) {
+        informesFilterBtn.addEventListener('click', function() {
+            informesFiltersContainer.classList.toggle('d-none');
+            
+            // Cambiar el ícono del botón según el estado
+            const icon = informesFilterBtn.querySelector('i');
+            if (informesFiltersContainer.classList.contains('d-none')) {
+                icon.className = 'bi bi-funnel';
+                informesFilterBtn.innerHTML = '<i class="bi bi-funnel"></i> Filtro';
+            } else {
+                icon.className = 'bi bi-funnel-fill';
+                informesFilterBtn.innerHTML = '<i class="bi bi-funnel-fill"></i> Ocultar Filtros';
+            }
+        });
+    }
+});
