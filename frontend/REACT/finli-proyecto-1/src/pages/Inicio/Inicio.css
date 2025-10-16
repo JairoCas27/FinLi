@@ -7,7 +7,7 @@
   --plomo: #f7f7f7; /* gris claro */
   --mint: #d7ffe3; /* tono mint */
   --letra: 'Footlight MT Light', sans-serif; /* fuente principal del proyecto */
-  font-size: 19px; /* tamaño base de letra */
+  font-size: 18px; /* tamaño base de letra */
 }
 
 body{ 
@@ -90,11 +90,19 @@ p, form{
   transform: translateY(-8px); /* eleva la tarjeta al pasar el cursor */
 }
 
+.card-body h5 {
+  font-family: var(--letra); 
+  font-size: 1rem; 
+  font-weight: 700; 
+  color: #333; 
+  margin-bottom: 0.5rem; 
+}
+
 /* ---- CONTENIDO PRINCIPAL ---- */
 .hero-section {
   position: relative; /* contenedor */
   overflow: hidden; /* recorta lo que sobresalga */
-  height: 100vh; /* para pantalla completa */
+  height: 95vh; /* para pantalla completa */
   display: flex; /* para centrar contenido */
   align-items: center; /* centra verticalmente */
 }
@@ -105,7 +113,7 @@ p, form{
   top: 0; /* pegado arriba */
   left: 0; /* pegado a la izquierda */
   width: 100%; /* ancho completo */
-  height: 100%; /* alto completo */
+  height: 95vh; /* alto completo */
   z-index: 0; /* detrás del contenido principal */
 }
 
@@ -141,9 +149,13 @@ p, form{
   text-shadow: 1px 1px 0px #333, -1px -1px 0px #fff; /* Sombra para el texto*/
 }
 
+.hero-content .btn-custom {
+  text-shadow: none; 
+}
+
 /* Asegura que las filas dentro del hero estén centradas verticalmente */
 .hero-content .row {
-  min-height: 100vh; /* para la pantalla completa */
+  min-height: 90vh; /* para la pantalla completa */
   align-items: center; /* centra su contenido verticalmente */
 }
 
@@ -263,7 +275,7 @@ p, form{
 
 /* Estilos de titulos del footer*/
 .footer-title {
-  font-size: 1rem; /* tamaño del título */
+  font-size: 1.1rem; /* tamaño del título */
   font-weight: 600; /* texto en negrita */
   margin-bottom: 1rem; /* separación inferior */
   color: white; /* color del título */
@@ -325,4 +337,13 @@ p, form{
   text-align: center; /* centrar el texto */
   margin-bottom: 0; /* sin margen */
   font-family: var(--letra); /* fuente */
+}
+
+.rounded-3.p-5 {
+    padding: 2rem !important; 
+    margin-top: 3rem !important; 
+}
+
+.col-md-8 form.p-4 {
+    padding: 1.5rem !important; 
 }
