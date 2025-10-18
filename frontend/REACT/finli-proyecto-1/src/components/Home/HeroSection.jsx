@@ -5,7 +5,7 @@ import Carousel from 'react-bootstrap/Carousel';
 
 function HeroSection() {
     return (
-        <section className="hero-section rounded-3 my-0">
+        <section className="hero-section my-0">
             
             <Carousel id="heroCarousel" className="hero-carousel" controls={true} indicators={true}> 
                 

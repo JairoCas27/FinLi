@@ -42,7 +42,7 @@ const ServiceCard = ({ imgSrc, title, linkTo, alt }) => (
 
 function ServicesSection() {
     return (
-        <section className="rounded-3 p-5 bg-plomo my-5">
+        <section className="p-5 bg-plomo my-5">
             <div className="container">
                 <div className="text-center mb-4">
                     <h3 className="fw-semibold">Nuestros Servicios</h3>

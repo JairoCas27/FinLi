@@ -56,7 +56,7 @@ function ContactSection() {
     };
     
     return (
-        <section className="rounded-3 p-5 bg-plomo mt-5">
+        <section className="p-5 bg-plomo mt-5">
             <div className="container">
                 <div className="row g-4">
                     <div className="col-md-4 d-flex flex-column justify-content-center text-center">

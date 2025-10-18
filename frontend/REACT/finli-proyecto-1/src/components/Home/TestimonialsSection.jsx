@@ -34,7 +34,7 @@ const TestimonialCard = ({ name, date, rating, text, imgSrc }) => (
 
 function TestimonialsSection() {
     return (
-        <section className="rounded-3 p-4 bg-mint mt-4">
+        <section className="p-4 bg-mint mt-4">
             
                 <div className="text-center my-4">
                     <h4 className="fw-semibold">Lo que nuestros usuarios dicen de FinLi...</h4>
