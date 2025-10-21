@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class AuthController {
 
     private final ServicioAutenticacion servicio;
@@ -20,7 +20,8 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody LoginRequest dto) {
         try {
             Usuario u = servicio.login(dto.getEmail(), dto.getContrasena());
-            return ResponseEntity.ok(u);
+            // antes: return ResponseEntity.ok(u);
+            return ResponseEntity.ok(servicio.toResponse(u));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -28,12 +29,8 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegistroRequest dto) {
-        if (!dto.getContrasena().equals(dto.getConfirmarContrasena())) {
-            return ResponseEntity.badRequest().body("Las contraseñas no coinciden");
-        }
         try {
-            Usuario u = servicio.registrar(dto.getNombre(), dto.getApellido(),
-                    dto.getEmail(), dto.getContrasena());
+            Usuario u = servicio.registrar(dto);
             return ResponseEntity.ok("Usuario creado ID: " + u.getId());
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

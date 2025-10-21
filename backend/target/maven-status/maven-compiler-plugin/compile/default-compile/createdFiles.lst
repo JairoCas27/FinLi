@@ -1,9 +1,12 @@
 com\finli\model\Usuario.class
 com\finli\repository\UsuarioRepository.class
-com\finli\model\Usuario$UsuarioBuilder.class
 com\finli\security\ConfiguracionSeguridad.class
+com\finli\dto\UsuarioResponse$UsuarioResponseBuilder.class
+com\finli\model\Usuario$UsuarioBuilder.class
 com\finli\dto\LoginRequest.class
 com\finli\dto\RegistroRequest.class
+com\finli\dto\RegistroRequest$RegistroRequestBuilder.class
 com\finli\service\ServicioAutenticacion.class
 com\finli\controller\AuthController.class
+com\finli\dto\UsuarioResponse.class
 com\finli\FinLiApplication.class
