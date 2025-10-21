@@ -183,11 +183,11 @@ formLogin.addEventListener('submit', async (e) => {
       body: JSON.stringify(payload)
     });
 
-    const data = await res.text();
+    const data = await res.json();
     if (!res.ok) throw new Error(data);
 
-    // Guardamos el usuario en localStorage (opcional)
-    localStorage.setItem('usuario', data); // o data.email, etc.
+    // Guardamos el usuario en localStorage y redirigimos
+    localStorage.setItem('usuario', JSON.stringify(data)); // o data.email, etc.
     location.href = '../Usuario/usuario.html'; // ← ventana principal
   } catch (err) {
     alert('Error: ' + err.message);

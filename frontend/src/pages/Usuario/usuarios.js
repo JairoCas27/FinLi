@@ -11,15 +11,34 @@ let currentFilter = 'categorias';
 let selectedCategories = [];
 let selectedSubCategories = [];
 
-// Perfil de usuario
-let userProfile = {
-    name: 'Jairo Castillo',
-    firstName: 'Jairo',
-    lastName: 'Castillo',
-    email: 'jairo@utp.edu.pe',
-    age: '20',
-    avatar: null
-};
+// ---- CARGAR DATOS REALES DEL USUARIO ----
+function loadUserFromBackend() {
+    const raw = localStorage.getItem('usuario');
+    if (!raw) { // no hay login
+        location.href = '../Autenticacion/login.html';
+        return;
+    }
+    const u = JSON.parse(raw); // viene del endpoint UsuarioResponse
+
+    // mapeamos a la estructura que ya usa el front
+    userProfile = {
+        name: `${u.nombre} ${u.apellidoPaterno} ${u.apellidoMaterno}`,
+        firstName: u.nombre,
+        lastName: `${u.apellidoPaterno} ${u.apellidoMaterno}`,
+        email: u.email,
+        age: u.edad,
+        avatar: null // más adelante puedes agregar campo avatar en BD
+    };
+
+    // pisamos localStorage para que el resto del código siga igual
+    localStorage.setItem('finli-profile', JSON.stringify(userProfile));
+}
+
+// ---- INICIALIZACIÓN ----
+document.addEventListener('DOMContentLoaded', () => {
+    loadUserFromBackend(); // ✅ datos reales
+    loadDataFromLocalStorage(); // carga transacciones, etc.
+});
 
 // Array para notificaciones
 let notifications = [];
