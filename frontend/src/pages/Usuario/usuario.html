@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FinLi - Usuario</title>
     <link rel="icon" href="/frontend/public/img/Logo/LogoFinLi.png" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/frontend/src/pages/Usuario/usuario.css">
+    <link rel="stylesheet" href="usuario.css">
 </head>
 <body>
     <div class="container-fluid">
@@ -26,21 +26,13 @@
                 <!-- Navegación principal -->
                 <nav class="mt-3">
                     <a class="nav-link active" data-section="inicio"><i class="bi bi-house-door-fill"></i> Inicio</a>
-                    <a class="nav-link" data-section="informes"><i class="bi bi-graph-up"></i> Informes</a>
+                    <a class="nav-link" data-section="pagos"><i class="bi bi-coin"></i> Pagos</a>
+                    <a class="nav-link" data-section="informes"><i class="bi bi-graph-up-arrow"></i> Informes</a>
                     <a class="nav-link" data-section="perfil"><i class="bi bi-person-fill"></i> Perfil</a>
                 </nav>
 
                 <div class="mt-4">
-                    <a href="/frontend/src/pages/Autenticación/login.html">
-                        <button class="btn btn-outline-secondary btn-logout">
-                            <i class="bi bi-box-arrow-right me-2"></i> Cerrar sesión
-                        </button>
-                    </a>
-                </div>
-
-                <div class="sidebar-footer text-muted small">
-                    <div>FinLi © <span id="year"></span></div>
-                    <div>Versión 1.0</div>
+                    <button class="btn btn-outline-secondary btn-logout" id="logoutBtn"><i class="bi bi-box-arrow-right me-2"></i> Cerrar sesión</button>
                 </div>
             </aside>
 
@@ -49,13 +41,12 @@
                 <!-- TOPBAR -->
                 <div class="topbar">
                     <div>
-                        <h2 class="mb-0" id="main-title">Bienvenido, <span class="text-gradient">Usuario</span></h2>
+                        <h2 class="mb-0" id="main-title">Bienvenido, <span class="text-gradient">Jairo</span></h2>
                         <small class="muted" id="main-subtitle">Panel de control personal</small>
                     </div>
 
                     <div class="d-flex align-items-center gap-3">
                         <div class="search-box d-none d-md-block">
-                            <!-- Buscador para filtrar transacciones por texto -->
                             <input class="form-control form-control-sm" placeholder="Buscar transacciones..." id="search-input" />
                         </div>
                         
@@ -79,12 +70,11 @@
                         <!-- Avatar y datos rápidos del usuario -->
                         <div class="d-flex align-items-center gap-2">
                             <div class="avatar-sm" style="background:linear-gradient(135deg,var(--verdeOs),var(--grisOs))">
-                                <img id="userAvatarSmall" src="" alt="Usuario" onerror="this.style.display='none'">
                                 <span id="userInitials">JC</span>
                             </div>
                             <div class="text-end d-none d-sm-block">
-                                <div id="quickProfileName"  style="font-weight:600">Usuario</div>
-                                <small class="muted" id="quickProfileEmail">correo@ejemplo.com</small>
+                                <div id="user-name" style="font-weight:600">Jairo Castillo</div>
+                                <small id="user-email" class="muted">jairo@utp.edu.pe</small>
                             </div>
                         </div>
                     </div>
@@ -112,41 +102,52 @@
                     <!-- AÑADIR TRANSACCIÓN-->
                     <div class="card-stat fade-in mb-4">
                         <h5 class="d-flex align-items-center gap-2 mb-3">
-                            <i class="bi bi-plus-circle text-primary"></i> Añadir Transacción
+                            <i class="bi bi-plus-circle-dotted"></i> Añadir Transacción
                         </h5>
                         
                         <!-- Fila de tipo, monto, fecha y hora -->
                         <div class="transaction-form-grid">
                             <div class="transaction-form-item">
-                                <label class="form-label fw-semibold">Tipo</label>
+                                <label class="form-label fw-semibold">Tipo de Movimiento</label>
                                 <select class="form-select" id="transactionType">
-                                    <option value="seleccion">Selecciona el tipo</option>
+                                    <option value="seleccion">Selecciona el tipo...</option>
                                     <option value="gasto">Gasto</option>
                                     <option value="ingreso">Ingreso</option>
                                 </select>
                             </div>
                             <div class="transaction-form-item">
-                                <label class="form-label fw-semibold">S/. monto</label>
+                                <label class="form-label fw-semibold">Métodos de pago</label>
+                                <select class="form-select" id="paymentMethod">
+                                    <option value="seleccion">Selecciona un metodo...</option>
+                                    <option value="efectivo">Efectivo</option>
+                                    <option value="yape">Yape</option>
+                                    <option value="plin">Plin</option>
+                                    <option value="credito">Tarjeta de Crédito</option>
+                                    <option value="debito">Tarjeta de Débito</option>
+                                    <option value="paypal">Paypal</option>
+                                    <option value="transferencia">Transferencia Bancaria</option>
+                                </select>
+                            </div>
+                            <div class="transaction-form-item">
+                                <label class="form-label fw-semibold">Monto S/. </label>
                                 <input type="number" class="form-control" id="transactionAmount" placeholder="0.00" step="0.01">
+                            </div>
+                        </div>
+
+                        <div class="transaction-form-grid">
+                            <div class="transaction-form-item">
+                                <label class="form-label fw-semibold">Imagen</label>
+                                <!-- Preview de imagen -->
+                                <div class="image-preview" id="imagePreview">
+                                    <div class="image-preview-placeholder">
+                                        <small>Selecciona imagen</small>
+                                    </div>
+                                </div>
+                                <input type="file" id="imageInput" accept="image/*" style="display: none;">
                             </div>
                             <div class="transaction-form-item">
                                 <label class="form-label fw-semibold">Fecha y Hora</label>
                                 <input type="datetime-local" class="form-control" id="transactionDateTime">
-                            </div>
-                        </div>
-
-                        <!-- Fila para imagen y descripción -->
-                        <div class="datetime-row">
-                            <div class="transaction-form-item">
-                                <label class="form-label fw-semibold">Imagen</label>
-                                <!-- Preview de imagen -->
-                                <div class="image-preview" id="imagePreview" onclick="document.getElementById('imageInput').click()">
-                                    <div class="image-preview-placeholder">
-                                        <i class="bi bi-image"></i>
-                                        <small>Haz clic para seleccionar imagen</small>
-                                    </div>
-                                </div>
-                                <input type="file" id="imageInput" accept="image/*" style="display: none;">
                             </div>
                             <div class="transaction-form-item">
                                 <label class="form-label fw-semibold">Descripción</label>
@@ -158,31 +159,37 @@
                         <div class="section-divider"></div>
                         
                         <h6 class="d-flex align-items-center gap-2 mb-3">
-                            <i class="bi bi-tags text-primary"></i> Selecciona Categoría
+                            <i class="bi bi-tags-fill"></i> Selecciona Categoría
                         </h6>
                         
                         <!-- Botones de categoría -->
                         <div class="category-buttons">
-                            <button class="category-btn" data-category="comida">
-                                <i class="bi bi-cup-straw"></i> Comida
-                            </button>
-                            <button class="category-btn" data-category="salud">
-                                <i class="bi bi-heart-pulse"></i> Salud
-                            </button>
-                            <button class="category-btn" data-category="salario">
-                                <i class="bi bi-cash-coin"></i> Salario
-                            </button>
-                            <button class="category-btn" data-category="entretenimiento">
-                                <i class="bi bi-controller"></i> Entretenimiento
-                            </button>
+                            <button class="category-btn" data-category="vivienda">
+                                <i class="bi bi-house"></i> Vivienda
+                            </button>   
                             <button class="category-btn" data-category="transporte">
                                 <i class="bi bi-car-front"></i> Transporte
+                            </button>                         
+                            <button class="category-btn" data-category="alimentacion">
+                                <i class="bi bi-cup-straw"></i> Alimentacion
+                            </button>
+                            <button class="category-btn" data-category="finanzas">
+                                <i class="bi bi-cash-coin"></i> Finanzas Personales
+                            </button>
+                            <button class="category-btn" data-category="salud">
+                                <i class="bi bi-heart-pulse"></i> Cuidado Personal y Salud
+                            </button>
+                            <button class="category-btn" data-category="entretenimiento">
+                                <i class="bi bi-controller"></i> Entretenimiento y Ocio
+                            </button>
+                            <button class="category-btn" data-category="ropa">
+                                <i class="bi bi-bag"></i> Ropa
+                            </button>
+                            <button class="category-btn" data-category="electronica">
+                                <i class="bi bi-pc-display"></i> Electrónica
                             </button>
                             <button class="category-btn" data-category="hogar">
-                                <i class="bi bi-house"></i> Hogar
-                            </button>
-                            <button class="category-btn" data-category="compras">
-                                <i class="bi bi-bag"></i> Compras
+                                <i class="bi bi-houses"></i> Artículos del Hogar
                             </button>
                             <button class="category-btn" data-category="educacion">
                                 <i class="bi bi-book"></i> Educación
@@ -191,7 +198,12 @@
                                 <i class="bi bi-sliders"></i> Personalizar
                             </button>
                         </div>
-                        
+
+                        <!-- Contenedor para subcategorías -->
+                        <div id="subcategories-container">
+                            <!-- Las subcategorías se cargarán aquí dinámicamente -->
+                        </div>
+
                         <div class="d-flex justify-content-end mt-3">
                             <!-- Botón principal para agregar la transacción -->
                             <button class="btn btn-primary" id="addTransactionBtn">
@@ -203,24 +215,45 @@
                     <!-- TABLA DE TRANSACCIONES -->
                     <div class="table-card fade-in">
                         <h5 class="d-flex align-items-center gap-2 mb-3">
-                            <i class="bi bi-table text-primary"></i> Tabla de Transacciones
+                            <i class="bi bi-piggy-bank"></i> Tabla de Transacciones
                         </h5>
+                        <div class="container">
+                            <button class="btn btn-outline-success" id="FiltroTraProfileBtn">
+                                <i class="bi bi-funnel"></i> Filtro
+                            </button>
+                            
+                            <!-- Filtros -->
+                            <div class="filters-container row mb-4 d-none">
+                                <!-- Periodo -->
+                                <div class="col-12 col-md-6">
+                                    <div class="filter-group">
+                                        <div class="filter-label">Periodo</div>
+                                        <div class="btn-group w-100" role="group" aria-label="Periodo">
+                                            <button class="btn btn-sm btn-outline-success active" data-period="mensual">Mensual</button>
+                                            <button class="btn btn-sm btn-outline-success" data-period="quincenal">Quincenal</button>
+                                            <button class="btn btn-sm btn-outline-success" data-period="semanal">Semanal</button>
+                                            <button class="btn btn-sm btn-outline-success" data-period="diario">Diario</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6" id="inicio-filter-container">
+                                    <!-- Filtro dinámico se cargará aquí -->
+                                </div>
+                            </div>
+                        </div>
                         
                         <div class="section-divider"></div>
                         
-                        <h6 class="fw-bold mb-3">Setiembre 2025</h6>
-                        
-                        <div class="table-responsive">
+                        <div class="table-responsive text-center">
                             <table class="table align-middle">
                                 <thead>
                                     <tr>
                                         <th>Categoría</th>
                                         <th>Tipo</th>
                                         <th>Importe</th>
-                                        <th>Nota</th>
                                         <th>Imagen</th>
                                         <th>Fecha y Hora</th>
-                                        <th class="text-end">Acciones</th>
+                                        <th class="text-end text-center">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="transactionsTableBody">
@@ -231,34 +264,183 @@
                     </div>
                 </section>
 
-                <!-- SECCIÓN INFORMES -->
-                <section id="informes" class="content-section">
-                    <!-- Filtros -->
-                    <div class="row mb-4">
-                        <div class="col-lg-12">
-                            <div class="filters-card">
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="filter-group">
-                                            <div class="filter-label">Periodo</div>
-                                            <div class="btn-group w-100">
-                                                <button class="btn btn-sm btn-outline-secondary">Semanal</button>
-                                                <button class="btn btn-sm btn-outline-primary active">Mensual</button>
-                                                <button class="btn btn-sm btn-outline-secondary">Anual</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="filter-group">
-                                            <div class="filter-label">Exportar</div>
-                                            <div class="d-flex gap-2">
-                                                <!-- Botones para exportar reportes. Añadir handlers para generar PDF/CSV -->
-                                                <button class="btn btn-sm btn-outline-primary flex-fill"><i class="bi bi-filetype-pdf me-1"></i> PDF</button>
-                                                <button class="btn btn-sm btn-outline-success flex-fill"><i class="bi bi-file-earmark-excel me-1"></i> CSV</button>
-                                            </div>
-                                        </div>
+                <!-- SECCIÓN AGENDA DE PAGOS -->
+                <section id="pagos" class="content-section">
+                    <!-- AÑADIR TRANSACCIÓN-->
+                    <div class="card-stat fade-in mb-4">
+                        <h5 class="d-flex align-items-center gap-2 mb-3">
+                            <i class="bi bi-plus-circle-dotted"></i> Insertar Nuevo Pago
+                        </h5>
+                        
+                        <!-- Fila de tipo, monto, fecha y hora -->
+                        <div class="transaction-form-grid">
+                            <div class="transaction-form-item">
+                                <label class="form-label fw-semibold">Nombre de Pago</label>
+                                <input type="text" class="form-control" id="NamePago" placeholder="Nombre de pago...">
+                            </div>
+                            <div class="transaction-form-item">
+                                <label class="form-label fw-semibold">Tipo de Movimiento</label>
+                                <select class="form-select" id="transactionTypePagos">
+                                    <option value="seleccion">Selecciona el tipo...</option>
+                                    <option value="gasto">Gasto</option>
+                                    <option value="ingreso">Ingreso</option>
+                                </select>
+                            </div>
+                            <div class="transaction-form-item">
+                                <label class="form-label fw-semibold">Fecha y Hora</label>
+                                <input type="datetime-local" class="form-control" id="transactionDateTimePagos">
+                            </div>
+                        </div>
+
+                        <div class="transaction-form-grid">
+                            <div class="transaction-form-item">
+                                <label class="form-label fw-semibold">Imagen</label>
+                                <!-- Preview de imagen -->
+                                <div class="image-preview" id="imagePreviewPagos">
+                                    <div class="image-preview-placeholder">
+                                        <small>Selecciona imagen</small>
                                     </div>
                                 </div>
+                                <input type="file" id="imageInputPagos" accept="image/*" style="display: none;">
+                            </div>
+                            <div class="transaction-form-item">
+                                <label class="form-label fw-semibold">Métodos de pago</label>
+                                <select class="form-select" id="paymentMethodPagos">
+                                    <option value="seleccion">Selecciona un metodo...</option>
+                                    <option value="efectivo">Efectivo</option>
+                                    <option value="yape">Yape</option>
+                                    <option value="plin">Plin</option>
+                                    <option value="credito">Tarjeta de Crédito</option>
+                                    <option value="debito">Tarjeta de Débito</option>
+                                    <option value="paypal">Paypal</option>
+                                    <option value="transferencia">Transferencia Bancaria</option>
+                                </select>
+                            </div>
+                            <div class="transaction-form-item">
+                                <label class="form-label fw-semibold">Monto S/. </label>
+                                <input type="number" class="form-control" id="transactionAmountPagos" placeholder="0.00" step="0.01">
+                            </div>
+                        </div>
+
+                        <!-- SELECCIONA CATEGORÍA -->
+                        <div class="section-divider"></div>
+                        
+                        <h6 class="d-flex align-items-center gap-2 mb-3">
+                            <i class="bi bi-tags"></i> Selecciona Categoría
+                        </h6>
+                        
+                        <!-- Botones de categoría -->
+                        <div class="category-buttons">
+                            <button class="category-btn" data-category="vivienda">
+                                <i class="bi bi-house"></i> Vivienda
+                            </button>   
+                            <button class="category-btn" data-category="transporte">
+                                <i class="bi bi-car-front"></i> Transporte
+                            </button>                         
+                            <button class="category-btn" data-category="alimentacion">
+                                <i class="bi bi-cup-straw"></i> Alimentacion
+                            </button>
+                            <button class="category-btn" data-category="finanzas">
+                                <i class="bi bi-cash-coin"></i> Finanzas Personales
+                            </button>
+                            <button class="category-btn" data-category="salud">
+                                <i class="bi bi-heart-pulse"></i> Cuidado Personal y Salud
+                            </button>
+                            <button class="category-btn" data-category="entretenimiento">
+                                <i class="bi bi-controller"></i> Entretenimiento y Ocio
+                            </button>
+                            <button class="category-btn" data-category="ropa">
+                                <i class="bi bi-bag"></i> Ropa
+                            </button>
+                            <button class="category-btn" data-category="electronica">
+                                <i class="bi bi-pc-display"></i> Electrónica
+                            </button>
+                            <button class="category-btn" data-category="hogar">
+                                <i class="bi bi-houses"></i> Artículos del Hogar
+                            </button>
+                            <button class="category-btn" data-category="educacion">
+                                <i class="bi bi-book"></i> Educación
+                            </button>
+                            <button class="category-btn" id="personalize-categories-btn-pagos">
+                                <i class="bi bi-sliders"></i> Personalizar
+                            </button>
+                        </div>
+
+                        <!-- Contenedor para subcategorías en Pagos -->
+                        <div id="subcategories-container-pagos">
+                            <!-- Las subcategorías se cargarán aquí dinámicamente -->
+                        </div>
+                        
+                        <div class="d-flex justify-content-end mt-3">
+                            <!-- Botón principal para agregar la transacción -->
+                            <button class="btn btn-primary" id="addTransactionBtnPagos">
+                                <i class="bi bi-plus-circle me-2"></i> Nuevo Pago
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- TABLA DE TRANSACCIONES -->
+                    <div class="table-card fade-in">
+                        <h5 class="d-flex align-items-center gap-2 mb-3">
+                            <i class="bi bi-piggy-bank"></i> Tabla de Agenda de Pagos
+                        </h5>
+                        <button class="btn btn-outline-success" id="FiltroPagosBtn">
+                            <i class="bi bi-funnel"></i> Filtro
+                        </button>
+                        <div class="row mb-4 d-none" id="pagos-filters-row">
+                            <!-- Periodo -->
+                            <div class="col-12 col-md-6">
+                                <div class="filter-group">
+                                    <div class="filter-label">Periodo</div>
+                                    <div class="btn-group w-100" role="group" aria-label="Periodo">
+                                        <button class="btn btn-sm btn-outline-success active" data-period="mensual">Mensual</button>
+                                        <button class="btn btn-sm btn-outline-success" data-period="quincenal">Quincenal</button>
+                                        <button class="btn btn-sm btn-outline-success" data-period="semanal">Semanal</button>
+                                        <button class="btn btn-sm btn-outline-success" data-period="diario">Diario</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6" id="pagos-filter-container">
+                                <!-- Filtro dinámico se cargará aquí -->
+                            </div>
+                        </div>
+
+                        <div class="section-divider"></div>
+                        
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Categoría</th>
+                                        <th>Monto</th>
+                                        <th>Fecha y Hora</th>
+                                        <th>Estado</th>
+                                        <th class="text-end text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactionsTableBodyPagos">
+                                    <!-- Las transacciones se cargarán dinámicamente aquí -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECCIÓN INFORMES -->
+                <section id="informes" class="content-section">
+                    <div class="container mt-4">
+                        <button class="btn btn-outline-success mb-4" id="FiltroProfileBtn">
+                            <i class="bi bi-funnel"></i> Filtro
+                        </button>
+                        
+                        <!-- Filtros -->
+                        <div class="filters-container row mb-4 d-none">
+                            <div class="col-md-4" id="informes-period-filter">
+                                <!-- Filtro de periodo se cargará aquí -->
+                            </div>
+                            <div class="col-md-8" id="informes-category-filter">
+                                <!-- Filtro de categoría se cargará aquí -->
                             </div>
                         </div>
                     </div>
@@ -268,8 +450,8 @@
                         <!-- Ingresos vs. Gastos -->
                         <div class="col-lg-6 mb-4">
                             <div class="card-report">
-                                <h5 class="d-flex align-items-center gap-2">
-                                    <i class="bi bi-bar-chart-fill text-success"></i> Ingresos vs. Gastos
+                                <h5 class="d-flex justify-content-center gap-2 text-warning">
+                                    <i class="bi bi-bar-chart-fill"></i> Ingresos vs. Gastos
                                 </h5>
                                 <p class="muted mb-3">Comparativa mensual de ingresos y gastos</p>
                                 <div class="chart-container">
@@ -282,8 +464,8 @@
                         <!-- Distribución de Gastos por Categoría -->
                         <div class="col-lg-6 mb-4">
                             <div class="card-report">
-                                <h5 class="d-flex align-items-center gap-2">
-                                    <i class="bi bi-pie-chart-fill text-warning"></i> Distribución de Gastos por Categoría
+                                <h5 class="d-flex justify-content-center gap-2 text-info">
+                                    <i class="bi bi-pie-chart-fill"></i> Distribución de Gastos por Categoría
                                 </h5>
                                 <p class="muted mb-3">Porcentaje de gastos en cada categoría</p>
                                 <div class="chart-container">
@@ -295,12 +477,26 @@
                         <!-- Evolución de tu Balance -->
                         <div class="col-lg-12 mb-4">
                             <div class="card-report">
-                                <h5 class="d-flex align-items-center gap-2">
-                                    <i class="bi bi-graph-up-arrow text-info"></i> Evolución de tu Balance
+                                <h5 class="d-flex justify-content-center gap-2 text-primary">
+                                    <i class="bi bi-graph-up-arrow"></i> Evolución de tu Balance
                                 </h5>
                                 <p class="muted mb-3">Tendencia de tu balance en los últimos meses</p>
                                 <div class="chart-container">
                                     <canvas id="balanceChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="filter-group">
+                                <div class="filter-label">Exportar</div>
+                                <div class="d-flex gap-2">
+                                    <!-- Botones para exportar reportes. Añadir handlers para generar PDF/CSV -->
+                                    <button class="btn btn-sm btn-outline-primary flex-fill"><i class="bi bi-filetype-pdf me-1"></i> PDF</button>
+                                    <button class="btn btn-sm btn-outline-success flex-fill"><i class="bi bi-filetype-xls me-1"></i> EXCEL</button>
+                                    <button class="btn btn-sm btn-outline-success flex-fill"><i class="bi bi-filetype-jpg me-1"></i> JPG</button>
                                 </div>
                             </div>
                         </div>
@@ -311,14 +507,14 @@
                 <section id="perfil" class="content-section">
                     <div class="card-stat fade-in mb-4">
                         <div class="profile-header">
-                            <div class="profile-info">
-                                <div class="profile-name" id="profileName">Usuario</div>
-                                <div class="profile-email" id="profileEmail">correo@ejemplo.com</div>
-                            </div>
                             <div class="profile-avatar" id="profileAvatar">
                                 <div id="avatarPlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:2rem;">JC</div>
                             </div>
-                            <button class="btn btn-outline-primary" id="editProfileBtn">
+                            <div class="profile-info">
+                                <div class="profile-name">Jairo Castillo</div>
+                                <div class="profile-email">jairo@utp.edu.pe</div>
+                            </div>
+                            <button class="btn btn-outline-success" id="editProfileBtn">
                                 <i class="bi bi-pencil me-1"></i> Editar
                             </button>
                         </div>
@@ -331,13 +527,15 @@
                             <form>
                                 <div class="profile-picture-edit">
                                     <div class="profile-picture-preview" id="profilePicturePreview">
-                                        <img id="profilePictureImage" src="" alt="Foto de perfil" onerror="this.style.display='none'">
                                         <div id="profilePicturePlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:3rem;">JC</div>
                                     </div>
-                                    <button type="button" class="profile-picture-change-btn" onclick="document.getElementById('avatarInput').click()">
+                                    <button type="button" class="profile-picture-change-btn" id="changeProfilePictureBtn">
                                         <i class="bi bi-camera me-1"></i> Cambiar foto de perfil
                                     </button>
                                     <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+                                    <button type="button" class="btn btn-outline-danger mt-2" id="removeProfilePhotoBtn" style="display: none;">
+                                        <i class="bi bi-trash me-1"></i> Eliminar foto
+                                    </button>
                                 </div>
                                 
                                 <div class="row">
@@ -355,7 +553,7 @@
                                     <input type="email" class="form-control" id="userEmail" value="jairo@utp.edu.pe">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="userPhone" class="form-label">Edad</label>
+                                    <label for="userEdad" class="form-label">Edad</label>
                                     <input type="number" class="form-control" id="userEdad" value="20">
                                 </div>
                                 
@@ -431,9 +629,9 @@
 
                         <!-- Botón de cerrar sesión -->
                         <div class="d-grid">
-                            <a class="btn btn-outline-danger" href="/frontend/src/pages/Autenticación/login.html" role="button" aria-label="Cerrar sesión">
-                                <i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i> Cerrar Sesión
-                            </a>
+                            <button class="btn btn-outline-danger" id="logoutProfileBtn">
+                                <i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión
+                            </button>
                         </div>
 
                         <!-- Sección de suscripción Premium -->
@@ -493,8 +691,8 @@
     <div class="modal fade transaction-detail-modal" id="viewTransactionModal" tabindex="-1" aria-labelledby="viewTransactionModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="transaction-detail-header">
-                    <h5 class="modal-title mb-0" id="viewTransactionModalLabel">Detalles de la Transacción</h5>
+                <div class="transaction-detail-header text-center">
+                    <h5 class="modal-title mb-0" id="viewTransactionModalLabel">DETALLES DE LA TRANSACCIÓN</h5>
                 </div>
                 <div class="transaction-detail-body" id="viewTransactionModalBody">
                     <!-- Los detalles se cargarán aquí -->
@@ -510,8 +708,8 @@
     <div class="modal fade transaction-edit-modal" id="editTransactionModal" tabindex="-1" aria-labelledby="editTransactionModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="transaction-edit-header">
-                    <h5 class="modal-title mb-0" id="editTransactionModalLabel">Editar Transacción</h5>
+                <div class="transaction-edit-header text-center">
+                    <h5 class="modal-title mb-0" id="editTransactionModalLabel">EDITAR TRANSACCIÓN</h5>
                 </div>
                 <div class="transaction-edit-body" id="editTransactionModalBody">
                     <!-- El formulario de edición se cargará aquí -->
@@ -524,28 +722,112 @@
         </div>
     </div>
 
+    <!-- Modal para personalizar categorías -->
+    <div class="modal fade" id="customizeCategoriesModal" tabindex="-1" aria-labelledby="customizeCategoriesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="customizeCategoriesModalLabel">
+                        <i class="bi bi-sliders me-2"></i>Personalizar Categorías
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs" id="customizeTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="new-category-tab" data-bs-toggle="tab" data-bs-target="#new-category" type="button" role="tab" aria-controls="new-category" aria-selected="true">
+                                Nueva Categoría
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="new-subcategory-tab" data-bs-toggle="tab" data-bs-target="#new-subcategory" type="button" role="tab" aria-controls="new-subcategory" aria-selected="false">
+                                Nueva Subcategoría
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="manage-categories-tab" data-bs-toggle="tab" data-bs-target="#manage-categories" type="button" role="tab" aria-controls="manage-categories" aria-selected="false">
+                                Gestionar Categorías
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content mt-3" id="customizeTabsContent">
+                        <!-- Pestaña Nueva Categoría -->
+                        <div class="tab-pane fade show active" id="new-category" role="tabpanel" aria-labelledby="new-category-tab">
+                            <div class="mb-3">
+                                <label for="newCategoryName" class="form-label">Nombre de la categoría</label>
+                                <input type="text" class="form-control" id="newCategoryName" placeholder="Ej: Mascotas, Viajes, etc.">
+                            </div>
+                            <div class="mb-3">
+                                <label for="newCategoryIcon" class="form-label">Selecciona un icono</label>
+                                <select class="form-select" id="newCategoryIcon">
+                                    <option value="bi-tag">Etiqueta</option>
+                                    <option value="bi-heart">Corazón</option>
+                                    <option value="bi-star">Estrella</option>
+                                    <option value="bi-gift">Regalo</option>
+                                    <option value="bi-phone">Teléfono</option>
+                                    <option value="bi-laptop">Laptop</option>
+                                    <option value="bi-camera">Cámara</option>
+                                    <option value="bi-music-note">Música</option>
+                                    <option value="bi-bookmark">Marcador</option>
+                                    <option value="bi-flag">Bandera</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-success" id="addNewCategoryBtn">
+                                <i class="bi bi-plus-circle me-2"></i>Agregar Categoría
+                            </button>
+                        </div>
+                        
+                        <!-- Pestaña Nueva Subcategoría -->
+                        <div class="tab-pane fade" id="new-subcategory" role="tabpanel" aria-labelledby="new-subcategory-tab">
+                            <div class="mb-3">
+                                <label for="parentCategory" class="form-label">Categoría padre</label>
+                                <select class="form-select" id="parentCategory">
+                                    <!-- Las opciones se llenarán dinámicamente -->
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="newSubcategoryName" class="form-label">Nombre de la subcategoría</label>
+                                <input type="text" class="form-control" id="newSubcategoryName" placeholder="Ej: Comida para mascotas, Vuelos, etc.">
+                            </div>
+                            <div class="mb-3">
+                                <label for="newSubcategoryIcon" class="form-label">Selecciona un icono</label>
+                                <select class="form-select" id="newSubcategoryIcon">
+                                    <option value="bi-tag">Etiqueta</option>
+                                    <option value="bi-heart">Corazón</option>
+                                    <option value="bi-star">Estrella</option>
+                                    <option value="bi-gift">Regalo</option>
+                                    <option value="bi-phone">Teléfono </option>
+                                    <option value="bi-laptop">Laptop</option>
+                                    <option value="bi-camera">Cámara</option>
+                                    <option value="bi-music-note">Música</option>
+                                    <option value="bi-bookmark">Marcador</option>
+                                    <option value="bi-flag">Bandera</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-success" id="addNewSubcategoryBtn">
+                                <i class="bi bi-plus-circle me-2"></i>Agregar Subcategoría
+                            </button>
+                        </div>
+                        
+                        <!-- Pestaña Gestionar Categorías -->
+                        <div class="tab-pane fade" id="manage-categories" role="tabpanel" aria-labelledby="manage-categories-tab">
+                            <div id="customCategoriesList">
+                                <!-- Las categorías personalizadas se mostrarán aquí -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
-     <script>
-// ...otros scripts...
-document.getElementById('logoutBtn').addEventListener('click', function() {
-    // Aquí puedes limpiar el almacenamiento local/session si usas tokens
-    // localStorage.removeItem('token');
-    window.location.href = '/frontend/src/pages/Autenticación/login.html';
-});
-</script>
-
-<script>
-// Obtener el nombre del usuario desde localStorage
-const nombreUsuario = localStorage.getItem('nombreUsuario') || 'Usuario';
-// Cambiar el nombre en la topbar
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelector('#main-title .text-gradient').textContent = nombreUsuario;
-    // Si quieres cambiar otros lugares, hazlo aquí también
-});
-</script>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/frontend/src/pages/Usuario/usuario.js"></script>
+    <script src="usuarios.js"></script>
 </body>
 </html>

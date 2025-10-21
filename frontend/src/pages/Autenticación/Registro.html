@@ -83,23 +83,34 @@
                 <form>
                 <div class="mb-3">
                     <label for="username" class="form-label">Nombres</label>
-                    <input type="text" class="form-control" id="nombre" placeholder="Ejm. Martín Alberto">
+                    <input type="text" class="form-control" id="nombre" placeholder="Nombres completos" required>
                 </div>
 
                 <div class="mb-3">
-                    <label for="username" class="form-label">Apellidos</label>
-                    <input type="text" class="form-control" id="apellido" placeholder="Ejm. Vizcarra Cornejo">
+                <label class="form-label">Apellidos</label>
+                <div class="two-cols">
+                    <input type="text" class="form-control" id="apellido-paterno" placeholder="Apellido paterno" required>
+                    <input type="text" class="form-control" id="apellido-materno" placeholder="Apellido materno" required>
+                </div>
+                </div>
+
+                <div class="mb-3">
+                <label class="form-label">Fecha de Nacimiento</label>
+                <div class="two-cols">
+                    <input type="date" class="form-control" id="fecha-nacimiento" placeholder="DD/MM/AAAA" required>
+                    <input type="number" class="form-control" id="edad" placeholder="Edad" min="0" max="150" readonly>
+                </div>
                 </div>
                 
                 <div class="mb-3">
                     <label for="email" class="form-label">Correo electrónico</label>
-                    <input type="email" class="form-control" id="email" placeholder="Ejm. utepino@gmail.com">
+                    <input type="email" class="form-control" id="email" placeholder="Ejm. utepino@gmail.com" required>
                 </div>
                 
                 <div class="mb-3">
                     <label for="password" class="form-label">Contraseña</label>
                     <div class="password-container">
-                        <input type="password" class="form-control" id="contrasena" placeholder="**********">
+                        <input type="password" class="form-control" id="contrasena" placeholder="**********" required>
                         <button type="button" class="password-toggle" id="togglePassword">
                             <i class="bi bi-eye"></i>
                         </button>
@@ -109,7 +120,7 @@
                 <div class="mb-3">
                     <label for="password" class="form-label">Confirmar Contraseña</label>
                     <div class="password-container">
-                        <input type="password" class="form-control" id="confirmarContrasena" placeholder="**********">
+                        <input type="password" class="form-control" id="confirmarContrasena" placeholder="**********" required>
                         <button type="button" class="password-toggle" id="toggleConfirmPassword">
                             <i class="bi bi-eye"></i>
                         </button>
@@ -174,36 +185,25 @@
         </div>
     </footer>
 
-    <!-- JavaScript para conectar con el API -->
 <script>
-document.querySelector('form').addEventListener('submit', async (e) => {
-    e.preventDefault();
+const fechaInput = document.getElementById('fecha-nacimiento');
+const edadInput = document.getElementById('edad');
 
-    const data = {
-        nombre: document.getElementById('nombre').value,
-        apellido: document.getElementById('apellido').value,
-        email: document.getElementById('email').value,
-        contrasena: document.getElementById('contrasena').value,
-        confirmarContrasena: document.getElementById('confirmarContrasena').value
-        
-    };
+function calcularEdad(fechaValue) {
+    if (!fechaValue) { edadInput.value = ''; return; }
+    const nacimiento = new Date(fechaValue); // fechaValue viene en formato yyyy-mm-dd
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - nacimiento.getFullYear();
+    const mesDiff = hoy.getMonth() - nacimiento.getMonth();
+    if (mesDiff < 0 || (mesDiff === 0 && hoy.getDate() < nacimiento.getDate())) edad--;
+    if (isNaN(edad) || edad < 0) { edadInput.value = ''; return; }
+    edadInput.value = edad;
+}
 
-    try {
-        const res = await fetch('http://localhost:8080/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-        });
-
-        const msg = await res.text();
-        alert(msg);
-
-        if (res.ok) {
-        window.location.href = 'login.html';
-        }
-    } catch (err) {
-        alert('Error de red: ' + err);
-    }
+// Actualiza al cambiar la fecha y al cargar si ya hay valor
+fechaInput.addEventListener('change', (e) => calcularEdad(e.target.value));
+window.addEventListener('DOMContentLoaded', () => {
+    if (fechaInput.value) calcularEdad(fechaInput.value);
 });
 
 // Toggle para mostrar/ocultar contraseñas

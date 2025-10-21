@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinLi - Iniciar Sesión</title>
+    <title>FinLi - Recuperar Contraseña</title>
     <link rel="icon" href="/frontend/public/img/Logo/LogoFinLi.png">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -62,7 +62,7 @@
             </ul>
             
             <div class="d-flex">
-            <a href="Registro.html" class="btn btn-custom">Registrarse</a>
+            <a href="login.html" class="btn btn-custom">Iniciar Sesión</a>
             </div>
         </div>
         </div>
@@ -77,17 +77,25 @@
                 <div class="logo-header">
                 <img src="/frontend/public/img/Logo/LogoFinLi.png" alt="Logo FinLi" width="100" height="100">
                 <h1>FinLi</h1>
-                <p>INICIAR SESIÓN</p>
+                <p>NUEVA CONTRASEÑA</p>
+                <!-- Temporizador agregado aquí -->
+                <div class="timer-container">
+                    <div class="timer" id="countdown">El código expira en <span id="time">30</span> segundos</div>
+                    <a class="resend-link" id="resendCode">Reenviar código</a>
+                </div>
                 </div>
                 
                 <form>
                 <div class="mb-3">
-                    <label for="email" class="form-label">Correo electrónico</label>
+                    <label for="email" class="form-label">Introduzca su correo electrónico</label>
                     <input type="email" class="form-control" id="email" placeholder="Ejm. utepino@gmail.com" required>
                 </div>
-                
                 <div class="mb-3">
-                    <label for="password" class="form-label">Contraseña</label>
+                    <label for="recuperacion" class="form-label">Código de Recuperación</label>
+                    <input type="recuperacion" class="form-control" id="recuperacion" placeholder="XXX-XXX" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Nueva Contraseña</label>
                     <div class="password-container">
                         <input type="password" class="form-control" id="contrasena" placeholder="**********" required>
                         <button type="button" class="password-toggle" id="togglePassword">
@@ -95,13 +103,21 @@
                         </button>
                     </div>
                 </div>
-                
-                <a href="RecuperarContra.html" class="login-link">¿Olvidaste tu contraseña?</a>
-                
-                <button type="submit" class="btn btn-custom mt-4">Enviar</button>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Confirmar Contraseña</label>
+                    <div class="password-container">
+                        <input type="password" class="form-control" id="confirmarContrasena" placeholder="**********" required>
+                        <button type="button" class="password-toggle" id="toggleConfirmPassword">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-custom mt-3">Actualizar Contraseña</button>
                 
                 <div class="login-redirect">
-                ¿Aún no tienes una cuenta? <a href="Registro.html" class="login-link">Registrarse aqui</a>
+                    <a href="/frontend/src/pages/Inicio/inicio.html" class="login-link">Regresar al Inicio</a>
                 </div>
             </div>
             </div>
@@ -150,11 +166,13 @@
         <p class="copyright">© 2025 FinLi. Todos los derechos reservados.</p>
         </div>
     </footer>
-
+</body>
 <script>
-// Toggle para mostrar/ocultar contraseña
+// Toggle para mostrar/ocultar contraseñas
 const togglePassword = document.getElementById('togglePassword');
 const passwordInput = document.getElementById('contrasena');
+const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+const confirmPasswordInput = document.getElementById('confirmarContrasena');
 
 togglePassword.addEventListener('click', function() {
     const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -163,6 +181,71 @@ togglePassword.addEventListener('click', function() {
     // Cambiar el icono
     this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
 });
+
+toggleConfirmPassword.addEventListener('click', function() {
+    const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    confirmPasswordInput.setAttribute('type', type);
+    
+    // Cambiar el icono
+    this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+});
+
+// Temporizador de 30 segundos 
+let timeLeft = 60;
+let countdownInterval = null;
+
+const timerElement = document.getElementById('time');
+const countdownElement = document.getElementById('countdown');
+const resendLink = document.getElementById('resendCode');
+
+if (!timerElement || !countdownElement || !resendLink) {
+  console.warn('Faltan elementos en el DOM: verifica #time, #countdown y #resendCode');
+} else {
+  // Actualiza la UI con el estado actual del temporizador
+  function render() {
+    timerElement.textContent = timeLeft;
+    countdownElement.textContent = timeLeft > 0
+      ? `El código expira en ${timeLeft} segundos`
+      : 'El código ha expirado';
+    // añadir o quitar clase de expirado según corresponda
+    countdownElement.classList.toggle('expired', timeLeft <= 0);
+    // mostrar/ocultar el link de reenvío
+    resendLink.style.display = timeLeft <= 0 ? 'inline' : 'none';
+  }
+
+  // Inicia (o reinicia) el temporizador. Si ya hay un intervalo, lo limpia.
+  function startTimer(initialSeconds = 60) {
+    clearInterval(countdownInterval);
+    timeLeft = initialSeconds;
+    render(); // actualizar inmediatamente para evitar 1s de delay
+
+    countdownInterval = setInterval(() => {
+      timeLeft--;
+      render();
+
+      if (timeLeft <= 0) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+    }, 1000);
+  }
+
+  // Función simulada para reenviar código (reemplaza con tu llamada real)
+  function resendCodeAction() {
+    console.log('Solicitud de reenvío de código enviada');
+  }
+
+  // Listener único para reenviar
+  resendLink.addEventListener('click', function (evt) {
+    evt.preventDefault();
+    resendCodeAction();
+    // reiniciar temporizador a 30s y ocultar link
+    startTimer(60);
+  });
+
+  // Arrancar al cargar la página
+  startTimer(60);
+}
+
 </script>
-</body>
 </html>

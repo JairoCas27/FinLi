@@ -364,6 +364,15 @@ a{
     font-family: 'Footlight MT Light', sans-serif; /* fuente consistente */
 }
 
+.two-cols { 
+    display:flex; 
+    gap:0.5rem; 
+}
+
+.two-cols input { 
+    flex:1; 
+}
+
 /* Estilos para el contenedor de contraseña */
 .password-container {
     position: relative;
@@ -384,4 +393,108 @@ a{
     cursor: pointer;
     padding: 5px;
     z-index: 2;
+}
+
+
+/* ---ESTILOS RECUPERAR CONTRASEÑA--- */
+/* Estilos para la notificación */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    background-color: #0ea46f;
+    color: #d7ffe3;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1050;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    animation: slideIn 0.3s ease-out;
+    max-width: 350px;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.notification.show {
+    display: flex;
+}
+
+.notification-icon {
+    font-size: 1rem;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+/* Estilos para el botón de carga */
+.btn-loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    border: 2px solid transparent;
+    border-top-color: #000000;
+    border-radius: 50%;
+    animation: loading-spinner 1s ease infinite;
+}
+
+@keyframes loading-spinner {
+    from {
+        transform: rotate(0turn);
+    }
+    to {
+        transform: rotate(1turn);
+    }
+}
+
+/* ---ESTILOS DE NUEVA CONTRASEÑA--- */
+.timer {
+    font-size: 1rem;
+    color: #0ea46f;
+}
+
+.timer.expired {
+    color: #e74c3c;
+}
+
+.resend-link {
+    display: none;
+    color: #0ea46f;
+    cursor: pointer;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.resend-link:hover {
+    text-decoration: underline;
 }
