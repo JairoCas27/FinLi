@@ -19,16 +19,18 @@
                     <img src="/frontend/public/img/Logo/LogoFinLi.png" alt="Logo" width="44" height="44">
                     <div>
                         <h3>FinLi</h3>
-                        <div class="text-muted" style="font-size:.85rem">Panel de usuario</div>
+                        <div class="text-muted" style="font-size:.80rem">Seguimiento Financiero</div>
                     </div>
                 </div>
 
                 <!-- Navegación principal -->
                 <nav class="mt-3">
                     <a class="nav-link active" data-section="inicio"><i class="bi bi-house-door-fill"></i> Inicio</a>
-                    <a class="nav-link" data-section="pagos"><i class="bi bi-coin"></i> Pagos</a>
+                    <a class="nav-link" data-section="ingresos"><i class="bi bi-cash-coin"></i> Metodos de Pago</a>
+                    <a class="nav-link" data-section="pagos"><i class="bi bi-calendar-plus-fill"></i> Agenda de Pagos</a>
                     <a class="nav-link" data-section="informes"><i class="bi bi-graph-up-arrow"></i> Informes</a>
-                    <a class="nav-link" data-section="perfil"><i class="bi bi-person-fill"></i> Perfil</a>
+                    <a class="nav-link" data-section="notificaciones"><i class="bi bi-bell-fill"></i> Notificaciones</a>
+                    <a class="nav-link" data-section="perfil"><i class="bi bi-person-bounding-box"></i> Perfil</a>
                 </nav>
 
                 <div class="mt-4">
@@ -55,7 +57,6 @@
                             <button class="btn btn-sm btn-light position-relative dropdown-toggle" type="button" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-bell"></i>
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
-                                0
                                 </span>
                             </button>
                             <ul class="dropdown-menu dropdown-notifications dropdown-menu-end" aria-labelledby="notificationsDropdown">
@@ -63,7 +64,7 @@
                                     <h6 class="dropdown-header">Notificaciones</h6>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-center small" href="#">Ver todas las notificaciones</a></li>
+                                <li><a class="dropdown-item text-center small" href="#" onclick="showSection('notificaciones')">Ver todas las notificaciones</a></li>
                             </ul>
                         </div>
                         
@@ -87,50 +88,68 @@
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
                                 <div class="balance-label">Balance Total</div>
-                                <div class="balance-amount">S/. 0.00</div>
-                                <div class="balance-label mt-2">+ S/. 0.00 este mes</div>
+                                <div class="balance-amount" id="mainBalanceAmount">S/. 0.00</div>
+                                <div class="balance-label mt-2" id="monthNetAmount">+ S/. 0.00 este mes</div>
                             </div>
                             <div class="text-end">
                                 <div class="balance-label">Ingresos</div>
-                                <div class="fs-4 fw-bold">S/. 0.00</div>
+                                <div class="fs-4 fw-bold" id="mainIncomeAmount">S/. 0.00</div>
                                 <div class="balance-label mt-2">Gastos</div>
-                                <div class="fs-4 fw-bold">S/. 0.00</div>
+                                <div class="fs-4 fw-bold" id="mainExpenseAmount">S/. 0.00</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- AÑADIR TRANSACCIÓN-->
                     <div class="card-stat fade-in mb-4">
+                        <!-- Registro de Nuevos Ingresos -->
                         <h5 class="d-flex align-items-center gap-2 mb-3">
-                            <i class="bi bi-plus-circle-dotted"></i> Añadir Transacción
+                            <i class="bi bi-plus-circle"></i> Registrar Nuevo Ingreso
+                        </h5>
+                        <div class="transaction-form-grid">
+                            <div class="transaction-form-item">
+                                <label class="form-label fw-semibold">Medio de Pago</label>
+                                <select class="form-select" id="incomePaymentMethod">
+                                    <option value="">Selecciona el medio de pago</option>
+                                </select>
+                            </div>
+                            <div class="transaction-form-item">
+                                <label class="form-label fw-semibold">Monto S/.</label>
+                                <input type="number" class="form-control" id="incomeAmount" placeholder="0.00" step="0.01">
+                            </div>
+                            <div class="transaction-form-item">
+                                <label class="form-label fw-semibold">Descripción</label>
+                                <input type="text" class="form-control" id="incomeDescription" placeholder="Descripción del ingreso">
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end mt-3">
+                            <!-- Botón principal para agregar un ingreso -->
+                            <button class="btn btn-primary" id="addIncomeBtnInicio">
+                                <i class="bi bi-plus-circle me-2"></i> Agregar Ingreso
+                            </button>
+                        </div>
+
+                        <div class="section-divider"></div>
+
+                        <h5 class="d-flex align-items-center gap-2 mb-3">
+                            <i class="bi bi-plus-circle me-2"></i> Añadir Transacción
                         </h5>
                         
                         <!-- Fila de tipo, monto, fecha y hora -->
                         <div class="transaction-form-grid">
                             <div class="transaction-form-item">
-                                <label class="form-label fw-semibold">Tipo de Movimiento</label>
-                                <select class="form-select" id="transactionType">
-                                    <option value="seleccion">Selecciona el tipo...</option>
-                                    <option value="gasto">Gasto</option>
-                                    <option value="ingreso">Ingreso</option>
-                                </select>
-                            </div>
-                            <div class="transaction-form-item">
                                 <label class="form-label fw-semibold">Métodos de pago</label>
                                 <select class="form-select" id="paymentMethod">
                                     <option value="seleccion">Selecciona un metodo...</option>
-                                    <option value="efectivo">Efectivo</option>
-                                    <option value="yape">Yape</option>
-                                    <option value="plin">Plin</option>
-                                    <option value="credito">Tarjeta de Crédito</option>
-                                    <option value="debito">Tarjeta de Débito</option>
-                                    <option value="paypal">Paypal</option>
-                                    <option value="transferencia">Transferencia Bancaria</option>
                                 </select>
                             </div>
                             <div class="transaction-form-item">
                                 <label class="form-label fw-semibold">Monto S/. </label>
                                 <input type="number" class="form-control" id="transactionAmount" placeholder="0.00" step="0.01">
+                            </div>
+                            <div class="transaction-form-item">
+                                <label class="form-label fw-semibold">Fecha y Hora</label>
+                                <input type="datetime-local" class="form-control" id="transactionDateTime">
                             </div>
                         </div>
 
@@ -146,12 +165,8 @@
                                 <input type="file" id="imageInput" accept="image/*" style="display: none;">
                             </div>
                             <div class="transaction-form-item">
-                                <label class="form-label fw-semibold">Fecha y Hora</label>
-                                <input type="datetime-local" class="form-control" id="transactionDateTime">
-                            </div>
-                            <div class="transaction-form-item">
-                                <label class="form-label fw-semibold">Descripción</label>
-                                <input type="text" class="form-control" id="transactionDescription" placeholder="Descripción de la transacción...">
+                                <label class="form-label fw-semibold">Etiqueta</label>
+                                <input type="text" class="form-control" id="transactionDescription" placeholder="Etiqueta de la transacción...">
                             </div>
                         </div>
 
@@ -215,6 +230,39 @@
                     <!-- TABLA DE TRANSACCIONES -->
                     <div class="table-card fade-in">
                         <h5 class="d-flex align-items-center gap-2 mb-3">
+                            <i class="bi bi-piggy-bank"></i> Tabla de Ingresos
+                        </h5>
+                        <!-- Tabla de ingresos -->
+                        <div class="table-responsive mt-4">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Medio de Pago</th>
+                                        <th>Monto</th>
+                                        <th>Descripción</th>
+                                        <th>Tipo</th>
+                                        <th class="text-end">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="incomeTable">
+                                    <!-- Mensaje inicial para tabla vacía -->
+                                    <tr id="emptyIncomeMessage" style="display: none;">
+                                        <td colspan="6" class="text-center py-4">
+                                            <div class="empty-state">
+                                                <i class="bi bi-cash-coin"></i>
+                                                <div>No hay ingresos registradas</div>
+                                                <small class="text-muted">Agrega tu primer ingreso usando el formulario</small>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="section-divider"></div>
+
+                        <h5 class="d-flex align-items-center gap-2 mb-3">
                             <i class="bi bi-piggy-bank"></i> Tabla de Transacciones
                         </h5>
                         <div class="container">
@@ -249,7 +297,7 @@
                                 <thead>
                                     <tr>
                                         <th>Categoría</th>
-                                        <th>Tipo</th>
+                                        <th>Metodo</th>
                                         <th>Importe</th>
                                         <th>Imagen</th>
                                         <th>Fecha y Hora</th>
@@ -258,6 +306,126 @@
                                 </thead>
                                 <tbody id="transactionsTableBody">
                                     <!-- Las transacciones se cargarán dinámicamente aquí -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECCIÓN INGRESOS -->
+                <section id="ingresos" class="content-section">
+                    <!-- Gestión de Medios de Pago -->
+                    <div class="card-stat fade-in mb-4">
+                        <h5 class="d-flex align-items-center gap-2 mb-3">
+                            <i class="bi bi-wallet2"></i> Gestión de Medios de Pago
+                        </h5>
+                        
+                        <!-- Formulario para agregar medio de pago -->
+                        <div class="transaction-form-grid">
+                            <div class="transaction-form-item">
+                                <label class="form-label fw-semibold">Nombre del Medio de Pago</label>
+                                <input type="text" class="form-control" id="paymentMethodName" placeholder="Ej: Yape, BCP, etc.">
+                            </div>
+                            <div class="transaction-form-item">
+                                <label class="form-label fw-semibold">Monto Inicial S/.</label>
+                                <input type="number" class="form-control" id="initialAmount" placeholder="0.00" step="0.01">
+                            </div>
+                            <div class="transaction-form-item">
+                                <label class="form-label fw-semibold">&nbsp;</label>
+                                <button class="btn btn-primary" id="addPaymentMethodBtn">Agregar Medio de Pago</button>
+                            </div>
+                        </div>
+
+                        <div class="section-divider"></div>
+
+                        <!-- fila que contiene gráfica -->
+                        <div class="row align-items-center">
+                            <div class="col-12 col-md-6 order-1 order-md-1">
+                            <div class="chart-container" style="height: 350px;">
+                                <canvas id="paymentMethodsChart"></canvas>
+                            </div>
+                            </div>
+                        
+                            <!-- Total -->
+                            <div class="col-12 col-md-6 order-2 order-md-2 d-flex justify-content-center justify-content-md-end">
+                            <div class="card-stat text-center">
+                                <h6 class="d-flex align-items-center gap-2 justify-content-center mb-3">
+                                <i class="bi bi-cash-stack text-success"></i> Total de Ingresos
+                                </h6>
+                                <div class="fs-3 fw-bold text-success" id="totalIncomeAmount">S/. 0.00</div>
+                                <small class="text-muted">Suma de todos los ingresos registrados</small>
+                            </div>
+                            </div>
+                        </div>
+
+                        <div class="section-divider"></div>
+
+                        <!-- Tabla de medios de pago -->
+                        <div class="table-responsive mt-4">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Medio de Pago</th>
+                                        <th>Saldo Actual</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="paymentMethodsTable">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Transferencias entre Medios de Pago -->
+                    <div class="card-stat fade-in mb-4">
+                        <h5 class="d-flex align-items-center gap-2 mb-3">
+                            <i class="bi bi-arrow-left-right"></i> Transferencias entre Medios de Pago
+                        </h5>
+                        <div class="transaction-form-grid">
+                            <div class="transaction-form-item">
+                                <label class="form-label fw-semibold">Desde</label>
+                                <select class="form-select" id="transferFrom">
+                                    <option value="">Selecciona el medio de pago</option>
+                                </select>
+                            </div>
+                            <div class="transaction-form-item">
+                                <label class="form-label fw-semibold">Hacia</label>
+                                <select class="form-select" id="transferTo">
+                                    <option value="">Selecciona el medio de pago</option>
+                                </select>
+                            </div>
+                            <div class="transaction-form-item">
+                                <label class="form-label fw-semibold">Monto S/.</label>
+                                <input type="number" class="form-control" id="transferAmount" placeholder="0.00" step="0.01">
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-3">
+                            <!-- Botón principal para realizar transferencia -->
+                            <button class="btn btn-primary" id="makeTransferBtn">
+                                <i class="bi bi-plus-circle me-2"></i> Realizar Transferencia
+                            </button>
+                        </div>
+
+                        <div class="section-divider"></div>
+
+                        <h5 class="d-flex align-items-center gap-2 mb-3">
+                            <i class="bi bi-piggy-bank"></i> Tabla de Transferencias
+                        </h5>
+
+                        <!-- Tabla de transferencias -->
+                        <div class="table-responsive mt-4">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Desde</th>
+                                        <th>Hacia</th>
+                                        <th>Monto</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transfersTable">
                                 </tbody>
                             </table>
                         </div>
@@ -279,11 +447,9 @@
                                 <input type="text" class="form-control" id="NamePago" placeholder="Nombre de pago...">
                             </div>
                             <div class="transaction-form-item">
-                                <label class="form-label fw-semibold">Tipo de Movimiento</label>
-                                <select class="form-select" id="transactionTypePagos">
-                                    <option value="seleccion">Selecciona el tipo...</option>
-                                    <option value="gasto">Gasto</option>
-                                    <option value="ingreso">Ingreso</option>
+                                <label class="form-label fw-semibold">Métodos de pago</label>
+                                <select class="form-select" id="paymentMethodPagos">
+                                    <option value="seleccion">Selecciona un metodo...</option>
                                 </select>
                             </div>
                             <div class="transaction-form-item">
@@ -302,19 +468,6 @@
                                     </div>
                                 </div>
                                 <input type="file" id="imageInputPagos" accept="image/*" style="display: none;">
-                            </div>
-                            <div class="transaction-form-item">
-                                <label class="form-label fw-semibold">Métodos de pago</label>
-                                <select class="form-select" id="paymentMethodPagos">
-                                    <option value="seleccion">Selecciona un metodo...</option>
-                                    <option value="efectivo">Efectivo</option>
-                                    <option value="yape">Yape</option>
-                                    <option value="plin">Plin</option>
-                                    <option value="credito">Tarjeta de Crédito</option>
-                                    <option value="debito">Tarjeta de Débito</option>
-                                    <option value="paypal">Paypal</option>
-                                    <option value="transferencia">Transferencia Bancaria</option>
-                                </select>
                             </div>
                             <div class="transaction-form-item">
                                 <label class="form-label fw-semibold">Monto S/. </label>
@@ -436,33 +589,55 @@
                         
                         <!-- Filtros -->
                         <div class="filters-container row mb-4 d-none">
-                            <div class="col-md-4" id="informes-period-filter">
-                                <!-- Filtro de periodo se cargará aquí -->
+                            <!-- Filtro de Periodo -->
+                            <div class="col-md-4">
+                                <div class="filter-group">
+                                    <div class="filter-label">Periodo</div>
+                                    <div class="btn-group w-100" role="group" aria-label="Periodo">
+                                        <button class="btn btn-sm btn-outline-success active" data-period="mensual">Mensual</button>
+                                        <button class="btn btn-sm btn-outline-success" data-period="quincenal">Quincenal</button>
+                                        <button class="btn btn-sm btn-outline-success" data-period="semanal">Semanal</button>
+                                        <button class="btn btn-sm btn-outline-secondary" data-filter="limpiar">Limpiar</button>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-8" id="informes-category-filter">
-                                <!-- Filtro de categoría se cargará aquí -->
+                            
+                            <!-- Filtro de Categorías -->
+                            <div class="col-md-8">
+                                <div class="filter-group">
+                                    <div class="filter-label">Filtrar por Categorías</div>
+                                    <div class="btn-group w-100" role="group" aria-label="FiltroCategorias">
+                                        <button class="btn btn-sm btn-outline-success active" data-filter="categorias">Categorías</button>
+                                        <button class="btn btn-sm btn-outline-success" data-filter="subcategorias">Subcategorías</button>
+                                        <button class="btn btn-sm btn-outline-secondary" data-filter="limpiar-categorias">Limpiar</button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Contenedor para categorías y subcategorías -->
+                                <div id="informes-category-filter-container" class="mt-3">
+                                    <!-- Se cargará dinámicamente -->
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Charts -->
+                    <!-- Charts (MANTENER ESTA PARTE IGUAL) -->
                     <div class="row">
                         <!-- Ingresos vs. Gastos -->
-                        <div class="col-lg-6 mb-4">
+                        <div class="col-lg-12 mb-4">
                             <div class="card-report">
                                 <h5 class="d-flex justify-content-center gap-2 text-warning">
                                     <i class="bi bi-bar-chart-fill"></i> Ingresos vs. Gastos
                                 </h5>
                                 <p class="muted mb-3">Comparativa mensual de ingresos y gastos</p>
                                 <div class="chart-container">
-                                    <!-- Canvas que usará Chart.js -->
                                     <canvas id="incomeExpensesChart"></canvas>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Distribución de Gastos por Categoría -->
-                        <div class="col-lg-6 mb-4">
+                        <div class="col-lg-12 mb-4">
                             <div class="card-report">
                                 <h5 class="d-flex justify-content-center gap-2 text-info">
                                     <i class="bi bi-pie-chart-fill"></i> Distribución de Gastos por Categoría
@@ -493,11 +668,70 @@
                             <div class="filter-group">
                                 <div class="filter-label">Exportar</div>
                                 <div class="d-flex gap-2">
-                                    <!-- Botones para exportar reportes. Añadir handlers para generar PDF/CSV -->
                                     <button class="btn btn-sm btn-outline-primary flex-fill"><i class="bi bi-filetype-pdf me-1"></i> PDF</button>
                                     <button class="btn btn-sm btn-outline-success flex-fill"><i class="bi bi-filetype-xls me-1"></i> EXCEL</button>
                                     <button class="btn btn-sm btn-outline-success flex-fill"><i class="bi bi-filetype-jpg me-1"></i> JPG</button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECCIÓN NOTIFICACIONES -->
+                <section id="notificaciones" class="content-section">
+                    <div class="card-stat fade-in mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="d-flex align-items-center gap-2 mb-0">
+                                <i class="bi bi-bell-fill"></i> Mis Notificaciones
+                            </h5>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-primary" id="markAllReadBtn">
+                                    <i class="bi bi-check-all me-1"></i> Marcar todas como leídas
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" id="clearAllNotificationsBtn">
+                                    <i class="bi bi-trash me-1"></i> Limpiar todas
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="section-divider"></div>
+
+                        <!-- Filtros de notificaciones -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="filter-group">
+                                    <div class="filter-label">Filtrar por tipo</div>
+                                    <select class="form-select" id="notificationTypeFilter">
+                                        <option value="all">Todas las notificaciones</option>
+                                        <option value="success">Éxito</option>
+                                        <option value="info">Información</option>
+                                        <option value="warning">Advertencia</option>
+                                        <option value="error">Error</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="filter-group">
+                                    <div class="filter-label">Filtrar por estado</div>
+                                    <select class="form-select" id="notificationStatusFilter">
+                                        <option value="all">Todas</option>
+                                        <option value="unread">No leídas</option>
+                                        <option value="read">Leídas</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lista de notificaciones -->
+                        <div id="notifications-list-container">
+                            <div class="empty-state" id="empty-notifications" style="display: none;">
+                                <i class="bi bi-bell-slash"></i>
+                                <div>No hay notificaciones</div>
+                                <small class="text-muted">Tus notificaciones aparecerán aquí</small>
+                            </div>
+                            
+                            <div class="notifications-list" id="notifications-list">
+                                <!-- Las notificaciones se cargarán aquí dinámicamente -->
                             </div>
                         </div>
                     </div>
@@ -716,7 +950,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="saveTransactionBtn">Guardar Cambios</button>
+                    <button type="button" class="btn btn-success" id="saveTransactionBtn">Guardar Cambios</button>
                 </div>
             </div>
         </div>
@@ -823,6 +1057,11 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Toast Container para notificaciones emergentes -->
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        <!-- Los toasts se insertarán aquí dinámicamente -->
     </div>
 
     <!-- Scripts -->
