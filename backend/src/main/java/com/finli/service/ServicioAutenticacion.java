@@ -5,14 +5,24 @@ import com.finli.dto.UsuarioResponse;
 import com.finli.model.Usuario;
 import com.finli.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import com.google.common.base.Preconditions;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class ServicioAutenticacion {
 
     private final UsuarioRepository repo;
+
+    /* ========== NUEVO MÉTODO QUE TE FALTABA ========== */
+    public Optional<Usuario> buscarPorCorreo(String correo) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(correo), "El correo no puede estar vacío");
+        return repo.findByCorreo(correo);
+    }
 
     public Usuario registrar(RegistroRequest dto) {
         if (!dto.getContrasena().equals(dto.getConfirmarContrasena())) {
@@ -42,13 +52,13 @@ public class ServicioAutenticacion {
     }
 
     public UsuarioResponse toResponse(Usuario u) {
-    return UsuarioResponse.builder()
-            .id(u.getId())
-            .email(u.getCorreo())
-            .nombre(u.getNombre())
-            .apellidoPaterno(u.getApellidoPaterno())
-            .apellidoMaterno(u.getApellidoMaterno())
-            .edad(u.getEdad())
-            .build();
-}
+        return UsuarioResponse.builder()
+                .id(u.getId())
+                .email(u.getCorreo())
+                .nombre(u.getNombre())
+                .apellidoPaterno(u.getApellidoPaterno())
+                .apellidoMaterno(u.getApellidoMaterno())
+                .edad(u.getEdad())
+                .build();
+    }
 }

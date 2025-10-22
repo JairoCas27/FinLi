@@ -11,6 +11,7 @@ import com.google.common.base.Preconditions;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +26,10 @@ public class CategoriaService {
 
     public List<Subcategoria> obtenerSubcategoriasPorCategoriaYUsuario(Categoria categoria, Usuario usuario) {
         return subcategoriaRepo.findByCategoriaAndUsuario(categoria, usuario);
+    }
+
+    public Optional<Categoria> buscarPorId(Integer id) {
+        return categoriaRepo.findById(id);
     }
 
     public Categoria guardarCategoria(Categoria categoria) {

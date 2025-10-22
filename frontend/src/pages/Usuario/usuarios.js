@@ -40,6 +40,46 @@ document.addEventListener('DOMContentLoaded', () => {
     loadDataFromLocalStorage(); // carga transacciones, etc.
 });
 
+//Cargar categorías al iniciar la página
+loadUserCategories(); // ✅ nuevo
+
+async function loadUserCategories() {
+    const usuario = JSON.parse(localStorage.getItem('usuario'));
+    if (!usuario || !usuario.email) return;
+
+    try {
+        const res = await fetch(`http://localhost:8080/api/categorias?email=${usuario.email}`);
+        const categorias = await res.json();
+
+        // Limpiar categorías previas
+        customCategories = [];
+        customSubcategories = {};
+
+        categorias.forEach(cat => {
+            customCategories.push({
+                name: cat.nombreCategoria.toLowerCase(),
+                label: cat.nombreCategoria,
+                icon: 'bi-tag' // puedes mejorar esto después
+            });
+
+            // Cargar subcategorías
+            fetch(`http://localhost:8080/api/categorias/${cat.idCategoria}/subcategorias?email=${usuario.email}`)
+                .then(res => res.json())
+                .then(subs => {
+                    customSubcategories[cat.nombreCategoria.toLowerCase()] = subs.map(s => ({
+                        name: s.nombreSubcategoria.toLowerCase(),
+                        label: s.nombreSubcategoria,
+                        icon: 'bi-tag'
+                    }));
+                    updateCategoryButtons(); // refrescar botones
+                });
+        });
+
+    } catch (err) {
+        console.error('Error al cargar categorías:', err);
+    }
+}
+
 // Array para notificaciones
 let notifications = [];
 
