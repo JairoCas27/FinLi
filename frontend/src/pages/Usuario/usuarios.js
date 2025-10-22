@@ -42,6 +42,9 @@ let transfers = [];
 let incomeRecords = [];
 let paymentMethodsChart = null;
 
+// ---- VARIABLES GLOBALES PARA PAGOS PROGRAMADOS ----
+let scheduledPayments = [];
+
 // Mapeo de subcategorías por categoría
 const subcategoriesMap = {
     vivienda: [
@@ -77,13 +80,6 @@ const subcategoriesMap = {
         { name: 'restaurantes', icon: 'bi-sina-weibo', label: 'Restaurantes' },
         { name: 'delivery', icon: 'bi-truck', label: 'Comida a Domicilio' },
         { name: 'cafetería', icon: 'bi-cup-hot', label: 'Cafetería' }
-    ],
-    finanzas: [
-        { name: 'deudas', icon: 'bi-wallet2', label: 'Deudas' },
-        { name: 'préstamos', icon: 'bi-bank', label: 'Préstamos' },
-        { name: 'tarjetaCrédito', icon: 'bi-credit-card', label: 'Tarjetas de Crédito' },
-        { name: 'ahorro', icon: 'bi-piggy-bank', label: 'Ahorro' },
-        { name: 'inversión', icon: 'bi-graph-up', label: 'Inversión' }
     ],
     salud: [
         { name: 'médicos', icon: 'bi-heart-pulse', label: 'Médicos' },
@@ -146,6 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadTransfersFromLocalStorage();
     loadIncomeRecordsFromLocalStorage();
     loadCustomCategoriesFromLocalStorage();
+    loadScheduledPaymentsFromLocalStorage();
     
     // INICIALIZAR MEDIOS DE PAGO POR DEFECTO  
     initializeDefaultPaymentMethods();
@@ -227,6 +224,14 @@ function loadIncomeRecordsFromLocalStorage() {
     }
 }
 
+// ---- CARGAR PAGOS PROGRAMADOS DESDE LOCALSTORAGE ----
+function loadScheduledPaymentsFromLocalStorage() {
+    const savedScheduledPayments = localStorage.getItem('finli-scheduled-payments');
+    if (savedScheduledPayments) {
+        scheduledPayments = JSON.parse(savedScheduledPayments);
+    }
+}
+
 // ---- GUARDAR DATOS EN LOCALSTORAGE ----
 function saveTransactionsToLocalStorage() {
     localStorage.setItem('finli-transactions', JSON.stringify(transactions));
@@ -253,6 +258,11 @@ function saveIncomeRecordsToLocalStorage() {
     localStorage.setItem('finli-income-records', JSON.stringify(incomeRecords));
 }
 
+// ---- GUARDAR PAGOS PROGRAMADOS EN LOCALSTORAGE ----
+function saveScheduledPaymentsToLocalStorage() {
+    localStorage.setItem('finli-scheduled-payments', JSON.stringify(scheduledPayments));
+}
+
 // ---- SINCRONIZACIÓN COMPLETA DE DATOS ----
 function syncAllData() {
     // Actualizar balances
@@ -262,7 +272,7 @@ function syncAllData() {
     
     // Actualizar interfaces
     renderTransactions();
-    renderTransactionsPagos();
+    renderScheduledPayments();
     renderPaymentMethods();
     renderIncomeRecords();
     renderTransfers();
@@ -358,6 +368,10 @@ function initializeNavigation() {
                 setTimeout(() => {
                     updateCharts();
                 }, 100);
+            }
+            
+            if (targetSection === 'pagos') {
+                renderScheduledPayments();
             }
         });
     });
@@ -865,6 +879,7 @@ function addTransaction() {
         savePaymentMethodsToLocalStorage();
         renderPaymentMethods();
         updatePaymentMethodsChart();
+        updateAllPaymentMethodSelects();
     }
     
     saveTransactionsToLocalStorage();
@@ -886,6 +901,44 @@ function updateTotalBalance() {
     const balanceAmount = document.querySelector('.balance-amount');
     if (balanceAmount && !balanceAmount.textContent.includes('S/.')) {
         balanceAmount.textContent = `S/. ${totalBalance.toFixed(2)}`;
+    }
+}
+
+// ---- ACTUALIZAR BALANCE GENERAL ----
+function updateBalance() {
+    // Calcular total de ingresos desde incomeRecords
+    let totalIncome = incomeRecords.reduce((sum, income) => sum + income.amount, 0);
+    
+    // Calcular total de gastos desde transactions (solo los que no están cancelados)
+    let totalExpenses = transactions
+        .filter(transaction => transaction.type === 'gasto' && transaction.status !== 'cancelado')
+        .reduce((sum, transaction) => sum + transaction.amount, 0);
+
+    // Calcular balance total (ingresos - gastos)
+    const totalBalance = totalIncome - totalExpenses;
+
+    // Actualizar la tarjeta de balance en la sección de inicio
+    const balanceAmount = document.querySelector('.balance-amount');
+    const incomeElements = document.querySelectorAll('.balance-card .fs-4.fw-bold');
+    
+    if (balanceAmount) {
+        balanceAmount.textContent = `S/. ${totalBalance.toFixed(2)}`;
+    }
+
+    if (incomeElements.length >= 2) {
+        // Ingresos
+        incomeElements[0].textContent = `S/. ${totalIncome.toFixed(2)}`;
+        // Gastos
+        incomeElements[1].textContent = `S/. ${totalExpenses.toFixed(2)}`;
+    }
+
+    // Actualizar también el texto de "este mes"
+    const balanceLabel = document.querySelector('.balance-label.mt-2');
+    if (balanceLabel) {
+        const netChange = totalIncome - totalExpenses;
+        balanceLabel.textContent = netChange >= 0 ? 
+            `+ S/. ${netChange.toFixed(2)} este mes` : 
+            `- S/. ${Math.abs(netChange).toFixed(2)} este mes`;
     }
 }
 
@@ -1116,7 +1169,31 @@ function initializeDefaultPaymentMethods() {
             },
             {
                 id: 4,
+                name: 'PayPal',
+                balance: 0,
+                initialAmount: 0
+            },
+            {
+                id: 5,
                 name: 'BCP',
+                balance: 0,
+                initialAmount: 0
+            },
+            {
+                id: 6,
+                name: 'BBVA',
+                balance: 0,
+                initialAmount: 0
+            },
+            {
+                id: 7,
+                name: 'Credito',
+                balance: 0,
+                initialAmount: 0
+            },
+            {
+                id: 8,
+                name: 'Debito',
                 balance: 0,
                 initialAmount: 0
             }
@@ -1313,7 +1390,7 @@ function initializeTransactionFilters() {
                 
                 // Mostrar el filtro correspondiente
                 showTransactionFilter('pagos', currentPeriod);
-                renderTransactionsPagos();
+                renderScheduledPayments();
             });
         });
     }
@@ -1412,7 +1489,7 @@ function showTransactionFilter(section, period) {
                 if (section === 'inicio') {
                     renderTransactions();
                 } else {
-                    renderTransactionsPagos();
+                    renderScheduledPayments();
                 }
             });
         });
@@ -1570,8 +1647,9 @@ function initializeEventListeners() {
         addTransactionBtn.addEventListener('click', addTransaction);
     }
     
+    // Cambiar de addTransactionPagos a addScheduledPayment
     if (addTransactionBtnPagos) {
-        addTransactionBtnPagos.addEventListener('click', addTransactionPagos);
+        addTransactionBtnPagos.addEventListener('click', addScheduledPayment);
     }
     
     // Agregar ingreso en sección inicio
@@ -1818,20 +1896,91 @@ function renderTransactions() {
     });
 }
 
-// ---- RENDERIZADO DE TRANSACCIONES EN PAGOS ----
-function renderTransactionsPagos() {
+// ---- AGREGAR PAGO PROGRAMADO ----
+function addScheduledPayment() {
+    const nameInput = document.getElementById('NamePago');
+    const amountInput = document.getElementById('transactionAmountPagos');
+    const dateTimeInput = document.getElementById('transactionDateTimePagos');
+    const paymentMethodSelect = document.getElementById('paymentMethodPagos');
+    
+    if (!nameInput || !amountInput || !dateTimeInput || !paymentMethodSelect) {
+        showNotification('Error: Elementos del formulario no encontrados', 'error');
+        return;
+    }
+    
+    const name = nameInput.value.trim();
+    const amount = parseFloat(amountInput.value);
+    const dateTime = dateTimeInput.value;
+    const paymentMethodId = parseInt(paymentMethodSelect.value);
+    
+    if (!name) {
+        showNotification('Por favor ingresa un nombre para el pago', 'error');
+        return;
+    }
+    
+    if (isNaN(amount) || amount <= 0) {
+        showNotification('Por favor ingresa un monto válido mayor a 0', 'error');
+        return;
+    }
+    
+    if (!dateTime) {
+        showNotification('Por favor selecciona fecha y hora', 'error');
+        return;
+    }
+    
+    if (!paymentMethodId || paymentMethodSelect.value === 'seleccion') {
+        showNotification('Por favor selecciona un método de pago', 'error');
+        return;
+    }
+    
+    if (!selectedCategory) {
+        showNotification('Por favor selecciona una categoría', 'error');
+        return;
+    }
+    
+    // Obtener el nombre del medio de pago
+    const paymentMethod = paymentMethods.find(m => m.id === paymentMethodId);
+    
+    const scheduledPayment = {
+        id: Date.now(),
+        name: name,
+        amount: amount,
+        category: selectedCategory,
+        subcategory: selectedSubCategory,
+        paymentMethod: paymentMethod ? paymentMethod.name : 'Desconocido',
+        paymentMethodId: paymentMethodId,
+        image: selectedImage,
+        dateTime: dateTime,
+        formattedDate: formatDateTime(dateTime),
+        status: 'pendiente', // pendiente, completado, cancelado
+        type: 'pago_programado'
+    };
+    
+    scheduledPayments.push(scheduledPayment);
+    saveScheduledPaymentsToLocalStorage();
+    renderScheduledPayments();
+    resetFormPagos();
+    
+    // NOTIFICACIONES
+    addNotification(`Pago programado: ${name} - S/. ${amount.toFixed(2)}`, 'success');
+    showNotification('Pago programado agregado exitosamente', 'success');
+}
+
+// ---- RENDERIZAR PAGOS PROGRAMADOS ----
+function renderScheduledPayments() {
     const tbody = document.getElementById('transactionsTableBodyPagos');
     if (!tbody) return;
     
     tbody.innerHTML = '';
     
-    if (transactions.length === 0) {
+    if (scheduledPayments.length === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="6" class="text-center py-4">
                     <div class="empty-state">
                         <i class="bi bi-receipt"></i>
-                        <div>No hay pagos registrados</div>
+                        <div>No hay pagos programados</div>
+                        <small class="text-muted">Agrega tu primer pago programado usando el formulario superior</small>
                     </div>
                 </td>
             </tr>
@@ -1839,12 +1988,10 @@ function renderTransactionsPagos() {
         return;
     }
     
-    const filteredTransactions = filterTransactionsByPeriod(transactions, currentPeriod, 'pagos');
-    const sortedTransactions = [...filteredTransactions].sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+    const filteredPayments = filterScheduledPaymentsByPeriod(scheduledPayments, currentPeriod);
+    const sortedPayments = [...filteredPayments].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
     
-    sortedTransactions.forEach(transaction => {
-        const tr = document.createElement('tr');
-
+    sortedPayments.forEach(payment => {
         const categoryColors = {
             vivienda: { bg: 'rgba(14, 164, 111, 0.1)', color: '#013220' },
             transporte: { bg: 'rgba(6, 163, 255, 0.1)', color: '#0833a2' },
@@ -1858,46 +2005,45 @@ function renderTransactionsPagos() {
             educacion: { bg: 'rgba(230, 126, 34, 0.1)', color: '#e67e22' }
         };
         
-        const categoryStyle = categoryColors[transaction.category] || { bg: 'rgba(108, 117, 125, 0.1)', color: 'var(--muted)' };
+        const categoryStyle = categoryColors[payment.category] || { bg: 'rgba(108, 117, 125, 0.1)', color: 'var(--muted)' };
         
         // Obtener el nombre de la subcategoría
         let subcategoryLabel = '';
-        if (transaction.subcategory) {
-            const subcat = findSubcategory(transaction.category, transaction.subcategory);
-            subcategoryLabel = subcat ? subcat.label : transaction.subcategory;
+        if (payment.subcategory) {
+            const subcat = findSubcategory(payment.category, payment.subcategory);
+            subcategoryLabel = subcat ? subcat.label : payment.subcategory;
         }
         
+        const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${transaction.description || 'Sin nombre'}</td>
+            <td>${payment.name}</td>
             <td>
                 <div class="d-flex flex-column">
                     <span class="category-badge text-center" style="background-color: ${categoryStyle.bg}; color: ${categoryStyle.color};">
-                        ${getCategoryLabel(transaction.category)}
+                        ${getCategoryLabel(payment.category)}
                     </span>
                     ${subcategoryLabel ? `
                         <small class="text-muted mt-1 text-center">${subcategoryLabel}</small>
                     ` : ''}
                 </div>
             </td>
-            <td class="${transaction.type === 'ingreso' ? 'transaction-amount-income text-success' : 'transaction-amount-expense text-danger'}">
-                ${transaction.type === 'ingreso' ? '+' : '-'}S/. ${transaction.amount.toFixed(2)}
+            <td class="transaction-amount-expense text-danger">
+                -S/. ${payment.amount.toFixed(2)}
             </td>
-            <td>${transaction.formattedDate}</td>
+            <td>${payment.formattedDate}</td>
             <td>
-                <select class="form-select form-select-sm status-select" data-transaction-id="${transaction.id}" onchange="updateTransactionStatus(${transaction.id}, this.value)">
-                    <option value="pendiente" ${transaction.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
-                    <option value="cancelado" ${transaction.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+                <select class="form-select form-select-sm status-select" data-payment-id="${payment.id}" onchange="updateScheduledPaymentStatus(${payment.id}, this.value)">
+                    <option value="pendiente" ${payment.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                    <option value="completado" ${payment.status === 'completado' ? 'selected' : ''}>Completado</option>
+                    <option value="cancelado" ${payment.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
                 </select>
             </td>
             <td class="text-end">
                 <div class="action-buttons">
-                    <button class="action-btn view-btn" onclick="viewTransaction(${transaction.id})" title="Ver detalles">
-                        <i class="bi bi-eye"></i>
-                    </button>
-                    <button class="action-btn edit-btn" onclick="editTransaction(${transaction.id})" title="Editar">
+                    <button class="action-btn edit-btn" onclick="editScheduledPayment(${payment.id})" title="Editar">
                         <i class="bi bi-pencil"></i>
                     </button>
-                    <button class="action-btn delete-btn" onclick="confirmDeleteTransaction(${transaction.id})" title="Eliminar">
+                    <button class="action-btn delete-btn" onclick="confirmDeleteScheduledPayment(${payment.id})" title="Eliminar">
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
@@ -1908,27 +2054,140 @@ function renderTransactionsPagos() {
     });
 }
 
-// ---- FILTROS DE PERIODO ----
-function initializeFilters() {
-    // Filtros en Inicio
-    document.querySelectorAll('#inicio .btn-group .btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('#inicio .btn-group .btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            currentPeriod = this.getAttribute('data-period');
+// ---- ACTUALIZAR ESTADO DEL PAGO PROGRAMADO ----
+function updateScheduledPaymentStatus(paymentId, newStatus) {
+    const payment = scheduledPayments.find(p => p.id === paymentId);
+    if (payment) {
+        payment.status = newStatus;
+        
+        // Si el pago se marca como completado, crear una transacción
+        if (newStatus === 'completado') {
+            const transaction = {
+                id: Date.now(),
+                type: 'gasto',
+                amount: payment.amount,
+                description: payment.name,
+                category: payment.category,
+                subcategory: payment.subcategory,
+                paymentMethod: payment.paymentMethod,
+                paymentMethodId: payment.paymentMethodId,
+                image: payment.image,
+                dateTime: new Date().toISOString(),
+                formattedDate: formatDateTime(new Date().toISOString()),
+                status: 'completado',
+                source: 'pago_programado'
+            };
+            
+            transactions.push(transaction);
+            
+            // Actualizar saldo del medio de pago
+            const method = paymentMethods.find(m => m.id === payment.paymentMethodId);
+            if (method) {
+                method.balance -= payment.amount;
+                savePaymentMethodsToLocalStorage();
+                renderPaymentMethods();
+                updatePaymentMethodsChart();
+            }
+            
+            saveTransactionsToLocalStorage();
             renderTransactions();
-        });
-    });
+            updateBalance();
+        }
+        
+        // Si el pago se marca como cancelado, también crear una transacción
+        if (newStatus === 'cancelado') {
+            const transaction = {
+                id: Date.now(),
+                type: 'gasto',
+                amount: payment.amount,
+                description: `${payment.name} (Cancelado)`,
+                category: payment.category,
+                subcategory: payment.subcategory,
+                paymentMethod: payment.paymentMethod,
+                paymentMethodId: payment.paymentMethodId,
+                image: payment.image,
+                dateTime: new Date().toISOString(),
+                formattedDate: formatDateTime(new Date().toISOString()),
+                status: 'cancelado',
+                source: 'pago_programado'
+            };
+            
+            transactions.push(transaction);
+            saveTransactionsToLocalStorage();
+            renderTransactions();
+            updateBalance();
+        }
+        
+        saveScheduledPaymentsToLocalStorage();
+        renderScheduledPayments();
+        
+        showNotification(`Estado del pago actualizado a: ${newStatus}`, 'success');
+    }
+}
+
+// ---- FILTRAR PAGOS PROGRAMADOS POR PERIODO ----
+function filterScheduledPaymentsByPeriod(payments, period) {
+    let filteredPayments = [...payments];
     
-    // Filtros en Pagos
-    document.querySelectorAll('#pagos .btn-group .btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('#pagos .btn-group .btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            currentPeriod = this.getAttribute('data-period');
-            renderTransactionsPagos();
-        });
-    });
+    if (filteredPayments.length === 0) {
+        return filteredPayments;
+    }
+    
+    let filterValue = null;
+    
+    switch(period) {
+        case 'mensual':
+            const monthFilter = document.getElementById('pagos-month-filter');
+            if (monthFilter && monthFilter.value) {
+                filterValue = monthFilter.value;
+                filteredPayments = filteredPayments.filter(p => {
+                    try {
+                        const paymentDate = new Date(p.dateTime);
+                        return paymentDate.toISOString().slice(0, 7) === filterValue;
+                    } catch (error) {
+                        return false;
+                    }
+                });
+            }
+            break;
+            
+        case 'quincenal':
+        case 'semanal':
+            const startDate = document.getElementById('pagos-start-date');
+            const endDate = document.getElementById('pagos-end-date');
+            if (startDate && startDate.value && endDate && endDate.value) {
+                const start = new Date(startDate.value);
+                const end = new Date(endDate.value);
+                end.setHours(23, 59, 59, 999);
+                
+                filteredPayments = filteredPayments.filter(p => {
+                    try {
+                        const paymentDate = new Date(p.dateTime);
+                        return paymentDate >= start && paymentDate <= end;
+                    } catch (error) {
+                        return false;
+                    }
+                });
+            }
+            break;
+            
+        case 'diario':
+            const dayFilter = document.getElementById('pagos-day-filter');
+            if (dayFilter && dayFilter.value) {
+                filterValue = dayFilter.value;
+                filteredPayments = filteredPayments.filter(p => {
+                    try {
+                        const paymentDate = new Date(p.dateTime);
+                        return paymentDate.toISOString().slice(0, 10) === filterValue;
+                    } catch (error) {
+                        return false;
+                    }
+                });
+            }
+            break;
+    }
+    
+    return filteredPayments;
 }
 
 // ---- FILTROS DE PERIODO ----
@@ -1998,19 +2257,6 @@ function filterTransactionsByPeriod(transactionsList, period, section = 'inicio'
     return filteredTransactions;
 }
 
-// Función para actualizar el estado de la transacción
-function updateTransactionStatus(transactionId, newStatus) {
-    const transaction = transactions.find(t => t.id === transactionId);
-    if (transaction) {
-        transaction.status = newStatus;
-        saveTransactionsToLocalStorage();
-        renderTransactionsPagos();
-        updateBalance();
-        updateCharts();
-        showNotification(`Estado de transacción actualizado a: ${newStatus}`, 'success');
-    }
-}
-
 // ---- GRÁFICOS ----
 let incomeExpensesChart = null;
 let expensesChart = null;
@@ -2049,16 +2295,52 @@ function updateCharts() {
     }
 }
 
-// Función para actualizar gráfico de ingresos vs gastos
+// ---- ACTUALIZAR GRÁFICO INGRESOS VS GASTOS ----
 function updateIncomeExpensesChart() {
     const ctx = document.getElementById('incomeExpensesChart');
     if (!ctx) return;
     
-    const filteredTransactions = getFilteredTransactionsForCharts();
+    const filteredIncome = getFilteredIncomeForCharts();
+    const filteredExpenses = getFilteredTransactionsForCharts()
+        .filter(transaction => transaction.type === 'gasto' && transaction.status !== 'cancelado');
     
     // Agrupar por periodo según el filtro actual
     const periodData = {};
-    filteredTransactions.forEach(transaction => {
+    
+    // Procesar ingresos
+    filteredIncome.forEach(income => {
+        const date = new Date(income.date);
+        let periodKey, periodLabel;
+        
+        switch(currentPeriod) {
+            case 'mensual':
+                periodKey = `${date.getFullYear()}-${date.getMonth()}`;
+                periodLabel = date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+                break;
+            case 'quincenal':
+                const half = date.getDate() <= 15 ? 1 : 2;
+                periodKey = `${date.getFullYear()}-${date.getMonth()}-${half}`;
+                periodLabel = `Quincena ${half} - ${date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })}`;
+                break;
+            case 'semanal':
+                const week = Math.ceil(date.getDate() / 7);
+                periodKey = `${date.getFullYear()}-${date.getMonth()}-${week}`;
+                periodLabel = `Semana ${week} - ${date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })}`;
+                break;
+            default:
+                periodKey = `${date.getFullYear()}-${date.getMonth()}`;
+                periodLabel = date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+        }
+        
+        if (!periodData[periodKey]) {
+            periodData[periodKey] = { income: 0, expenses: 0, label: periodLabel };
+        }
+        
+        periodData[periodKey].income += income.amount;
+    });
+    
+    // Procesar gastos
+    filteredExpenses.forEach(transaction => {
         const date = new Date(transaction.dateTime);
         let periodKey, periodLabel;
         
@@ -2077,17 +2359,16 @@ function updateIncomeExpensesChart() {
                 periodKey = `${date.getFullYear()}-${date.getMonth()}-${week}`;
                 periodLabel = `Semana ${week} - ${date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })}`;
                 break;
+            default:
+                periodKey = `${date.getFullYear()}-${date.getMonth()}`;
+                periodLabel = date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
         }
         
         if (!periodData[periodKey]) {
             periodData[periodKey] = { income: 0, expenses: 0, label: periodLabel };
         }
         
-        if (transaction.type === 'ingreso') {
-            periodData[periodKey].income += transaction.amount;
-        } else {
-            periodData[periodKey].expenses += transaction.amount;
-        }
+        periodData[periodKey].expenses += transaction.amount;
     });
     
     const labels = Object.values(periodData).map(data => data.label);
@@ -2098,7 +2379,6 @@ function updateIncomeExpensesChart() {
         incomeExpensesChart.destroy();
     }
     
-    // Configuración mejorada del gráfico
     incomeExpensesChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -2186,13 +2466,44 @@ function updateIncomeExpensesChart() {
     });
 }
 
+// ---- FILTRAR INGRESOS PARA GRÁFICOS ----
+function getFilteredIncomeForCharts() {
+    let filtered = [...incomeRecords];
+    
+    // Aplicar filtros según la configuración actual
+    if (currentPeriod === 'mensual') {
+        const monthFilter = document.getElementById('informes-month-filter');
+        if (monthFilter && monthFilter.value) {
+            filtered = filtered.filter(income => {
+                const incomeDate = new Date(income.date);
+                return incomeDate.toISOString().slice(0, 7) === monthFilter.value;
+            });
+        }
+    } else if (currentPeriod === 'quincenal' || currentPeriod === 'semanal') {
+        const startDate = document.getElementById('informes-start-date');
+        const endDate = document.getElementById('informes-end-date');
+        if (startDate && startDate.value && endDate && endDate.value) {
+            const start = new Date(startDate.value);
+            const end = new Date(endDate.value);
+            end.setHours(23, 59, 59, 999);
+            
+            filtered = filtered.filter(income => {
+                const incomeDate = new Date(income.date);
+                return incomeDate >= start && incomeDate <= end;
+            });
+        }
+    }
+    
+    return filtered;
+}
+
 // Función para actualizar gráfico de distribución de gastos con selección múltiple
 function updateExpensesChart() {
     const ctx = document.getElementById('expensesChart');
     if (!ctx) return;
     
     const filteredTransactions = getFilteredTransactionsForCharts();
-    const expenses = filteredTransactions.filter(t => t.type === 'gasto');
+    const expenses = filteredTransactions.filter(t => t.type === 'gasto' && t.status !== 'cancelado');
     
     // Agrupar por categoría o subcategoría según lo seleccionado
     let data = {};
@@ -2296,18 +2607,23 @@ function updateBalanceChart() {
     if (!ctx) return;
     
     const filteredTransactions = getFilteredTransactionsForCharts();
+    const filteredIncome = getFilteredIncomeForCharts();
     
     // Calcular balance acumulado por mes
     const monthlyBalance = {};
     let runningBalance = 0;
     
-    // Ordenar transacciones por fecha
-    const sortedTransactions = [...filteredTransactions].sort((a, b) => 
-        new Date(a.dateTime) - new Date(b.dateTime)
-    );
+    // Combinar y ordenar todas las transacciones e ingresos por fecha
+    const allRecords = [
+        ...filteredTransactions.map(t => ({ ...t, type: t.type, amount: t.type === 'ingreso' ? t.amount : -t.amount, date: new Date(t.dateTime) })),
+        ...filteredIncome.map(i => ({ ...i, type: 'ingreso', amount: i.amount, date: new Date(i.date) }))
+    ];
     
-    sortedTransactions.forEach(transaction => {
-        const date = new Date(transaction.dateTime);
+    // Ordenar por fecha
+    const sortedRecords = allRecords.sort((a, b) => a.date - b.date);
+    
+    sortedRecords.forEach(record => {
+        const date = new Date(record.date);
         const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
         const label = date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
         
@@ -2315,12 +2631,7 @@ function updateBalanceChart() {
             monthlyBalance[monthKey] = { balance: runningBalance, label: label };
         }
         
-        if (transaction.type === 'ingreso') {
-            runningBalance += transaction.amount;
-        } else {
-            runningBalance -= transaction.amount;
-        }
-        
+        runningBalance += record.amount;
         monthlyBalance[monthKey].balance = runningBalance;
     });
     
@@ -2438,9 +2749,6 @@ function showReportFilter() {
             <button class="category-btn" data-category="alimentacion">
                 <i class="bi bi-cup-straw"></i> Alimentacion
             </button>
-            <button class="category-btn" data-category="finanzas">
-                <i class="bi bi-cash-coin"></i> Finanzas Personales
-            </button>
             <button class="category-btn" data-category="salud">
                 <i class="bi bi-heart-pulse"></i> Cuidado Personal y Salud
             </button>
@@ -2490,6 +2798,70 @@ function showReportFilter() {
             updateCharts();
         });
     });
+
+    // ---- FUNCIÓN PARA MOSTRAR SUBCATEGORÍAS EN INFORME ----
+    function showInformesSubcategories() {
+        const container = document.getElementById('informes-subcategories-container');
+        if (!container) return;
+        
+        if (selectedCategories.length === 0) {
+            container.innerHTML = `
+                <div class="alert alert-warning mt-3">
+                    <i class="bi bi-exclamation-triangle"></i> Selecciona al menos una categoría primero
+                </div>
+            `;
+            return;
+        }
+        
+        let html = `
+            <div class="section-divider mt-3"></div>
+            <h6 class="d-flex align-items-center gap-2 mb-3 text-warning">
+                <i class="bi bi-tags"></i> Sub-Categorías (Múltiple)
+            </h6>
+        `;
+        
+        // Mostrar subcategorías de todas las categorías seleccionadas
+        selectedCategories.forEach(category => {
+            const subcategories = subcategoriesMap[category] || customSubcategories[category] || [];
+            if (subcategories.length > 0) {
+                html += `
+                    <div class="mb-3">
+                        <h6 class="text-info">${getCategoryLabel(category)}</h6>
+                        <div class="category-buttons">
+                `;
+                
+                subcategories.forEach(sub => {
+                    const isActive = selectedSubCategories.includes(sub.name);
+                    html += `
+                        <button class="subcategory-btn ${isActive ? 'active' : ''}" data-category="${sub.name}">
+                            <i class="${sub.icon}"></i> ${sub.label}
+                        </button>
+                    `;
+                });
+                
+                html += `</div></div>`;
+            }
+        });
+        
+        container.innerHTML = html;
+        
+        // Añadir event listeners a los botones de subcategoría
+        document.querySelectorAll('#informes-subcategories-container .subcategory-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const subcategory = this.getAttribute('data-category');
+                
+                if (this.classList.contains('active')) {
+                    this.classList.remove('active');
+                    selectedSubCategories = selectedSubCategories.filter(sub => sub !== subcategory);
+                } else {
+                    this.classList.add('active');
+                    selectedSubCategories.push(subcategory);
+                }
+                
+                updateCharts();
+            });
+        });
+    }
     
     // Botón para mostrar subcategorías
     const showSubcategoriesBtn = document.getElementById('show-subcategories-btn');
@@ -2515,65 +2887,66 @@ function showReportFilter() {
     });
 }
 
-// ---- FUNCIÓN PARA MOSTRAR SUBCATEGORÍAS EN INFORME ----
-function showInformesSubcategories() {
-    const container = document.getElementById('informes-subcategories-container');
+// ---- MOSTRAR CONTROLES DE PERIODO EN INFORMES ----
+function showInformesPeriodFilter(period) {
+    const container = document.getElementById('informes-period-filter-container');
     if (!container) return;
     
-    if (selectedCategories.length === 0) {
-        container.innerHTML = `
-            <div class="alert alert-warning mt-3">
-                <i class="bi bi-exclamation-triangle"></i> Selecciona al menos una categoría primero
-            </div>
-        `;
-        return;
-    }
+    const now = new Date();
+    let html = '';
     
-    let html = `
-        <div class="section-divider mt-3"></div>
-        <h6 class="d-flex align-items-center gap-2 mb-3 text-warning">
-            <i class="bi bi-tags"></i> Sub-Categorías (Múltiple)
-        </h6>
-    `;
-    
-    // Mostrar subcategorías de todas las categorías seleccionadas
-    selectedCategories.forEach(category => {
-        const subcategories = subcategoriesMap[category] || customSubcategories[category] || [];
-        if (subcategories.length > 0) {
-            html += `
-                <div class="mb-3">
-                    <h6 class="text-info">${getCategoryLabel(category)}</h6>
-                    <div class="category-buttons">
+    switch(period) {
+        case 'mensual':
+            const currentMonth = now.toISOString().slice(0, 7);
+            html = `
+                <div class="filter-group">
+                    <div class="filter-label">Selecciona un mes</div>
+                    <input type="month" class="form-control" id="informes-month-filter" value="${currentMonth}">
+                </div>
             `;
+            break;
+        case 'quincenal':
+        case 'semanal':
+            const startDate = new Date(now);
+            const endDate = new Date(now);
             
-            subcategories.forEach(sub => {
-                const isActive = selectedSubCategories.includes(sub.name);
-                html += `
-                    <button class="subcategory-btn ${isActive ? 'active' : ''}" data-category="${sub.name}">
-                        <i class="${sub.icon}"></i> ${sub.label}
-                    </button>
-                `;
-            });
+            if (period === 'semanal') {
+                startDate.setDate(now.getDate() - now.getDay());
+                endDate.setDate(now.getDate() + (6 - now.getDay()));
+            } else { // quincenal
+                if (now.getDate() <= 15) {
+                    startDate.setDate(1);
+                    endDate.setDate(15);
+                } else {
+                    startDate.setDate(16);
+                    endDate.setDate(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate());
+                }
+            }
             
-            html += `</div></div>`;
-        }
-    });
+            html = `
+                <div class="filter-group">
+                    <div class="filter-label">Selecciona ${period === 'semanal' ? 'semana' : 'quincena'}</div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <input type="date" class="form-control" id="informes-start-date" 
+                                    value="${startDate.toISOString().slice(0, 10)}">
+                        </div>
+                        <div class="col-6">
+                            <input type="date" class="form-control" id="informes-end-date" 
+                                    value="${endDate.toISOString().slice(0, 10)}">
+                        </div>
+                    </div>
+                </div>
+            `;
+            break;
+    }
     
     container.innerHTML = html;
     
-    // Añadir event listeners a los botones de subcategoría
-    document.querySelectorAll('#informes-subcategories-container .subcategory-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const subcategory = this.getAttribute('data-category');
-            
-            if (this.classList.contains('active')) {
-                this.classList.remove('active');
-                selectedSubCategories = selectedSubCategories.filter(sub => sub !== subcategory);
-            } else {
-                this.classList.add('active');
-                selectedSubCategories.push(subcategory);
-            }
-            
+    // Agregar event listeners a los nuevos inputs
+    const inputs = container.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('change', () => {
             updateCharts();
         });
     });
@@ -2900,7 +3273,7 @@ function saveEditedTransaction() {
         
         saveTransactionsToLocalStorage();
         renderTransactions();
-        renderTransactionsPagos();
+        renderScheduledPayments();
         updateBalance();
         updateCharts();
         
@@ -2937,7 +3310,7 @@ function deleteTransaction(id) {
     
     // ACTUALIZAR TODAS LAS INTERFACES
     renderTransactions();
-    renderTransactionsPagos();
+    renderScheduledPayments();
     updateBalance();
     updateCharts();
     
@@ -4080,7 +4453,6 @@ function getCategoryIcon(category) {
         vivienda: 'house',
         transporte: 'car-front',
         alimentacion: 'cup-straw',
-        finanzas: 'cash-coin',
         salud: 'heart-pulse',
         entretenimiento: 'controller',
         ropa: 'bag',
@@ -4119,7 +4491,6 @@ function getCategoryLabel(category) {
         vivienda: 'Vivienda',
         transporte: 'Transporte',
         alimentacion: 'Alimentación',
-        finanzas: 'Finanzas Personales',
         salud: 'Cuidado Personal y Salud',
         entretenimiento: 'Entretenimiento y Ocio',
         ropa: 'Ropa',
@@ -4269,20 +4640,13 @@ function updateIncomeTableMessage() {
     }
 }
 
-// Función para actualizar el total de ingresos
+// ---- ACTUALIZAR TOTAL DE INGRESOS EN SECCIÓN INGRESOS ----
 function updateTotalIncome() {
     const totalIncome = incomeRecords.reduce((sum, income) => sum + income.amount, 0);
     const totalIncomeElement = document.getElementById('totalIncomeAmount');
-    const totalBalanceElement = document.getElementById('totalBalanceAmount');
     
     if (totalIncomeElement) {
         totalIncomeElement.textContent = `S/. ${totalIncome.toFixed(2)}`;
-    }
-    
-    // Actualizar también el balance total
-    if (totalBalanceElement) {
-        const totalBalance = paymentMethods.reduce((sum, method) => sum + method.balance, 0);
-        totalBalanceElement.textContent = `S/. ${totalBalance.toFixed(2)}`;
     }
 }
 
@@ -4334,8 +4698,11 @@ function addIncome() {
     updatePaymentMethodsChart();
     updateTotalBalance();
     updateBalance(); // ACTUALIZAR BALANCE GENERAL
-    updateTotalIncome(); // ACTUALIZAR TOTAL INGRESOS
+    updateTotalIncome(); // ACTUALIZAR TOTAL INGRESOS EN SECCIÓN INGRESOS
     
+    // ACTUALIZAR LOS SELECTS DE MÉTODOS DE PAGO EN TIEMPO REAL
+    updateAllPaymentMethodSelects();
+
     // Actualizar mensaje de tabla vacía
     updateIncomeTableMessage();
     
@@ -4347,93 +4714,6 @@ function addIncome() {
     // NOTIFICACIONES
     addNotification(`Ingreso registrado: S/. ${amount.toFixed(2)} en ${method.name}`, 'success');
     showNotification('Ingreso registrado exitosamente', 'success');
-}
-
-// ---- AGREGAR TRANSACCIÓN EN PAGOS ----
-function addTransactionPagos() {
-    const nameInput = document.getElementById('NamePago');
-    const amountInput = document.getElementById('transactionAmountPagos');
-    const dateTimeInput = document.getElementById('transactionDateTimePagos');
-    const paymentMethodSelect = document.getElementById('paymentMethodPagos');
-    
-    if (!nameInput || !amountInput || !dateTimeInput || !paymentMethodSelect) {
-        showNotification('Error: Elementos del formulario no encontrados', 'error');
-        return;
-    }
-    
-    const name = nameInput.value.trim();
-    const amount = parseFloat(amountInput.value);
-    const dateTime = dateTimeInput.value;
-    const paymentMethodId = parseInt(paymentMethodSelect.value);
-    
-    if (!name) {
-        showNotification('Por favor ingresa un nombre para el pago', 'error');
-        return;
-    }
-    
-    if (isNaN(amount) || amount <= 0) {
-        showNotification('Por favor ingresa un monto válido mayor a 0', 'error');
-        return;
-    }
-    
-    if (!dateTime) {
-        showNotification('Por favor selecciona fecha y hora', 'error');
-        return;
-    }
-    
-    if (!paymentMethodId || paymentMethodSelect.value === 'seleccion') {
-        showNotification('Por favor selecciona un método de pago', 'error');
-        return;
-    }
-    
-    if (!selectedCategory) {
-        showNotification('Por favor selecciona una categoría', 'error');
-        return;
-    }
-    
-    // Validar saldo suficiente
-    if (!validateExpense(paymentMethodId, amount)) {
-        return;
-    }
-    
-    // Obtener el nombre del medio de pago
-    const paymentMethod = paymentMethods.find(m => m.id === paymentMethodId);
-    
-    const transaction = {
-        id: Date.now(),
-        type: 'gasto',
-        amount: amount,
-        description: name,
-        category: selectedCategory,
-        subcategory: selectedSubCategory,
-        paymentMethod: paymentMethod ? paymentMethod.name : 'Desconocido',
-        paymentMethodId: paymentMethodId,
-        image: selectedImage,
-        dateTime: dateTime,
-        formattedDate: formatDateTime(dateTime),
-        status: 'pendiente'
-    };
-    
-    transactions.push(transaction);
-    
-    // Actualizar saldo del medio de pago
-    if (paymentMethod) {
-        paymentMethod.balance -= amount;
-        savePaymentMethodsToLocalStorage();
-        renderPaymentMethods();
-        updatePaymentMethodsChart();
-    }
-    
-    saveTransactionsToLocalStorage();
-    renderTransactionsPagos();
-    renderTransactions();
-    updateBalance();
-    updateCharts();
-    resetFormPagos();
-    
-    // NOTIFICACIONES
-    addNotification(`Pago programado: ${name} - S/. ${amount.toFixed(2)}`, 'success');
-    showNotification('Pago agregado exitosamente', 'success');
 }
 
 // ---- RENDERIZAR REGISTROS DE INGRESOS ----
@@ -4610,76 +4890,6 @@ function editIncomeRecord(id) {
             return true;
         }
     );
-}
-
-// ---- ACTUALIZAR BALANCE GENERAL ----
-function updateBalance() {
-    // Calcular total de ingresos y gastos desde las transacciones
-    let totalIncome = 0;
-    let totalExpenses = 0;
-
-    // Filtrar transacciones del mes actual
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    
-    let monthIncome = 0;
-    let monthExpenses = 0;
-
-    transactions.forEach(transaction => {
-        const transactionDate = new Date(transaction.dateTime);
-        
-        if (transaction.type === 'ingreso') {
-            totalIncome += transaction.amount;
-            // Verificar si es del mes actual
-            if (transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear) {
-                monthIncome += transaction.amount;
-            }
-        } else {
-            totalExpenses += transaction.amount;
-            // Verificar si es del mes actual
-            if (transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear) {
-                monthExpenses += transaction.amount;
-            }
-        }
-    });
-
-    // Calcular balance total (ingresos - gastos)
-    const totalBalance = totalIncome - totalExpenses;
-    const monthNet = monthIncome - monthExpenses;
-
-    // Actualizar la tarjeta de balance en la sección de inicio usando IDs específicos
-    const balanceAmount = document.getElementById('mainBalanceAmount');
-    const incomeAmount = document.getElementById('mainIncomeAmount');
-    const expenseAmount = document.getElementById('mainExpenseAmount');
-    const monthNetElement = document.getElementById('monthNetAmount');
-    
-    if (balanceAmount) {
-        balanceAmount.textContent = `S/. ${totalBalance.toFixed(2)}`;
-    }
-
-    if (incomeAmount) {
-        incomeAmount.textContent = `S/. ${totalIncome.toFixed(2)}`;
-    }
-
-    if (expenseAmount) {
-        expenseAmount.textContent = `S/. ${totalExpenses.toFixed(2)}`;
-    }
-
-    if (monthNetElement) {
-        const sign = monthNet >= 0 ? '+' : '-';
-        monthNetElement.textContent = `${sign} S/. ${Math.abs(monthNet).toFixed(2)} este mes`;
-        
-        // Cambiar color según si es positivo o negativo
-        if (monthNet >= 0) {
-            monthNetElement.style.color = '#0ea46f';
-        } else {
-            monthNetElement.style.color = '#ff6b6b';
-        }
-    }
-
-    // Actualizar también el balance de medios de pago
-    updateTotalBalance();
 }
 
 // ---- ACTUALIZAR TODOS LOS SELECTS DE MÉTODOS DE PAGO ----
@@ -4960,4 +5170,35 @@ function showSection(sectionName) {
     if (sectionName === 'notificaciones') {
         renderNotificationsSection();
     }
+    
+    // Si es la sección de pagos, renderizar los pagos programados
+    if (sectionName === 'pagos') {
+        renderScheduledPayments();
+    }
+}
+
+// Funciones adicionales para pagos programados
+function editScheduledPayment(id) {
+    const payment = scheduledPayments.find(p => p.id === id);
+    if (!payment) return;
+    
+    // Implementar lógica de edición similar a editTransaction
+    showNotification('Funcionalidad de edición de pagos programados en desarrollo', 'info');
+}
+
+function confirmDeleteScheduledPayment(id) {
+    if (confirm('¿Estás seguro de que deseas eliminar este pago programado?')) {
+        deleteScheduledPayment(id);
+    }
+}
+
+function deleteScheduledPayment(id) {
+    const payment = scheduledPayments.find(p => p.id === id);
+    if (!payment) return;
+    
+    scheduledPayments = scheduledPayments.filter(p => p.id !== id);
+    saveScheduledPaymentsToLocalStorage();
+    renderScheduledPayments();
+    
+    showNotification('Pago programado eliminado exitosamente', 'success');
 }
