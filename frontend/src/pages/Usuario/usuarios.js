@@ -4,81 +4,27 @@ let selectedCategory = null;
 let selectedSubCategory = null;
 let selectedImage = null;
 let editingTransactionId = null;
-let currentPeriod = 'mensual';
+let currentPeriod = null; 
 let currentFilter = 'categorias';
+
+// Variables para selects de métodos de pago
+let transferFromSelect = null;
+let transferToSelect = null;
+let incomePaymentMethodSelect = null;
 
 // Variables globales para múltiples selecciones en informes
 let selectedCategories = [];
 let selectedSubCategories = [];
 
-// ---- CARGAR DATOS REALES DEL USUARIO ----
-function loadUserFromBackend() {
-    const raw = localStorage.getItem('usuario');
-    if (!raw) { // no hay login
-        location.href = '../Autenticacion/login.html';
-        return;
-    }
-    const u = JSON.parse(raw); // viene del endpoint UsuarioResponse
-
-    // mapeamos a la estructura que ya usa el front
-    userProfile = {
-        name: `${u.nombre} ${u.apellidoPaterno} ${u.apellidoMaterno}`,
-        firstName: u.nombre,
-        lastName: `${u.apellidoPaterno} ${u.apellidoMaterno}`,
-        email: u.email,
-        age: u.edad,
-        avatar: null // más adelante puedes agregar campo avatar en BD
-    };
-
-    // pisamos localStorage para que el resto del código siga igual
-    localStorage.setItem('finli-profile', JSON.stringify(userProfile));
-}
-
-// ---- INICIALIZACIÓN ----
-document.addEventListener('DOMContentLoaded', () => {
-    loadUserFromBackend(); // ✅ datos reales
-    loadDataFromLocalStorage(); // carga transacciones, etc.
-});
-
-//Cargar categorías al iniciar la página
-loadUserCategories(); // ✅ nuevo
-
-async function loadUserCategories() {
-    const usuario = JSON.parse(localStorage.getItem('usuario'));
-    if (!usuario || !usuario.email) return;
-
-    try {
-        const res = await fetch(`http://localhost:8080/api/categorias?email=${usuario.email}`);
-        const categorias = await res.json();
-
-        // Limpiar categorías previas
-        customCategories = [];
-        customSubcategories = {};
-
-        categorias.forEach(cat => {
-            customCategories.push({
-                name: cat.nombreCategoria.toLowerCase(),
-                label: cat.nombreCategoria,
-                icon: 'bi-tag' // puedes mejorar esto después
-            });
-
-            // Cargar subcategorías
-            fetch(`http://localhost:8080/api/categorias/${cat.idCategoria}/subcategorias?email=${usuario.email}`)
-                .then(res => res.json())
-                .then(subs => {
-                    customSubcategories[cat.nombreCategoria.toLowerCase()] = subs.map(s => ({
-                        name: s.nombreSubcategoria.toLowerCase(),
-                        label: s.nombreSubcategoria,
-                        icon: 'bi-tag'
-                    }));
-                    updateCategoryButtons(); // refrescar botones
-                });
-        });
-
-    } catch (err) {
-        console.error('Error al cargar categorías:', err);
-    }
-}
+// Perfil de usuario
+let userProfile = {
+    name: 'Jairo Castillo',
+    firstName: 'Jairo',
+    lastName: 'Castillo',
+    email: 'jairo@utp.edu.pe',
+    age: '20',
+    avatar: null
+};
 
 // Array para notificaciones
 let notifications = [];
@@ -86,6 +32,18 @@ let notifications = [];
 // Categorías personalizadas
 let customCategories = [];
 let customSubcategories = {};
+
+// Variable para almacenar la sección actual
+let currentSection = 'inicio';
+
+// ---- VARIABLES GLOBALES PARA INGRESOS ----
+let paymentMethods = [];
+let transfers = [];
+let incomeRecords = [];
+let paymentMethodsChart = null;
+
+// ---- VARIABLES GLOBALES PARA PAGOS PROGRAMADOS ----
+let scheduledPayments = [];
 
 // Mapeo de subcategorías por categoría
 const subcategoriesMap = {
@@ -122,13 +80,6 @@ const subcategoriesMap = {
         { name: 'restaurantes', icon: 'bi-sina-weibo', label: 'Restaurantes' },
         { name: 'delivery', icon: 'bi-truck', label: 'Comida a Domicilio' },
         { name: 'cafetería', icon: 'bi-cup-hot', label: 'Cafetería' }
-    ],
-    finanzas: [
-        { name: 'deudas', icon: 'bi-wallet2', label: 'Deudas' },
-        { name: 'préstamos', icon: 'bi-bank', label: 'Préstamos' },
-        { name: 'tarjetaCrédito', icon: 'bi-credit-card', label: 'Tarjetas de Crédito' },
-        { name: 'ahorro', icon: 'bi-piggy-bank', label: 'Ahorro' },
-        { name: 'inversión', icon: 'bi-graph-up', label: 'Inversión' }
     ],
     salud: [
         { name: 'médicos', icon: 'bi-heart-pulse', label: 'Médicos' },
@@ -187,15 +138,19 @@ const subcategoriesMap = {
 document.addEventListener('DOMContentLoaded', function() {
     // Cargar datos desde localStorage
     loadDataFromLocalStorage();
-    
-    // Cargar categorías personalizadas
+    loadPaymentMethodsFromLocalStorage();
+    loadTransfersFromLocalStorage();
+    loadIncomeRecordsFromLocalStorage();
     loadCustomCategoriesFromLocalStorage();
+    loadScheduledPaymentsFromLocalStorage();
+    
+    // INICIALIZAR MEDIOS DE PAGO POR DEFECTO  
+    initializeDefaultPaymentMethods();
     
     // Establecer fecha y hora actual
     const now = new Date();
     const formattedNow = now.toISOString().slice(0, 16);
     
-    // Solo establecer valores si los elementos existen
     const dateTimeInput = document.getElementById('transactionDateTime');
     const dateTimeInputPagos = document.getElementById('transactionDateTimePagos');
     
@@ -209,13 +164,16 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeProfile();
     initializeNotifications();
     
-    // Renderizar transacciones
-    renderTransactions();
-    renderTransactionsPagos();
-    updateBalance();
+    // SINCRONIZAR TODOS LOS DATOS AL INICIO
+    syncAllData();
     
     // Inicializar filtros dinámicos
     initializeDynamicFilters();
+    
+    // Asegurar que el select de métodos de pago esté actualizado
+    updateIncomeTableMessage();
+    updateTotalIncome();
+    updateAllPaymentMethodSelects();
     
     // Inicializar gráficos (solo si estamos en la sección de informes)
     if (document.getElementById('informes').classList.contains('active')) {
@@ -244,6 +202,36 @@ function loadDataFromLocalStorage() {
     }
 }
 
+// ---- CARGAR DATOS DE INGRESOS DESDE LOCALSTORAGE ----
+function loadPaymentMethodsFromLocalStorage() {
+    const savedPaymentMethods = localStorage.getItem('finli-payment-methods');
+    if (savedPaymentMethods) {
+        paymentMethods = JSON.parse(savedPaymentMethods);
+    }
+}
+
+function loadTransfersFromLocalStorage() {
+    const savedTransfers = localStorage.getItem('finli-transfers');
+    if (savedTransfers) {
+        transfers = JSON.parse(savedTransfers);
+    }
+}
+
+function loadIncomeRecordsFromLocalStorage() {
+    const savedIncomeRecords = localStorage.getItem('finli-income-records');
+    if (savedIncomeRecords) {
+        incomeRecords = JSON.parse(savedIncomeRecords);
+    }
+}
+
+// ---- CARGAR PAGOS PROGRAMADOS DESDE LOCALSTORAGE ----
+function loadScheduledPaymentsFromLocalStorage() {
+    const savedScheduledPayments = localStorage.getItem('finli-scheduled-payments');
+    if (savedScheduledPayments) {
+        scheduledPayments = JSON.parse(savedScheduledPayments);
+    }
+}
+
 // ---- GUARDAR DATOS EN LOCALSTORAGE ----
 function saveTransactionsToLocalStorage() {
     localStorage.setItem('finli-transactions', JSON.stringify(transactions));
@@ -255,6 +243,49 @@ function saveProfileToLocalStorage() {
 
 function saveNotificationsToLocalStorage() {
     localStorage.setItem('finli-notifications', JSON.stringify(notifications));
+}
+
+// ---- GUARDAR DATOS DE INGRESOS EN LOCALSTORAGE ----
+function savePaymentMethodsToLocalStorage() {
+    localStorage.setItem('finli-payment-methods', JSON.stringify(paymentMethods));
+}
+
+function saveTransfersToLocalStorage() {
+    localStorage.setItem('finli-transfers', JSON.stringify(transfers));
+}
+
+function saveIncomeRecordsToLocalStorage() {
+    localStorage.setItem('finli-income-records', JSON.stringify(incomeRecords));
+}
+
+// ---- GUARDAR PAGOS PROGRAMADOS EN LOCALSTORAGE ----
+function saveScheduledPaymentsToLocalStorage() {
+    localStorage.setItem('finli-scheduled-payments', JSON.stringify(scheduledPayments));
+}
+
+// ---- SINCRONIZACIÓN COMPLETA DE DATOS ----
+function syncAllData() {
+    // Actualizar balances
+    updateBalance();
+    updateTotalBalance();
+    updateTotalIncome();
+    
+    // Actualizar interfaces
+    renderTransactions();
+    renderScheduledPayments();
+    renderPaymentMethods();
+    renderIncomeRecords();
+    renderTransfers();
+    
+    // Actualizar gráficas si estamos en informes
+    if (document.getElementById('informes')?.classList.contains('active')) {
+        updateCharts();
+    }
+    
+    // Actualizar notificaciones si estamos en esa sección
+    if (document.getElementById('notificaciones')?.classList.contains('active')) {
+        renderNotificationsSection();
+    }
 }
 
 // ---- SISTEMA DE NAVEGACIÓN ----
@@ -276,6 +307,10 @@ function initializeNavigation() {
             title: 'Bienvenido, <span class="text-gradient">Jairo</span>',
             subtitle: 'Panel de control personal'
         },
+        ingresos: {
+            title: 'Gestión de <span class="text-gradient">Ingresos</span>',
+            subtitle: 'Medios de pago y transferencias'
+        },
         pagos: {
             title: 'Tu <span class="text-gradient">Agenda</span> de Pagos',
             subtitle: 'Reportes mensuales y semanales'
@@ -283,6 +318,10 @@ function initializeNavigation() {
         informes: {
             title: 'Tus <span class="text-gradient">Finanzas</span> en Detalles',
             subtitle: 'Análisis y reportes financieros'
+        },
+        notificaciones: {
+            title: 'Tus <span class="text-gradient">Notificaciones</span>',
+            subtitle: 'Gestiona tus alertas y notificaciones'
         },
         perfil: {
             title: 'Mi <span class="text-gradient">Perfil</span>',
@@ -294,6 +333,7 @@ function initializeNavigation() {
     navLinks.forEach(link => {
         link.addEventListener('click', function() {
             const targetSection = this.getAttribute('data-section');
+            currentSection = targetSection;
             
             navLinks.forEach(nav => nav.classList.remove('active'));
             this.classList.add('active');
@@ -310,10 +350,28 @@ function initializeNavigation() {
                 mainSubtitle.textContent = sectionData[targetSection].subtitle;
             }
 
+            // ACTUALIZAR COMPONENTES ESPECÍFICOS DE CADA SECCIÓN
+            if (targetSection === 'ingresos') {
+                initializeIncomeSection();
+            }
+
+            if (targetSection === 'notificaciones') {
+                renderNotificationsSection();
+            }
+
+            if (targetSection === 'inicio') {
+                updateAllPaymentMethodSelects();
+                updateBalance();
+            }
+
             if (targetSection === 'informes') {
                 setTimeout(() => {
                     updateCharts();
                 }, 100);
+            }
+            
+            if (targetSection === 'pagos') {
+                renderScheduledPayments();
             }
         });
     });
@@ -339,6 +397,811 @@ function initializeNavigation() {
     }
 }
 
+// ---- INICIALIZACIÓN DE LA SECCIÓN INGRESOS ----
+function initializeIncomeSection() {
+    renderPaymentMethods();
+    renderTransfers();
+    renderIncomeRecords();
+    updatePaymentMethodsChart();
+    setupIncomeEventListeners();
+    updateAllPaymentMethodSelects();  
+}
+
+// ---- CONFIGURAR EVENT LISTENERS PARA INGRESOS ----
+function setupIncomeEventListeners() {
+    // Agregar medio de pago
+    const addPaymentMethodBtn = document.getElementById('addPaymentMethodBtn');
+    if (addPaymentMethodBtn) {
+        addPaymentMethodBtn.addEventListener('click', addPaymentMethod);
+    }
+    
+    // Realizar transferencia
+    const makeTransferBtn = document.getElementById('makeTransferBtn');
+    if (makeTransferBtn) {
+        makeTransferBtn.addEventListener('click', makeTransfer);
+    }
+    
+    // Registrar ingreso en sección ingresos
+    const addIncomeBtnIngresos = document.getElementById('addIncomeBtn');
+    if (addIncomeBtnIngresos) {
+        addIncomeBtnIngresos.addEventListener('click', addIncome);
+    }
+}
+
+// ---- AGREGAR MEDIO DE PAGO ----
+function addPaymentMethod() {
+    const name = document.getElementById('paymentMethodName').value.trim();
+    const amount = parseFloat(document.getElementById('initialAmount').value);
+    
+    if (!name) {
+        showNotification('Por favor ingresa un nombre para el medio de pago', 'error');
+        return;
+    }
+    
+    if (isNaN(amount) || amount < 0) {
+        showNotification('Por favor ingresa un monto válido', 'error');
+        return;
+    }
+    
+    // Verificar si ya existe un medio de pago con ese nombre
+    const existingMethod = paymentMethods.find(method => method.name.toLowerCase() === name.toLowerCase());
+    if (existingMethod) {
+        showNotification('Ya existe un medio de pago con ese nombre', 'error');
+        return;
+    }
+    
+    const paymentMethod = {
+        id: Date.now(),
+        name: name,
+        balance: amount,
+        initialAmount: amount
+    };
+    
+    paymentMethods.push(paymentMethod);
+    savePaymentMethodsToLocalStorage();
+    renderPaymentMethods();
+    updateAllPaymentMethodSelects(); 
+    updatePaymentMethodsChart();
+    updateTotalBalance();
+
+    // REGISTRAR AUTOMÁTICAMENTE COMO INGRESO SI HAY MONTO INICIAL
+    if (amount > 0) {
+        const incomeRecord = {
+            id: Date.now() + 1,
+            methodId: paymentMethod.id,
+            methodName: paymentMethod.name,
+            amount: amount,
+            description: 'Saldo inicial',
+            date: new Date().toISOString(),
+            formattedDate: formatDateTime(new Date().toISOString()),
+            type: 'saldo_inicial'
+        };
+        
+        incomeRecords.push(incomeRecord);
+        saveIncomeRecordsToLocalStorage();
+        syncIncomeTables();
+        
+        addNotification(`Saldo inicial registrado: S/. ${amount.toFixed(2)} en ${name}`, 'info');
+    }
+    
+    // Limpiar formulario
+    document.getElementById('paymentMethodName').value = '';
+    document.getElementById('initialAmount').value = '';
+    
+    showNotification('Medio de pago agregado exitosamente', 'success');
+}
+
+// ---- RENDERIZAR MEDIOS DE PAGO ----
+function renderPaymentMethods() {
+    const table = document.getElementById('paymentMethodsTable');
+    if (!table) return;
+    
+    table.innerHTML = '';
+    
+    if (paymentMethods.length === 0) {
+        table.innerHTML = `
+            <tr>
+                <td colspan="3" class="text-center py-4">
+                    <div class="empty-state">
+                        <i class="bi bi-wallet2"></i>
+                        <div>No hay medios de pago registrados</div>
+                        <small class="text-muted">Agrega tu primer medio de pago usando el formulario superior</small>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Renderizar tabla
+    paymentMethods.forEach(method => {
+        const paymentMethodClass = getPaymentMethodClass(method.name);
+        const paymentMethodLogo = getPaymentMethodLogo(method.name);
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <div class="payment-method-with-logo">
+                    ${paymentMethodLogo}
+                    <span class="payment-method-badge ${paymentMethodClass}">${method.name}</span>
+                </div>
+            </td>
+            <td>S/. ${method.balance.toFixed(2)}</td>
+            <td>
+                <div class="action-buttons">
+                    <button class="action-btn edit-btn" onclick="editPaymentMethod(${method.id})" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="action-btn delete-btn" onclick="deletePaymentMethod(${method.id})" title="Eliminar">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        table.appendChild(tr);
+    });
+    
+    // Actualizar selects
+    if (transferFromSelect) {
+        transferFromSelect.innerHTML = '<option value="">Selecciona el medio de pago</option>';
+        paymentMethods.forEach(method => {
+            const option = document.createElement('option');
+            option.value = method.id;
+            option.textContent = `${method.name} (S/. ${method.balance.toFixed(2)})`;
+            transferFromSelect.appendChild(option);
+        });
+    }
+    
+    if (transferToSelect) {
+        transferToSelect.innerHTML = '<option value="">Selecciona el medio de pago</option>';
+        paymentMethods.forEach(method => {
+            const option = document.createElement('option');
+            option.value = method.id;
+            option.textContent = `${method.name} (S/. ${method.balance.toFixed(2)})`;
+            transferToSelect.appendChild(option);
+        });
+    }
+    
+    if (incomePaymentMethodSelect) {
+        incomePaymentMethodSelect.innerHTML = '<option value="">Selecciona el medio de pago</option>';
+        paymentMethods.forEach(method => {
+            const option = document.createElement('option');
+            option.value = method.id;
+            option.textContent = `${method.name} (S/. ${method.balance.toFixed(2)})`;
+            incomePaymentMethodSelect.appendChild(option);
+        });
+    }
+}
+
+// Función para obtener logo del método de pago
+function getPaymentMethodLogo(methodName) {
+    const methodMap = {
+        'yape': '/frontend/public/img/Tipos/yape.png',
+        'plin': '/frontend/public/img/Tipos/plin.png',
+        'bcp': '/frontend/public/img/Tipos/bcp.png',
+        'bbva': '/frontend/public/img/Tipos/bbva.png',
+        'paypal': '/frontend/public/img/Tipos/paypal.png',
+        'credito': '/frontend/public/img/Tipos/credito.png',
+        'debito': '/frontend/public/img/Tipos/debito.png',
+        'efectivo': '/frontend/public/img/Tipos/efectivo.png'
+    };
+    
+    const logoPath = methodMap[methodName.toLowerCase()];
+    if (logoPath) {
+        return `<img src="${logoPath}" alt="${methodName}" class="payment-method-logo" onerror="this.style.display='none'">`;
+    }
+    return '';
+}
+
+// ---- ELIMINAR MEDIO DE PAGO ----
+function deletePaymentMethod(id) {
+    if (confirm('¿Estás seguro de que deseas eliminar este medio de pago? Se perderán todos los datos asociados.')) {
+        paymentMethods = paymentMethods.filter(method => method.id !== id);
+        savePaymentMethodsToLocalStorage();
+        renderPaymentMethods();
+        updatePaymentMethodsChart();
+        updateTotalBalance();
+        showNotification('Medio de pago eliminado', 'success');
+    }
+}
+
+function editPaymentMethod(id) {
+    const method = paymentMethods.find(m => m.id === id);
+    if (!method) return;
+    
+    // Crear modal de edición
+    const modalBody = `
+        <div class="mb-3">
+            <label class="form-label">Nombre del Medio de Pago</label>
+            <input type="text" class="form-control" id="editPaymentMethodName" value="${method.name}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Saldo Actual S/.</label>
+            <input type="number" class="form-control" id="editPaymentMethodBalance" value="${method.balance.toFixed(2)}" step="0.01">
+        </div>
+        <div class="alert alert-info">
+            <small><i class="bi bi-info-circle"></i> Al modificar el saldo, se registrará automáticamente como un ajuste.</small>
+        </div>
+    `;
+    
+    // Mostrar modal personalizado
+    showCustomModal(
+        'Editar Medio de Pago',
+        modalBody,
+        'Guardar Cambios',
+        'secondary',
+        () => {
+            const newName = document.getElementById('editPaymentMethodName').value.trim();
+            const newBalance = parseFloat(document.getElementById('editPaymentMethodBalance').value);
+            
+            if (!newName) {
+                showNotification('Por favor ingresa un nombre válido', 'error');
+                return false;
+            }
+            
+            if (isNaN(newBalance) || newBalance < 0) {
+                showNotification('Por favor ingresa un saldo válido', 'error');
+                return false;
+            }
+            
+            // Verificar si el nombre ya existe (excluyendo el actual)
+            const nameExists = paymentMethods.some(m => 
+                m.id !== id && m.name.toLowerCase() === newName.toLowerCase()
+            );
+            
+            if (nameExists) {
+                showNotification('Ya existe un medio de pago con ese nombre', 'error');
+                return false;
+            }
+            
+            // Calcular diferencia para registro de ajuste
+            const balanceDifference = newBalance - method.balance;
+            
+            // Actualizar método de pago
+            method.name = newName;
+            method.balance = newBalance;
+            
+            // Registrar ajuste si hubo cambio en el saldo
+            if (balanceDifference !== 0) {
+                const adjustmentRecord = {
+                    id: Date.now(),
+                    methodId: method.id,
+                    methodName: method.name,
+                    amount: Math.abs(balanceDifference),
+                    description: `Ajuste de saldo - ${balanceDifference > 0 ? 'Incremento' : 'Decremento'}`,
+                    type: balanceDifference > 0 ? 'ajuste_ingreso' : 'ajuste_gasto',
+                    date: new Date().toISOString(),
+                    formattedDate: formatDateTime(new Date().toISOString())
+                };
+                
+                incomeRecords.push(adjustmentRecord);
+                saveIncomeRecordsToLocalStorage();
+                
+                addNotification(`Ajuste de saldo en ${method.name}: S/. ${Math.abs(balanceDifference).toFixed(2)}`, 'info');
+            }
+            
+            savePaymentMethodsToLocalStorage();
+            renderPaymentMethods();
+            updateAllPaymentMethodSelects();
+            updatePaymentMethodsChart();
+            updateTotalBalance();
+            syncIncomeTables();
+            
+            showNotification('Medio de pago actualizado exitosamente', 'success');
+            return true;
+        }
+    );
+}
+
+// Función para mostrar modal personalizado
+function showCustomModal(title, body, confirmText, confirmClass, onConfirm) {
+    // Crear modal dinámicamente
+    const modalId = 'customModal-' + Date.now();
+    const modalHTML = `
+        <div class="modal fade" id="${modalId}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">${title}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        ${body}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-${confirmClass}" id="${modalId}-confirm">${confirmText}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    const modalElement = document.getElementById(modalId);
+    const modal = new bootstrap.Modal(modalElement);
+    
+    // Configurar evento del botón confirmar
+    document.getElementById(`${modalId}-confirm`).addEventListener('click', function() {
+        if (onConfirm && onConfirm() !== false) {
+            modal.hide();
+        }
+    });
+    
+    // Eliminar modal del DOM cuando se oculte
+    modalElement.addEventListener('hidden.bs.modal', function() {
+        document.body.removeChild(modalElement);
+    });
+    
+    modal.show();
+}
+
+// ---- REALIZAR TRANSFERENCIA ----
+function makeTransfer() {
+    const fromId = parseInt(document.getElementById('transferFrom').value);
+    const toId = parseInt(document.getElementById('transferTo').value);
+    const amount = parseFloat(document.getElementById('transferAmount').value);
+    
+    if (!fromId || !toId) {
+        showNotification('Por favor selecciona ambos medios de pago', 'error');
+        return;
+    }
+    
+    if (fromId === toId) {
+        showNotification('No puedes transferir al mismo medio de pago', 'error');
+        return;
+    }
+    
+    if (isNaN(amount) || amount <= 0) {
+        showNotification('Por favor ingresa un monto válido', 'error');
+        return;
+    }
+    
+    const fromMethod = paymentMethods.find(method => method.id === fromId);
+    const toMethod = paymentMethods.find(method => method.id === toId);
+    
+    if (!fromMethod || !toMethod) {
+        showNotification('Error: Medio de pago no encontrado', 'error');
+        return;
+    }
+    
+    if (fromMethod.balance < amount) {
+        showNotification(`Saldo insuficiente en ${fromMethod.name}. Saldo disponible: S/. ${fromMethod.balance.toFixed(2)}`, 'error');
+        return;
+    }
+    
+    // Realizar la transferencia
+    fromMethod.balance -= amount;
+    toMethod.balance += amount;
+    
+    // Registrar la transferencia
+    const transfer = {
+        id: Date.now(),
+        fromId: fromId,
+        fromName: fromMethod.name,
+        toId: toId,
+        toName: toMethod.name,
+        amount: amount,
+        date: new Date().toISOString(),
+        formattedDate: formatDateTime(new Date().toISOString())
+    };
+    
+    transfers.push(transfer);
+    
+    // Guardar cambios
+    savePaymentMethodsToLocalStorage();
+    saveTransfersToLocalStorage();
+    
+    // ACTUALIZAR TODAS LAS INTERFACES
+    renderPaymentMethods();
+    renderTransfers();
+    updatePaymentMethodsChart();
+    updateTotalBalance();
+    updateBalance(); // ACTUALIZAR BALANCE GENERAL
+    updateAllPaymentMethodSelects();
+    
+    // Limpiar formulario
+    document.getElementById('transferFrom').value = '';
+    document.getElementById('transferTo').value = '';
+    document.getElementById('transferAmount').value = '';
+    
+    // NOTIFICACIONES
+    addNotification(`Transferencia: S/. ${amount.toFixed(2)} de ${fromMethod.name} a ${toMethod.name}`, 'info');
+    showNotification('Transferencia realizada exitosamente', 'success');
+}
+
+// ---- AGREGAR TRANSACCIÓN EN INICIO ----
+function addTransaction() {
+    const amountInput = document.getElementById('transactionAmount');
+    const descriptionInput = document.getElementById('transactionDescription');
+    const dateTimeInput = document.getElementById('transactionDateTime');
+    const paymentMethodSelect = document.getElementById('paymentMethod');
+    
+    if (!amountInput || !descriptionInput || !dateTimeInput || !paymentMethodSelect) {
+        showNotification('Error: Elementos del formulario no encontrados', 'error');
+        return;
+    }
+    
+    const amount = parseFloat(amountInput.value);
+    const description = descriptionInput.value.trim();
+    const dateTime = dateTimeInput.value;
+    const paymentMethodId = parseInt(paymentMethodSelect.value);
+    
+    // Validaciones básicas
+    if (!paymentMethodId || paymentMethodSelect.value === 'seleccion') {
+        showNotification('Por favor selecciona un método de pago válido', 'error');
+        return;
+    }
+    
+    if (isNaN(amount) || amount <= 0) {
+        showNotification('Por favor ingresa un monto válido mayor a 0', 'error');
+        return;
+    }
+    
+    if (!dateTime) {
+        showNotification('Por favor selecciona fecha y hora', 'error');
+        return;
+    }
+    
+    if (!selectedCategory) {
+        showNotification('Por favor selecciona una categoría', 'error');
+        return;
+    }
+    
+    // Validar saldo suficiente
+    if (!validateExpense(paymentMethodId, amount)) {
+        return;
+    }
+    
+    // Obtener el nombre del medio de pago
+    const paymentMethod = paymentMethods.find(m => m.id === paymentMethodId);
+    
+    const transaction = {
+        id: Date.now(),
+        type: 'gasto',
+        amount: amount,
+        description: description,
+        category: selectedCategory,
+        subcategory: selectedSubCategory,
+        paymentMethod: paymentMethod ? paymentMethod.name : 'Desconocido',
+        paymentMethodId: paymentMethodId,
+        image: selectedImage,
+        dateTime: dateTime,
+        formattedDate: formatDateTime(dateTime),
+        status: 'completado'
+    };
+    
+    transactions.push(transaction);
+    
+    // Actualizar saldo del medio de pago
+    if (paymentMethod) {
+        paymentMethod.balance -= amount;
+        savePaymentMethodsToLocalStorage();
+        renderPaymentMethods();
+        updatePaymentMethodsChart();
+        updateAllPaymentMethodSelects();
+    }
+    
+    saveTransactionsToLocalStorage();
+    renderTransactions();
+    updateBalance(); // ACTUALIZAR BALANCE
+    updateCharts(); // ACTUALIZAR GRÁFICAS
+    resetForm();
+    
+    // NOTIFICACIONES SINCRONIZADAS
+    addNotification(`Gasto registrado: ${description} - S/. ${amount.toFixed(2)}`, 'success');
+    showNotification('Gasto registrado exitosamente', 'success');
+}
+
+// ---- ACTUALIZAR BALANCE TOTAL ----
+function updateTotalBalance() {
+    const totalBalance = paymentMethods.reduce((sum, method) => sum + method.balance, 0);
+    
+    // Actualizar en la sección de inicio si es necesario
+    const balanceAmount = document.querySelector('.balance-amount');
+    if (balanceAmount && !balanceAmount.textContent.includes('S/.')) {
+        balanceAmount.textContent = `S/. ${totalBalance.toFixed(2)}`;
+    }
+}
+
+// ---- ACTUALIZAR BALANCE GENERAL ----
+function updateBalance() {
+    // Calcular total de ingresos desde incomeRecords
+    let totalIncome = incomeRecords.reduce((sum, income) => sum + income.amount, 0);
+    
+    // Calcular total de gastos desde transactions (solo los que no están cancelados)
+    let totalExpenses = transactions
+        .filter(transaction => transaction.type === 'gasto' && transaction.status !== 'cancelado')
+        .reduce((sum, transaction) => sum + transaction.amount, 0);
+
+    // Calcular balance total (ingresos - gastos)
+    const totalBalance = totalIncome - totalExpenses;
+
+    // Actualizar la tarjeta de balance en la sección de inicio
+    const balanceAmount = document.querySelector('.balance-amount');
+    const incomeElements = document.querySelectorAll('.balance-card .fs-4.fw-bold');
+    
+    if (balanceAmount) {
+        balanceAmount.textContent = `S/. ${totalBalance.toFixed(2)}`;
+    }
+
+    if (incomeElements.length >= 2) {
+        // Ingresos
+        incomeElements[0].textContent = `S/. ${totalIncome.toFixed(2)}`;
+        // Gastos
+        incomeElements[1].textContent = `S/. ${totalExpenses.toFixed(2)}`;
+    }
+
+    // Actualizar también el texto de "este mes"
+    const balanceLabel = document.querySelector('.balance-label.mt-2');
+    if (balanceLabel) {
+        const netChange = totalIncome - totalExpenses;
+        balanceLabel.textContent = netChange >= 0 ? 
+            `+ S/. ${netChange.toFixed(2)} este mes` : 
+            `- S/. ${Math.abs(netChange).toFixed(2)} este mes`;
+    }
+}
+
+// ---- VALIDAR GASTO ----
+function validateExpense(paymentMethodId, amount) {
+    const method = paymentMethods.find(m => m.id === paymentMethodId);
+    if (!method) {
+        showNotification('Error: Medio de pago no encontrado', 'error');
+        return false;
+    }
+    
+    if (method.balance < amount) {
+        showNotification(`Saldo insuficiente en ${method.name}. Saldo disponible: S/. ${method.balance.toFixed(2)}`, 'error');
+        return false;
+    }
+    
+    return true;
+}
+
+// ---- OBTENER CLASE CSS PARA MÉTODO DE PAGO ----
+function getPaymentMethodClass(methodName) {
+    const methodMap = {
+        'yape': 'payment-method-yape',
+        'plin': 'payment-method-plin',
+        'bcp': 'payment-method-bcp',
+        'bbva': 'payment-method-bbva',
+        'paypal': 'payment-method-paypal',
+        'credito': 'payment-method-credito',
+        'debito': 'payment-method-debito',
+        'efectivo': 'payment-method-efectivo'
+    };
+    
+    return methodMap[methodName.toLowerCase()] || 'payment-method-efectivo';
+}
+
+// ---- ACTUALIZAR GRÁFICO DE MÉTODOS DE PAGO ----
+function updatePaymentMethodsChart() {
+    const ctx = document.getElementById('paymentMethodsChart');
+    if (!ctx || paymentMethods.length === 0) return;
+    
+    if (paymentMethodsChart) {
+        paymentMethodsChart.destroy();
+    }
+    
+    const labels = paymentMethods.map(method => method.name);
+    const data = paymentMethods.map(method => method.balance);
+    const backgroundColors = [
+        '#0ea46f', '#06a3ff', '#8e44ad', '#f39c12', '#ff6b6b',
+        '#3498db', '#9b59b6', '#2ecc71', '#f1c40f', '#e67e22'
+    ];
+    
+    paymentMethodsChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: backgroundColors.slice(0, labels.length),
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: {
+                            family: "'Poppins', sans-serif"
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                            return `${context.label}: S/.${context.parsed.toFixed(2)} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// ---- RENDERIZAR TRANSFERENCIAS ----
+function renderTransfers() {
+    const table = document.getElementById('transfersTable');
+    if (!table) return;
+    
+    table.innerHTML = '';
+    
+    if (transfers.length === 0) {
+        table.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center py-4">
+                    <div class="empty-state">
+                        <i class="bi bi-arrow-left-right"></i>
+                        <div>No hay transferencias registradas</div>
+                        <small class="text-muted">Las transferencias entre medios de pago aparecerán aquí</small>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    const sortedTransfers = [...transfers].sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    sortedTransfers.forEach(transfer => {
+        const fromMethodClass = getPaymentMethodClass(transfer.fromName);
+        const toMethodClass = getPaymentMethodClass(transfer.toName);
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${transfer.formattedDate}</td>
+            <td>
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-arrow-left-right text-primary"></i>
+                    <div class="payment-method-with-logo">
+                        ${getPaymentMethodLogo(transfer.fromName)}
+                        <span class="payment-method-badge ${fromMethodClass}">${transfer.fromName}</span>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-arrow-left-right text-success"></i>
+                    <div class="payment-method-with-logo">
+                        ${getPaymentMethodLogo(transfer.toName)}
+                        <span class="payment-method-badge ${toMethodClass}">${transfer.toName}</span>
+                    </div>
+                </div>
+            </td>
+            <td class="fw-bold">S/. ${transfer.amount.toFixed(2)}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteTransfer(${transfer.id})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        table.appendChild(tr);
+    });
+}
+
+// Función para eliminar transferencias
+function deleteTransfer(id) {
+    const transfer = transfers.find(t => t.id === id);
+    if (!transfer) return;
+    
+    if (!confirm(`¿Estás seguro de que deseas eliminar esta transferencia?\n${transfer.fromName} → ${transfer.toName} - S/. ${transfer.amount.toFixed(2)}`)) {
+        return;
+    }
+    
+    // Revertir la transferencia en los métodos de pago
+    const fromMethod = paymentMethods.find(m => m.id === transfer.fromId);
+    const toMethod = paymentMethods.find(m => m.id === transfer.toId);
+    
+    if (fromMethod) fromMethod.balance += transfer.amount;
+    if (toMethod) toMethod.balance -= transfer.amount;
+    
+    // Eliminar la transferencia
+    transfers = transfers.filter(t => t.id !== id);
+    
+    savePaymentMethodsToLocalStorage();
+    saveTransfersToLocalStorage();
+    
+    renderPaymentMethods();
+    renderTransfers();
+    updateAllPaymentMethodSelects();
+    updatePaymentMethodsChart();
+    updateTotalBalance();
+    
+    showNotification('Transferencia eliminada exitosamente', 'success');
+}
+
+// Función para sincronizar todas las tablas de ingresos
+function syncIncomeTables() {
+    renderIncomeRecords();
+    
+    // Actualizar la tabla de ingresos en Inicio
+    const inicioIncomeTable = document.getElementById('incomeTable');
+    if (inicioIncomeTable) {
+        renderIncomeRecords();
+    }
+}
+
+// ---- VALIDAR GASTO ----
+function validateExpense(paymentMethodId, amount) {
+    const method = paymentMethods.find(m => m.id === paymentMethodId);
+    if (!method) {
+        showNotification('Error: Medio de pago no encontrado', 'error');
+        return false;
+    }
+    
+    if (method.balance < amount) {
+        showNotification(`Saldo insuficiente en ${method.name}. Saldo disponible: S/. ${method.balance.toFixed(2)}`, 'error');
+        return false;
+    }
+    
+    return true;
+}
+
+// ---- INICIALIZAR MEDIOS DE PAGO POR DEFECTO ----
+function initializeDefaultPaymentMethods() {
+    if (paymentMethods.length === 0) {
+        paymentMethods = [
+            {
+                id: 1,
+                name: 'Efectivo',
+                balance: 0,
+                initialAmount: 0
+            },
+            {
+                id: 2,
+                name: 'Yape',
+                balance: 0,
+                initialAmount: 0
+            },
+            {
+                id: 3,
+                name: 'Plin',
+                balance: 0,
+                initialAmount: 0
+            },
+            {
+                id: 4,
+                name: 'PayPal',
+                balance: 0,
+                initialAmount: 0
+            },
+            {
+                id: 5,
+                name: 'BCP',
+                balance: 0,
+                initialAmount: 0
+            },
+            {
+                id: 6,
+                name: 'BBVA',
+                balance: 0,
+                initialAmount: 0
+            },
+            {
+                id: 7,
+                name: 'Credito',
+                balance: 0,
+                initialAmount: 0
+            },
+            {
+                id: 8,
+                name: 'Debito',
+                balance: 0,
+                initialAmount: 0
+            }
+        ];
+        savePaymentMethodsToLocalStorage();
+    }
+}
+
 // ---- GESTIÓN DE CATEGORÍAS Y SUBCATEGORÍAS ----
 function initializeCategoryButtons() {
     // Cargar categorías personalizadas desde localStorage
@@ -347,45 +1210,36 @@ function initializeCategoryButtons() {
     // Actualizar los botones de categorías para incluir las personalizadas
     updateCategoryButtons();
     
-    // Categorías en Inicio
-    const inicioCategoryBtns = document.querySelectorAll('#inicio .category-btn');
-    if (inicioCategoryBtns.length > 0) {
-        inicioCategoryBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                if (this.id === 'personalize-categories-btn') {
-                    showCustomizeCategoriesModal();
-                    return;
-                }
-                
-                document.querySelectorAll('#inicio .category-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                selectedCategory = this.getAttribute('data-category');
-                
-                // Mostrar subcategorías
-                showSubcategories('inicio', selectedCategory);
-            });
-        });
-    }
-    
-    // Categorías en Pagos
-    const pagosCategoryBtns = document.querySelectorAll('#pagos .category-btn');
-    if (pagosCategoryBtns.length > 0) {
-        pagosCategoryBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                if (this.id === 'personalize-categories-btn-pagos') {
-                    showCustomizeCategoriesModal();
-                    return;
-                }
-                
-                document.querySelectorAll('#pagos .category-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                selectedCategory = this.getAttribute('data-category');
-                
-                // Mostrar subcategorías
-                showSubcategories('pagos', selectedCategory);
-            });
-        });
-    }
+    // Usar event delegation para manejar clics en categorías
+    document.addEventListener('click', function(e) {
+        // Botones de categoría en Inicio
+        if (e.target.closest('#inicio .category-btn') && !e.target.closest('#inicio #personalize-categories-btn')) {
+            const btn = e.target.closest('#inicio .category-btn');
+            document.querySelectorAll('#inicio .category-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedCategory = btn.getAttribute('data-category');
+            showSubcategories('inicio', selectedCategory);
+        }
+        
+        // Botones de categoría en Pagos
+        if (e.target.closest('#pagos .category-btn') && !e.target.closest('#pagos #personalize-categories-btn-pagos')) {
+            const btn = e.target.closest('#pagos .category-btn');
+            document.querySelectorAll('#pagos .category-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedCategory = btn.getAttribute('data-category');
+            showSubcategories('pagos', selectedCategory);
+        }
+        
+        // Botón personalizar en Inicio
+        if (e.target.closest('#inicio #personalize-categories-btn')) {
+            showCustomizeCategoriesModal();
+        }
+        
+        // Botón personalizar en Pagos
+        if (e.target.closest('#pagos #personalize-categories-btn-pagos')) {
+            showCustomizeCategoriesModal();
+        }
+    });
 }
 
 // Función para mostrar subcategorías
@@ -395,10 +1249,12 @@ function showSubcategories(section, category) {
     
     if (!container) return;
     
-    // Buscar subcategorías en categorías predefinidas y personalizadas
-    const subcategories = subcategoriesMap[category] || customSubcategories[category] || [];
+    // Buscar subcategorías en categorías predefinidas Y personalizadas
+    const predefinedSubcategories = subcategoriesMap[category] || [];
+    const customSubcategoriesForCategory = customSubcategories[category] || [];
+    const allSubcategories = [...predefinedSubcategories, ...customSubcategoriesForCategory];
     
-    if (subcategories.length > 0) {
+    if (allSubcategories.length > 0) {
         let html = `
             <div class="section-divider"></div>
             <h6 class="d-flex align-items-center gap-2 mb-3 text-warning">
@@ -407,7 +1263,7 @@ function showSubcategories(section, category) {
             <div class="category-buttons">
         `;
         
-        subcategories.forEach(sub => {
+        allSubcategories.forEach(sub => {
             html += `
                 <button class="subcategory-btn" data-category="${sub.name}">
                     <i class="${sub.icon}"></i> ${sub.label}
@@ -415,19 +1271,51 @@ function showSubcategories(section, category) {
             `;
         });
         
+        // Agregar botón "+" para nueva subcategoría
+        html += `
+            <button class="subcategory-btn subcategory-add-btn" data-category="${category}">
+                <i class="bi bi-plus"></i> Nueva Subcategoría
+            </button>
+        `;
+        
         html += `</div>`;
         container.innerHTML = html;
         
         // Añadir event listeners a los botones de subcategoría
         document.querySelectorAll(`#${containerId} .subcategory-btn`).forEach(btn => {
             btn.addEventListener('click', function() {
-                document.querySelectorAll(`#${containerId} .subcategory-btn`).forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                selectedSubCategory = this.getAttribute('data-category');
+                if (this.classList.contains('subcategory-add-btn')) {
+                    // Si es el botón de añadir, abrir modal de personalización
+                    showCustomizeCategoriesModal(category);
+                } else {
+                    document.querySelectorAll(`#${containerId} .subcategory-btn`).forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedSubCategory = this.getAttribute('data-category');
+                }
             });
         });
     } else {
-        container.innerHTML = '';
+        // Si no hay subcategorías, mostrar solo el botón para añadir
+        let html = `
+            <div class="section-divider"></div>
+            <h6 class="d-flex align-items-center gap-2 mb-3 text-warning">
+                <i class="bi bi-tags"></i> Sub-Categoría ${getCategoryLabel(category)}
+            </h6>
+            <div class="category-buttons">
+                <button class="subcategory-btn subcategory-add-btn" data-category="${category}">
+                    <i class="bi bi-plus"></i> Nueva Subcategoría
+                </button>
+            </div>
+        `;
+        container.innerHTML = html;
+        
+        // Añadir event listener al botón de añadir
+        const addButton = container.querySelector('.subcategory-add-btn');
+        if (addButton) {
+            addButton.addEventListener('click', function() {
+                showCustomizeCategoriesModal(category);
+            });
+        }
     }
 }
 
@@ -475,8 +1363,8 @@ function initializeTransactionFilters() {
     }
     
     // Inicializar filtros para Pagos
-    const pagosFilterBtn = document.getElementById('FiltroTraProfileBtnPagos');
-    const pagosFiltersContainer = document.getElementById('filters-container-pagos');
+    const pagosFilterBtn = document.getElementById('FiltroPagosBtn');
+    const pagosFiltersContainer = document.getElementById('pagos-filters-row');
     
     if (pagosFilterBtn && pagosFiltersContainer) {
         pagosFilterBtn.addEventListener('click', function() {
@@ -502,7 +1390,7 @@ function initializeTransactionFilters() {
                 
                 // Mostrar el filtro correspondiente
                 showTransactionFilter('pagos', currentPeriod);
-                renderTransactionsPagos();
+                renderScheduledPayments();
             });
         });
     }
@@ -522,7 +1410,7 @@ function showTransactionFilter(section, period) {
         if (section === 'inicio') {
             filterRow = document.querySelector(`#${section} .filters-container`);
         } else {
-            filterRow = document.getElementById('filters-container-pagos');
+            filterRow = document.getElementById('pagos-filters-row');
         }
         
         if (filterRow) {
@@ -571,11 +1459,11 @@ function showTransactionFilter(section, period) {
                     <div class="row g-2">
                         <div class="col-6">
                             <input type="date" class="form-control" id="${section}-start-date" 
-                                   value="${startDate.toISOString().slice(0, 10)}">
+                                    value="${startDate.toISOString().slice(0, 10)}">
                         </div>
                         <div class="col-6">
                             <input type="date" class="form-control" id="${section}-end-date" 
-                                   value="${endDate.toISOString().slice(0, 10)}">
+                                    value="${endDate.toISOString().slice(0, 10)}">
                         </div>
                     </div>
                 </div>
@@ -601,7 +1489,7 @@ function showTransactionFilter(section, period) {
                 if (section === 'inicio') {
                     renderTransactions();
                 } else {
-                    renderTransactionsPagos();
+                    renderScheduledPayments();
                 }
             });
         });
@@ -619,11 +1507,8 @@ function initializeReportFilters() {
                 this.classList.add('active');
                 currentPeriod = this.getAttribute('data-period');
                 
-                // Mostrar filtro de periodo
-                showReportPeriodFilter();
-                
-                // Mostrar todos los gráficos
-                showAllCharts();
+                // Mostrar filtro de categorías
+                showReportFilter();
                 
                 // Actualizar gráficos
                 updateCharts();
@@ -638,19 +1523,26 @@ function initializeReportFilters() {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('#informes .btn-group .btn[data-filter]').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
-                currentFilter = this.getAttribute('data-filter');
+                const filterType = this.getAttribute('data-filter');
                 
-                // Si es "Limpiar", resetear filtros
-                if (currentFilter === 'limpiar') {
+                if (filterType === 'limpiar') {
                     resetReportFilters();
                     return;
                 }
                 
-                // Mostrar filtro de categorías
-                showReportCategoryFilter();
+                if (filterType === 'limpiar-categorias') {
+                    selectedCategories = [];
+                    selectedSubCategories = [];
+                    document.querySelectorAll('#informes .category-btn, #informes .subcategory-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    updateCharts();
+                    showNotification('Filtros de categoría limpiados', 'info');
+                    return;
+                }
                 
-                // Mostrar todos los gráficos
-                showAllCharts();
+                // Mostrar filtro de categorías
+                showReportFilter();
                 
                 // Actualizar gráficos
                 updateCharts();
@@ -658,265 +1550,13 @@ function initializeReportFilters() {
         });
     }
     
-    // Mostrar ambos filtros inicialmente
-    showReportPeriodFilter();
-    showReportCategoryFilter();
-}
-
-// Mostrar el filtro de periodo
-function showReportPeriodFilter() {
-    let container = document.getElementById('informes-period-filter');
+    // Mostrar filtro inicial y asegurar que los tres gráficos sean visibles al inicio
+    showReportFilter();
     
-    if (!container) {
-        const filterRow = document.querySelector('#informes .filters-container');
-        if (filterRow) {
-            const newCol = document.createElement('div');
-            newCol.className = 'col-md-4 mt-2';
-            newCol.id = 'informes-period-filter';
-            filterRow.appendChild(newCol);
-            container = newCol;
-        }
-    }
-    
-    if (!container) return;
-    
-    container.style.display = 'block';
-    
-    let html = '';
-    const now = new Date();
-    
-    switch(currentPeriod) {
-        case 'mensual':
-            const currentMonth = now.toISOString().slice(0, 7);
-            html = `
-                <div class="filter-group">
-                    <div class="filter-label">Selecciona un mes</div>
-                    <input type="month" class="form-control" id="informes-month-filter" value="${currentMonth}">
-                </div>
-            `;
-            break;
-        case 'quincenal':
-        case 'semanal':
-            const startDate = new Date(now);
-            const endDate = new Date(now);
-            
-            if (currentPeriod === 'semanal') {
-                startDate.setDate(now.getDate() - now.getDay());
-                endDate.setDate(now.getDate() + (6 - now.getDay()));
-            } else { // quincenal
-                if (now.getDate() <= 15) {
-                    startDate.setDate(1);
-                    endDate.setDate(15);
-                } else {
-                    startDate.setDate(16);
-                    endDate.setDate(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate());
-                }
-            }
-            
-            html = `
-                <div class="filter-group">
-                    <div class="filter-label">Selecciona ${currentPeriod === 'semanal' ? 'semana' : 'quincena'}</div>
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <input type="date" class="form-control" id="informes-start-date" 
-                                value="${startDate.toISOString().slice(0, 10)}">
-                        </div>
-                        <div class="col-6">
-                            <input type="date" class="form-control" id="informes-end-date" 
-                                value="${endDate.toISOString().slice(0, 10)}">
-                        </div>
-                    </div>
-                </div>
-            `;
-            break;
-    }
-    
-    container.innerHTML = html;
-    
-    // Agregar event listeners
-    const inputs = container.querySelectorAll('input');
-    inputs.forEach(input => {
-        input.addEventListener('change', function() {
-            showAllCharts();
-            updateCharts();
-        });
-    });
-}
-
-// Mostrar el filtro de categoría con selección múltiple
-function showReportCategoryFilter() {
-    let container = document.getElementById('informes-category-filter');
-    
-    if (!container) {
-        const filterRow = document.querySelector('#informes .filters-container');
-        if (filterRow) {
-            const newCol = document.createElement('div');
-            newCol.className = 'col-md-8 mt-2';
-            newCol.id = 'informes-category-filter';
-            filterRow.appendChild(newCol);
-            container = newCol;
-        }
-    }
-    
-    if (!container) return;
-    
-    container.style.display = 'block';
-    
-    let html = `
-        <div class="category-buttons" id="informes-category-buttons">
-            <button class="category-btn" data-category="vivienda">
-                <i class="bi bi-house"></i> Vivienda
-            </button>   
-            <button class="category-btn" data-category="transporte">
-                <i class="bi bi-car-front"></i> Transporte
-            </button>                         
-            <button class="category-btn" data-category="alimentacion">
-                <i class="bi bi-cup-straw"></i> Alimentacion
-            </button>
-            <button class="category-btn" data-category="finanzas">
-                <i class="bi bi-cash-coin"></i> Finanzas Personales
-            </button>
-            <button class="category-btn" data-category="salud">
-                <i class="bi bi-heart-pulse"></i> Cuidado Personal y Salud
-            </button>
-            <button class="category-btn" data-category="entretenimiento">
-                <i class="bi bi-controller"></i> Entretenimiento y Ocio
-            </button>
-            <button class="category-btn" data-category="ropa">
-                <i class="bi bi-bag"></i> Ropa
-            </button>
-            <button class="category-btn" data-category="electronica">
-                <i class="bi bi-pc-display"></i> Electrónica
-            </button>
-            <button class="category-btn" data-category="hogar">
-                <i class="bi bi-houses"></i> Artículos del Hogar
-            </button>
-            <button class="category-btn" data-category="educacion">
-                <i class="bi bi-book"></i> Educación
-            </button>
-        </div>
-
-        <div class="mt-3">
-            <button class="btn btn-sm btn-outline-primary" id="show-subcategories-btn">
-                <i class="bi bi-arrow-down"></i> Ver Subcategorías
-            </button>
-        </div>
-
-        <div id="informes-subcategories-container" style="display: none;">
-            <!-- Las subcategorías se cargarán aquí dinámicamente -->
-        </div>
-    `;
-    
-    container.innerHTML = html;
-    
-    // Configurar event listeners para categorías (selección múltiple)
-    document.querySelectorAll('#informes-category-buttons .category-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const category = this.getAttribute('data-category');
-            
-            // Permitir selección múltiple de categorías
-            if (this.classList.contains('active')) {
-                this.classList.remove('active');
-                selectedCategories = selectedCategories.filter(cat => cat !== category);
-            } else {
-                this.classList.add('active');
-                selectedCategories.push(category);
-            }
-            
-            // Mostrar todos los gráficos al filtrar
-            showAllCharts();
-            
-            // Actualizar gráficos
-            updateCharts();
-        });
-    });
-    
-    // Botón para mostrar subcategorías
-    const showSubcategoriesBtn = document.getElementById('show-subcategories-btn');
-    if (showSubcategoriesBtn) {
-        showSubcategoriesBtn.addEventListener('click', function() {
-            const subcontainer = document.getElementById('informes-subcategories-container');
-            if (subcontainer.style.display === 'none') {
-                subcontainer.style.display = 'block';
-                this.innerHTML = '<i class="bi bi-arrow-up"></i> Ocultar Subcategorías';
-                
-                // Mostrar subcategorías de las categorías seleccionadas
-                showInformesSubcategories();
-            } else {
-                subcontainer.style.display = 'none';
-                this.innerHTML = '<i class="bi bi-arrow-down"></i> Ver Subcategorías';
-            }
-        });
-    }
-}
-
-// Función para mostrar subcategorías en informes con selección múltiple
-function showInformesSubcategories() {
-    const container = document.getElementById('informes-subcategories-container');
-    if (!container) return;
-    
-    if (selectedCategories.length === 0) {
-        container.innerHTML = `
-            <div class="alert alert-warning mt-3">
-                <i class="bi bi-exclamation-triangle"></i> Selecciona al menos una categoría primero
-            </div>
-        `;
-        return;
-    }
-    
-    let html = `
-        <div class="section-divider mt-3"></div>
-        <h6 class="d-flex align-items-center gap-2 mb-3 text-warning">
-            <i class="bi bi-tags"></i> Sub-Categorías (Múltiple)
-        </h6>
-    `;
-    
-    // Mostrar subcategorías de todas las categorías seleccionadas
-    selectedCategories.forEach(category => {
-        const subcategories = subcategoriesMap[category] || customSubcategories[category] || [];
-        if (subcategories.length > 0) {
-            html += `
-                <div class="mb-3">
-                    <h6 class="text-info">${getCategoryLabel(category)}</h6>
-                    <div class="category-buttons">
-            `;
-            
-            subcategories.forEach(sub => {
-                const isActive = selectedSubCategories.includes(sub.name);
-                html += `
-                    <button class="subcategory-btn ${isActive ? 'active' : ''}" data-category="${sub.name}">
-                        <i class="${sub.icon}"></i> ${sub.label}
-                    </button>
-                `;
-            });
-            
-            html += `</div></div>`;
-        }
-    });
-    
-    container.innerHTML = html;
-    
-    // Añadir event listeners a los botones de subcategoría (selección múltiple)
-    document.querySelectorAll('#informes-subcategories-container .subcategory-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const subcategory = this.getAttribute('data-category');
-            
-            // Permitir selección múltiple de subcategorías
-            if (this.classList.contains('active')) {
-                this.classList.remove('active');
-                selectedSubCategories = selectedSubCategories.filter(sub => sub !== subcategory);
-            } else {
-                this.classList.add('active');
-                selectedSubCategories.push(subcategory);
-            }
-            
-            // Mostrar todos los gráficos al filtrar
-            showAllCharts();
-            
-            // Actualizar gráficos
-            updateCharts();
-        });
-    });
+    // Forzar que al inicio se muestren los tres gráficos
+    setTimeout(() => {
+        updateChartsVisibility();
+    }, 500);
 }
 
 // ---- CONTROL DE VISUALIZACIÓN DE GRÁFICOS ----
@@ -964,8 +1604,8 @@ function showAllCharts() {
     const expensesCard = document.querySelector('#expensesChart')?.closest('.card-report')?.parentElement;
     const balanceCard = document.querySelector('#balanceChart')?.closest('.card-report')?.parentElement;
     
-    if (incomeExpensesCard) incomeExpensesCard.className = 'col-lg-6 mb-4';
-    if (expensesCard) expensesCard.className = 'col-lg-6 mb-4';
+    if (incomeExpensesCard) incomeExpensesCard.className = 'col-lg-12 mb-4';
+    if (expensesCard) expensesCard.className = 'col-lg-12 mb-4';
     if (balanceCard) balanceCard.className = 'col-lg-12 mb-4';
     
     // Aumentar tamaño de todos los gráficos para mejor visualización
@@ -998,7 +1638,7 @@ function initializeEventListeners() {
             handleImageUpload(e, 'imagePreviewPagos');
         });
     }
-    
+
     // Agregar transacciones
     const addTransactionBtn = document.getElementById('addTransactionBtn');
     const addTransactionBtnPagos = document.getElementById('addTransactionBtnPagos');
@@ -1007,8 +1647,15 @@ function initializeEventListeners() {
         addTransactionBtn.addEventListener('click', addTransaction);
     }
     
+    // Cambiar de addTransactionPagos a addScheduledPayment
     if (addTransactionBtnPagos) {
-        addTransactionBtnPagos.addEventListener('click', addTransactionPagos);
+        addTransactionBtnPagos.addEventListener('click', addScheduledPayment);
+    }
+    
+    // Agregar ingreso en sección inicio
+    const addIncomeBtnInicio = document.getElementById('addIncomeBtnInicio');
+    if (addIncomeBtnInicio) {
+        addIncomeBtnInicio.addEventListener('click', addIncome);
     }
     
     // Perfil
@@ -1042,6 +1689,68 @@ function initializeEventListeners() {
             if (imageInputPagos) imageInputPagos.click();
         });
     }
+
+    // Event listeners para la sección de notificaciones
+    const markAllReadBtn = document.getElementById('markAllReadBtn');
+    const clearAllNotificationsBtn = document.getElementById('clearAllNotificationsBtn');
+    const notificationTypeFilter = document.getElementById('notificationTypeFilter');
+    const notificationStatusFilter = document.getElementById('notificationStatusFilter');
+    
+    if (markAllReadBtn) {
+        markAllReadBtn.addEventListener('click', markAllNotificationsAsRead);
+    }
+    
+    if (clearAllNotificationsBtn) {
+        clearAllNotificationsBtn.addEventListener('click', clearAllNotifications);
+    }
+    
+    if (notificationTypeFilter) {
+        notificationTypeFilter.addEventListener('change', renderNotificationsSection);
+    }
+    
+    if (notificationStatusFilter) {
+        notificationStatusFilter.addEventListener('change', renderNotificationsSection);
+    }
+
+    // Configurar botones del modal de personalización
+    const addNewCategoryBtn = document.getElementById('addNewCategoryBtn');
+    const addNewSubcategoryBtn = document.getElementById('addNewSubcategoryBtn');
+    
+    if (addNewCategoryBtn) {
+        addNewCategoryBtn.addEventListener('click', addNewCategory);
+    }
+    
+    if (addNewSubcategoryBtn) {
+        addNewSubcategoryBtn.addEventListener('click', addNewSubcategory);
+    }
+    
+    // Reinicializar el modal cuando se muestre
+    const customizeModal = document.getElementById('customizeCategoriesModal');
+    if (customizeModal) {
+        customizeModal.addEventListener('show.bs.modal', function() {
+            updateCustomizeCategoriesModal();
+        });
+    }
+    
+    // Configurar filtro de informes
+    const informesFilterBtn = document.getElementById('FiltroProfileBtn');
+    const informesFiltersContainer = document.querySelector('#informes .filters-container');
+    
+    if (informesFilterBtn && informesFiltersContainer) {
+        informesFilterBtn.addEventListener('click', function() {
+            informesFiltersContainer.classList.toggle('d-none');
+            
+            // Cambiar el ícono del botón según el estado
+            const icon = informesFilterBtn.querySelector('i');
+            if (informesFiltersContainer.classList.contains('d-none')) {
+                icon.className = 'bi bi-funnel';
+                informesFilterBtn.innerHTML = '<i class="bi bi-funnel"></i> Filtro';
+            } else {
+                icon.className = 'bi bi-funnel-fill';
+                informesFilterBtn.innerHTML = '<i class="bi bi-funnel-fill"></i> Ocultar Filtros';
+            }
+        });
+    }
 }
 
 function handleImageUpload(e, previewId) {
@@ -1062,83 +1771,7 @@ function handleImageUpload(e, previewId) {
     }
 }
 
-// ---- AGREGAR TRANSACCIÓN EN INICIO ----
-function addTransaction() {
-    const type = document.getElementById('transactionType').value;
-    const amount = document.getElementById('transactionAmount').value;
-    const description = document.getElementById('transactionDescription').value;
-    const dateTime = document.getElementById('transactionDateTime').value;
-    const paymentMethod = document.getElementById('paymentMethod').value;
-    
-    if (!validateTransactionForm(type, amount, dateTime, paymentMethod)) {
-        return;
-    }
-    
-    const transaction = {
-        id: Date.now(),
-        type: type,
-        amount: parseFloat(amount),
-        description: description,
-        category: selectedCategory,
-        subcategory: selectedSubCategory,
-        paymentMethod: paymentMethod,
-        image: selectedImage,
-        dateTime: dateTime,
-        formattedDate: formatDateTime(dateTime),
-        status: 'pendiente'
-    };
-    
-    transactions.push(transaction);
-    saveTransactionsToLocalStorage();
-    renderTransactions();
-    renderTransactionsPagos();
-    updateBalance();
-    updateCharts();
-    resetForm();
-    
-    addNotification(`Transacción ${type === 'ingreso' ? 'de ingreso' : 'de gasto'} agregada: S/. ${amount}`, 'success');
-    showNotification('Transacción agregada exitosamente', 'success');
-}
-
-// ---- AGREGAR TRANSACCIÓN EN PAGOS ----
-function addTransactionPagos() {
-    const type = document.getElementById('transactionTypePagos').value;
-    const amount = document.getElementById('transactionAmountPagos').value;
-    const description = document.getElementById('NamePago').value;
-    const dateTime = document.getElementById('transactionDateTimePagos').value;
-    const paymentMethod = document.getElementById('paymentMethodPagos').value;
-    
-    if (!validateTransactionForm(type, amount, dateTime, paymentMethod)) {
-        return;
-    }
-    
-    const transaction = {
-        id: Date.now(),
-        type: type,
-        amount: parseFloat(amount),
-        description: description,
-        category: selectedCategory,
-        subcategory: selectedSubCategory,
-        paymentMethod: paymentMethod,
-        image: selectedImage,
-        dateTime: dateTime,
-        formattedDate: formatDateTime(dateTime),
-        status: 'pendiente'
-    };
-    
-    transactions.push(transaction);
-    saveTransactionsToLocalStorage();
-    renderTransactionsPagos();
-    renderTransactions();
-    updateBalance();
-    updateCharts();
-    resetFormPagos();
-    
-    addNotification(`Pago programado agregado: ${description} - S/. ${amount}`, 'success');
-    showNotification('Pago agregado exitosamente', 'success');
-}
-
-function validateTransactionForm(type, amount, dateTime, paymentMethod) {
+function validateTransactionForm(type, amount, dateTime, paymentMethodId) {
     if (type === 'seleccion') {
         showNotification('Por favor selecciona el tipo de movimiento', 'error');
         return false;
@@ -1151,7 +1784,7 @@ function validateTransactionForm(type, amount, dateTime, paymentMethod) {
         showNotification('Por favor selecciona fecha y hora', 'error');
         return false;
     }
-    if (paymentMethod === 'seleccion') {
+    if (!paymentMethodId) {
         showNotification('Por favor selecciona un método de pago', 'error');
         return false;
     }
@@ -1212,6 +1845,10 @@ function renderTransactions() {
             subcategoryLabel = subcat ? subcat.label : transaction.subcategory;
         }
         
+        // Obtener la clase del método de pago y el logo
+        const paymentMethodClass = getPaymentMethodClass(transaction.paymentMethod);
+        const paymentMethodLogo = getPaymentMethodLogo(transaction.paymentMethod);
+        
         tr.innerHTML = `
             <td>
                 <div class="d-flex flex-column">
@@ -1224,9 +1861,9 @@ function renderTransactions() {
                 </div>
             </td>
             <td>
-                <span class="transaction-type-badge ${transaction.type === 'ingreso' ? 'transaction-type-income' : 'transaction-type-expense'}">
-                    ${transaction.type === 'ingreso' ? 'Ingreso' : 'Gasto'}
-                </span>
+                <div class="payment-method-with-logo-center">
+                    ${paymentMethodLogo}
+                </div>
             </td>
             <td class="${transaction.type === 'ingreso' ? 'transaction-amount-income text-success' : 'transaction-amount-expense text-danger'}">
                 ${transaction.type === 'ingreso' ? '+' : '-'}S/. ${transaction.amount.toFixed(2)}
@@ -1259,20 +1896,91 @@ function renderTransactions() {
     });
 }
 
-// ---- RENDERIZADO DE TRANSACCIONES EN PAGOS ----
-function renderTransactionsPagos() {
+// ---- AGREGAR PAGO PROGRAMADO ----
+function addScheduledPayment() {
+    const nameInput = document.getElementById('NamePago');
+    const amountInput = document.getElementById('transactionAmountPagos');
+    const dateTimeInput = document.getElementById('transactionDateTimePagos');
+    const paymentMethodSelect = document.getElementById('paymentMethodPagos');
+    
+    if (!nameInput || !amountInput || !dateTimeInput || !paymentMethodSelect) {
+        showNotification('Error: Elementos del formulario no encontrados', 'error');
+        return;
+    }
+    
+    const name = nameInput.value.trim();
+    const amount = parseFloat(amountInput.value);
+    const dateTime = dateTimeInput.value;
+    const paymentMethodId = parseInt(paymentMethodSelect.value);
+    
+    if (!name) {
+        showNotification('Por favor ingresa un nombre para el pago', 'error');
+        return;
+    }
+    
+    if (isNaN(amount) || amount <= 0) {
+        showNotification('Por favor ingresa un monto válido mayor a 0', 'error');
+        return;
+    }
+    
+    if (!dateTime) {
+        showNotification('Por favor selecciona fecha y hora', 'error');
+        return;
+    }
+    
+    if (!paymentMethodId || paymentMethodSelect.value === 'seleccion') {
+        showNotification('Por favor selecciona un método de pago', 'error');
+        return;
+    }
+    
+    if (!selectedCategory) {
+        showNotification('Por favor selecciona una categoría', 'error');
+        return;
+    }
+    
+    // Obtener el nombre del medio de pago
+    const paymentMethod = paymentMethods.find(m => m.id === paymentMethodId);
+    
+    const scheduledPayment = {
+        id: Date.now(),
+        name: name,
+        amount: amount,
+        category: selectedCategory,
+        subcategory: selectedSubCategory,
+        paymentMethod: paymentMethod ? paymentMethod.name : 'Desconocido',
+        paymentMethodId: paymentMethodId,
+        image: selectedImage,
+        dateTime: dateTime,
+        formattedDate: formatDateTime(dateTime),
+        status: 'pendiente', // pendiente, completado, cancelado
+        type: 'pago_programado'
+    };
+    
+    scheduledPayments.push(scheduledPayment);
+    saveScheduledPaymentsToLocalStorage();
+    renderScheduledPayments();
+    resetFormPagos();
+    
+    // NOTIFICACIONES
+    addNotification(`Pago programado: ${name} - S/. ${amount.toFixed(2)}`, 'success');
+    showNotification('Pago programado agregado exitosamente', 'success');
+}
+
+// ---- RENDERIZAR PAGOS PROGRAMADOS ----
+function renderScheduledPayments() {
     const tbody = document.getElementById('transactionsTableBodyPagos');
     if (!tbody) return;
     
     tbody.innerHTML = '';
     
-    if (transactions.length === 0) {
+    if (scheduledPayments.length === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="6" class="text-center py-4">
                     <div class="empty-state">
                         <i class="bi bi-receipt"></i>
-                        <div>No hay pagos registrados</div>
+                        <div>No hay pagos programados</div>
+                        <small class="text-muted">Agrega tu primer pago programado usando el formulario superior</small>
                     </div>
                 </td>
             </tr>
@@ -1280,12 +1988,10 @@ function renderTransactionsPagos() {
         return;
     }
     
-    const filteredTransactions = filterTransactionsByPeriod(transactions, currentPeriod, 'pagos');
-    const sortedTransactions = [...filteredTransactions].sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+    const filteredPayments = filterScheduledPaymentsByPeriod(scheduledPayments, currentPeriod);
+    const sortedPayments = [...filteredPayments].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
     
-    sortedTransactions.forEach(transaction => {
-        const tr = document.createElement('tr');
-
+    sortedPayments.forEach(payment => {
         const categoryColors = {
             vivienda: { bg: 'rgba(14, 164, 111, 0.1)', color: '#013220' },
             transporte: { bg: 'rgba(6, 163, 255, 0.1)', color: '#0833a2' },
@@ -1299,46 +2005,45 @@ function renderTransactionsPagos() {
             educacion: { bg: 'rgba(230, 126, 34, 0.1)', color: '#e67e22' }
         };
         
-        const categoryStyle = categoryColors[transaction.category] || { bg: 'rgba(108, 117, 125, 0.1)', color: 'var(--muted)' };
+        const categoryStyle = categoryColors[payment.category] || { bg: 'rgba(108, 117, 125, 0.1)', color: 'var(--muted)' };
         
         // Obtener el nombre de la subcategoría
         let subcategoryLabel = '';
-        if (transaction.subcategory) {
-            const subcat = findSubcategory(transaction.category, transaction.subcategory);
-            subcategoryLabel = subcat ? subcat.label : transaction.subcategory;
+        if (payment.subcategory) {
+            const subcat = findSubcategory(payment.category, payment.subcategory);
+            subcategoryLabel = subcat ? subcat.label : payment.subcategory;
         }
         
+        const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${transaction.description || 'Sin nombre'}</td>
+            <td>${payment.name}</td>
             <td>
                 <div class="d-flex flex-column">
                     <span class="category-badge text-center" style="background-color: ${categoryStyle.bg}; color: ${categoryStyle.color};">
-                        ${getCategoryLabel(transaction.category)}
+                        ${getCategoryLabel(payment.category)}
                     </span>
                     ${subcategoryLabel ? `
                         <small class="text-muted mt-1 text-center">${subcategoryLabel}</small>
                     ` : ''}
                 </div>
             </td>
-            <td class="${transaction.type === 'ingreso' ? 'transaction-amount-income text-success' : 'transaction-amount-expense text-danger'}">
-                ${transaction.type === 'ingreso' ? '+' : '-'}S/. ${transaction.amount.toFixed(2)}
+            <td class="transaction-amount-expense text-danger">
+                -S/. ${payment.amount.toFixed(2)}
             </td>
-            <td>${transaction.formattedDate}</td>
+            <td>${payment.formattedDate}</td>
             <td>
-                <select class="form-select form-select-sm status-select" data-transaction-id="${transaction.id}" onchange="updateTransactionStatus(${transaction.id}, this.value)">
-                    <option value="pendiente" ${transaction.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
-                    <option value="cancelado" ${transaction.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+                <select class="form-select form-select-sm status-select" data-payment-id="${payment.id}" onchange="updateScheduledPaymentStatus(${payment.id}, this.value)">
+                    <option value="pendiente" ${payment.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                    <option value="completado" ${payment.status === 'completado' ? 'selected' : ''}>Completado</option>
+                    <option value="cancelado" ${payment.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
                 </select>
             </td>
             <td class="text-end">
                 <div class="action-buttons">
-                    <button class="action-btn view-btn" onclick="viewTransaction(${transaction.id})" title="Ver detalles">
-                        <i class="bi bi-eye"></i>
-                    </button>
-                    <button class="action-btn edit-btn" onclick="editTransaction(${transaction.id})" title="Editar">
+                    <button class="action-btn edit-btn" onclick="editScheduledPayment(${payment.id})" title="Editar">
                         <i class="bi bi-pencil"></i>
                     </button>
-                    <button class="action-btn delete-btn" onclick="confirmDeleteTransaction(${transaction.id})" title="Eliminar">
+                    <button class="action-btn delete-btn" onclick="confirmDeleteScheduledPayment(${payment.id})" title="Eliminar">
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
@@ -1349,31 +2054,150 @@ function renderTransactionsPagos() {
     });
 }
 
-// ---- FILTROS DE PERIODO ----
-function initializeFilters() {
-    // Filtros en Inicio
-    document.querySelectorAll('#inicio .btn-group .btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('#inicio .btn-group .btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            currentPeriod = this.getAttribute('data-period');
+// ---- ACTUALIZAR ESTADO DEL PAGO PROGRAMADO ----
+function updateScheduledPaymentStatus(paymentId, newStatus) {
+    const payment = scheduledPayments.find(p => p.id === paymentId);
+    if (payment) {
+        payment.status = newStatus;
+        
+        // Si el pago se marca como completado, crear una transacción
+        if (newStatus === 'completado') {
+            const transaction = {
+                id: Date.now(),
+                type: 'gasto',
+                amount: payment.amount,
+                description: payment.name,
+                category: payment.category,
+                subcategory: payment.subcategory,
+                paymentMethod: payment.paymentMethod,
+                paymentMethodId: payment.paymentMethodId,
+                image: payment.image,
+                dateTime: new Date().toISOString(),
+                formattedDate: formatDateTime(new Date().toISOString()),
+                status: 'completado',
+                source: 'pago_programado'
+            };
+            
+            transactions.push(transaction);
+            
+            // Actualizar saldo del medio de pago
+            const method = paymentMethods.find(m => m.id === payment.paymentMethodId);
+            if (method) {
+                method.balance -= payment.amount;
+                savePaymentMethodsToLocalStorage();
+                renderPaymentMethods();
+                updatePaymentMethodsChart();
+            }
+            
+            saveTransactionsToLocalStorage();
             renderTransactions();
-        });
-    });
-    
-    // Filtros en Pagos
-    document.querySelectorAll('#pagos .btn-group .btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('#pagos .btn-group .btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            currentPeriod = this.getAttribute('data-period');
-            renderTransactionsPagos();
-        });
-    });
+            updateBalance();
+        }
+        
+        // Si el pago se marca como cancelado, también crear una transacción
+        if (newStatus === 'cancelado') {
+            const transaction = {
+                id: Date.now(),
+                type: 'gasto',
+                amount: payment.amount,
+                description: `${payment.name} (Cancelado)`,
+                category: payment.category,
+                subcategory: payment.subcategory,
+                paymentMethod: payment.paymentMethod,
+                paymentMethodId: payment.paymentMethodId,
+                image: payment.image,
+                dateTime: new Date().toISOString(),
+                formattedDate: formatDateTime(new Date().toISOString()),
+                status: 'cancelado',
+                source: 'pago_programado'
+            };
+            
+            transactions.push(transaction);
+            saveTransactionsToLocalStorage();
+            renderTransactions();
+            updateBalance();
+        }
+        
+        saveScheduledPaymentsToLocalStorage();
+        renderScheduledPayments();
+        
+        showNotification(`Estado del pago actualizado a: ${newStatus}`, 'success');
+    }
 }
 
+// ---- FILTRAR PAGOS PROGRAMADOS POR PERIODO ----
+function filterScheduledPaymentsByPeriod(payments, period) {
+    let filteredPayments = [...payments];
+    
+    if (filteredPayments.length === 0) {
+        return filteredPayments;
+    }
+    
+    let filterValue = null;
+    
+    switch(period) {
+        case 'mensual':
+            const monthFilter = document.getElementById('pagos-month-filter');
+            if (monthFilter && monthFilter.value) {
+                filterValue = monthFilter.value;
+                filteredPayments = filteredPayments.filter(p => {
+                    try {
+                        const paymentDate = new Date(p.dateTime);
+                        return paymentDate.toISOString().slice(0, 7) === filterValue;
+                    } catch (error) {
+                        return false;
+                    }
+                });
+            }
+            break;
+            
+        case 'quincenal':
+        case 'semanal':
+            const startDate = document.getElementById('pagos-start-date');
+            const endDate = document.getElementById('pagos-end-date');
+            if (startDate && startDate.value && endDate && endDate.value) {
+                const start = new Date(startDate.value);
+                const end = new Date(endDate.value);
+                end.setHours(23, 59, 59, 999);
+                
+                filteredPayments = filteredPayments.filter(p => {
+                    try {
+                        const paymentDate = new Date(p.dateTime);
+                        return paymentDate >= start && paymentDate <= end;
+                    } catch (error) {
+                        return false;
+                    }
+                });
+            }
+            break;
+            
+        case 'diario':
+            const dayFilter = document.getElementById('pagos-day-filter');
+            if (dayFilter && dayFilter.value) {
+                filterValue = dayFilter.value;
+                filteredPayments = filteredPayments.filter(p => {
+                    try {
+                        const paymentDate = new Date(p.dateTime);
+                        return paymentDate.toISOString().slice(0, 10) === filterValue;
+                    } catch (error) {
+                        return false;
+                    }
+                });
+            }
+            break;
+    }
+    
+    return filteredPayments;
+}
+
+// ---- FILTROS DE PERIODO ----
 function filterTransactionsByPeriod(transactionsList, period, section = 'inicio') {
     let filteredTransactions = [...transactionsList];
+    
+    // Si no hay transacciones, retornar array vacío
+    if (filteredTransactions.length === 0) {
+        return filteredTransactions;
+    }
     
     // Obtener valores de filtro según la sección
     let filterValue = null;
@@ -1384,8 +2208,12 @@ function filterTransactionsByPeriod(transactionsList, period, section = 'inicio'
             if (monthFilter && monthFilter.value) {
                 filterValue = monthFilter.value;
                 filteredTransactions = filteredTransactions.filter(t => {
-                    const transDate = new Date(t.dateTime);
-                    return transDate.toISOString().slice(0, 7) === filterValue;
+                    try {
+                        const transDate = new Date(t.dateTime);
+                        return transDate.toISOString().slice(0, 7) === filterValue;
+                    } catch (error) {
+                        return false;
+                    }
                 });
             }
             break;
@@ -1400,8 +2228,12 @@ function filterTransactionsByPeriod(transactionsList, period, section = 'inicio'
                 end.setHours(23, 59, 59, 999); // Incluir todo el día final
                 
                 filteredTransactions = filteredTransactions.filter(t => {
-                    const transDate = new Date(t.dateTime);
-                    return transDate >= start && transDate <= end;
+                    try {
+                        const transDate = new Date(t.dateTime);
+                        return transDate >= start && transDate <= end;
+                    } catch (error) {
+                        return false;
+                    }
                 });
             }
             break;
@@ -1411,61 +2243,18 @@ function filterTransactionsByPeriod(transactionsList, period, section = 'inicio'
             if (dayFilter && dayFilter.value) {
                 filterValue = dayFilter.value;
                 filteredTransactions = filteredTransactions.filter(t => {
-                    const transDate = new Date(t.dateTime);
-                    return transDate.toISOString().slice(0, 10) === filterValue;
+                    try {
+                        const transDate = new Date(t.dateTime);
+                        return transDate.toISOString().slice(0, 10) === filterValue;
+                    } catch (error) {
+                        return false;
+                    }
                 });
             }
             break;
     }
     
     return filteredTransactions;
-}
-
-// Función para actualizar el estado de la transacción
-function updateTransactionStatus(transactionId, newStatus) {
-    const transaction = transactions.find(t => t.id === transactionId);
-    if (transaction) {
-        transaction.status = newStatus;
-        saveTransactionsToLocalStorage();
-        renderTransactionsPagos();
-        updateBalance();
-        updateCharts();
-        showNotification(`Estado de transacción actualizado a: ${newStatus}`, 'success');
-    }
-}
-
-// ---- ACTUALIZAR BALANCE ----
-function updateBalance() {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    
-    // Filtrar transacciones del mes actual
-    const monthlyTransactions = transactions.filter(t => {
-        const transDate = new Date(t.dateTime);
-        return transDate.getMonth() === currentMonth && transDate.getFullYear() === currentYear;
-    });
-    
-    const totalIncome = monthlyTransactions
-        .filter(t => t.type === 'ingreso')
-        .reduce((sum, t) => sum + t.amount, 0);
-    
-    const totalExpenses = monthlyTransactions
-        .filter(t => t.type === 'gasto')
-        .reduce((sum, t) => sum + t.amount, 0);
-    
-    const balance = totalIncome - totalExpenses;
-    
-    // Actualizar UI
-    const balanceAmount = document.querySelector('.balance-amount');
-    const incomeElement = document.querySelector('.balance-label + .fs-4.fw-bold');
-    const expensesElement = document.querySelector('.balance-label.mt-2 + .fs-4.fw-bold');
-    const balanceLabel = document.querySelector('.balance-label.mt-2');
-    
-    if (balanceAmount) balanceAmount.textContent = `S/. ${balance.toFixed(2)}`;
-    if (incomeElement) incomeElement.textContent = `S/. ${totalIncome.toFixed(2)}`;
-    if (expensesElement) expensesElement.textContent = `S/. ${totalExpenses.toFixed(2)}`;
-    if (balanceLabel) balanceLabel.textContent = `+ S/. ${balance.toFixed(2)} este mes`;
 }
 
 // ---- GRÁFICOS ----
@@ -1489,34 +2278,69 @@ function updateCharts() {
         return;
     }
     
-    // Forzar resize de los gráficos después de actualizar
-    setTimeout(() => {
-        if (incomeExpensesChart) {
-            incomeExpensesChart.resize();
-        }
-        if (expensesChart) {
-            expensesChart.resize();
-        }
-        if (balanceChart) {
-            balanceChart.resize();
-        }
-    }, 100);
-    
-    updateIncomeExpensesChart();
-    updateExpensesChart();
-    updateBalanceChart();
+    try {
+        updateIncomeExpensesChart();
+        updateExpensesChart();
+        updateBalanceChart();
+        updateChartsVisibility();
+        
+        // Forzar resize de los gráficos
+        setTimeout(() => {
+            if (incomeExpensesChart) incomeExpensesChart.resize();
+            if (expensesChart) expensesChart.resize();
+            if (balanceChart) balanceChart.resize();
+        }, 100);
+    } catch (error) {
+        console.error('Error actualizando gráficas:', error);
+    }
 }
 
-// Función para actualizar gráfico de ingresos vs gastos
+// ---- ACTUALIZAR GRÁFICO INGRESOS VS GASTOS ----
 function updateIncomeExpensesChart() {
     const ctx = document.getElementById('incomeExpensesChart');
     if (!ctx) return;
     
-    const filteredTransactions = getFilteredTransactionsForCharts();
+    const filteredIncome = getFilteredIncomeForCharts();
+    const filteredExpenses = getFilteredTransactionsForCharts()
+        .filter(transaction => transaction.type === 'gasto' && transaction.status !== 'cancelado');
     
     // Agrupar por periodo según el filtro actual
     const periodData = {};
-    filteredTransactions.forEach(transaction => {
+    
+    // Procesar ingresos
+    filteredIncome.forEach(income => {
+        const date = new Date(income.date);
+        let periodKey, periodLabel;
+        
+        switch(currentPeriod) {
+            case 'mensual':
+                periodKey = `${date.getFullYear()}-${date.getMonth()}`;
+                periodLabel = date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+                break;
+            case 'quincenal':
+                const half = date.getDate() <= 15 ? 1 : 2;
+                periodKey = `${date.getFullYear()}-${date.getMonth()}-${half}`;
+                periodLabel = `Quincena ${half} - ${date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })}`;
+                break;
+            case 'semanal':
+                const week = Math.ceil(date.getDate() / 7);
+                periodKey = `${date.getFullYear()}-${date.getMonth()}-${week}`;
+                periodLabel = `Semana ${week} - ${date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })}`;
+                break;
+            default:
+                periodKey = `${date.getFullYear()}-${date.getMonth()}`;
+                periodLabel = date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+        }
+        
+        if (!periodData[periodKey]) {
+            periodData[periodKey] = { income: 0, expenses: 0, label: periodLabel };
+        }
+        
+        periodData[periodKey].income += income.amount;
+    });
+    
+    // Procesar gastos
+    filteredExpenses.forEach(transaction => {
         const date = new Date(transaction.dateTime);
         let periodKey, periodLabel;
         
@@ -1535,17 +2359,16 @@ function updateIncomeExpensesChart() {
                 periodKey = `${date.getFullYear()}-${date.getMonth()}-${week}`;
                 periodLabel = `Semana ${week} - ${date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })}`;
                 break;
+            default:
+                periodKey = `${date.getFullYear()}-${date.getMonth()}`;
+                periodLabel = date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
         }
         
         if (!periodData[periodKey]) {
             periodData[periodKey] = { income: 0, expenses: 0, label: periodLabel };
         }
         
-        if (transaction.type === 'ingreso') {
-            periodData[periodKey].income += transaction.amount;
-        } else {
-            periodData[periodKey].expenses += transaction.amount;
-        }
+        periodData[periodKey].expenses += transaction.amount;
     });
     
     const labels = Object.values(periodData).map(data => data.label);
@@ -1556,7 +2379,6 @@ function updateIncomeExpensesChart() {
         incomeExpensesChart.destroy();
     }
     
-    // Configuración mejorada del gráfico
     incomeExpensesChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -1644,13 +2466,44 @@ function updateIncomeExpensesChart() {
     });
 }
 
+// ---- FILTRAR INGRESOS PARA GRÁFICOS ----
+function getFilteredIncomeForCharts() {
+    let filtered = [...incomeRecords];
+    
+    // Aplicar filtros según la configuración actual
+    if (currentPeriod === 'mensual') {
+        const monthFilter = document.getElementById('informes-month-filter');
+        if (monthFilter && monthFilter.value) {
+            filtered = filtered.filter(income => {
+                const incomeDate = new Date(income.date);
+                return incomeDate.toISOString().slice(0, 7) === monthFilter.value;
+            });
+        }
+    } else if (currentPeriod === 'quincenal' || currentPeriod === 'semanal') {
+        const startDate = document.getElementById('informes-start-date');
+        const endDate = document.getElementById('informes-end-date');
+        if (startDate && startDate.value && endDate && endDate.value) {
+            const start = new Date(startDate.value);
+            const end = new Date(endDate.value);
+            end.setHours(23, 59, 59, 999);
+            
+            filtered = filtered.filter(income => {
+                const incomeDate = new Date(income.date);
+                return incomeDate >= start && incomeDate <= end;
+            });
+        }
+    }
+    
+    return filtered;
+}
+
 // Función para actualizar gráfico de distribución de gastos con selección múltiple
 function updateExpensesChart() {
     const ctx = document.getElementById('expensesChart');
     if (!ctx) return;
     
     const filteredTransactions = getFilteredTransactionsForCharts();
-    const expenses = filteredTransactions.filter(t => t.type === 'gasto');
+    const expenses = filteredTransactions.filter(t => t.type === 'gasto' && t.status !== 'cancelado');
     
     // Agrupar por categoría o subcategoría según lo seleccionado
     let data = {};
@@ -1754,18 +2607,23 @@ function updateBalanceChart() {
     if (!ctx) return;
     
     const filteredTransactions = getFilteredTransactionsForCharts();
+    const filteredIncome = getFilteredIncomeForCharts();
     
     // Calcular balance acumulado por mes
     const monthlyBalance = {};
     let runningBalance = 0;
     
-    // Ordenar transacciones por fecha
-    const sortedTransactions = [...filteredTransactions].sort((a, b) => 
-        new Date(a.dateTime) - new Date(b.dateTime)
-    );
+    // Combinar y ordenar todas las transacciones e ingresos por fecha
+    const allRecords = [
+        ...filteredTransactions.map(t => ({ ...t, type: t.type, amount: t.type === 'ingreso' ? t.amount : -t.amount, date: new Date(t.dateTime) })),
+        ...filteredIncome.map(i => ({ ...i, type: 'ingreso', amount: i.amount, date: new Date(i.date) }))
+    ];
     
-    sortedTransactions.forEach(transaction => {
-        const date = new Date(transaction.dateTime);
+    // Ordenar por fecha
+    const sortedRecords = allRecords.sort((a, b) => a.date - b.date);
+    
+    sortedRecords.forEach(record => {
+        const date = new Date(record.date);
         const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
         const label = date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
         
@@ -1773,12 +2631,7 @@ function updateBalanceChart() {
             monthlyBalance[monthKey] = { balance: runningBalance, label: label };
         }
         
-        if (transaction.type === 'ingreso') {
-            runningBalance += transaction.amount;
-        } else {
-            runningBalance -= transaction.amount;
-        }
-        
+        runningBalance += record.amount;
         monthlyBalance[monthKey].balance = runningBalance;
     });
     
@@ -1839,6 +2692,266 @@ function updateBalanceChart() {
     });
 }
 
+// ---- CONTROL DE VISIBILIDAD DE GRÁFICOS ----
+function updateChartsVisibility() {
+    const incomeExpensesCard = document.querySelector('#incomeExpensesChart').closest('.card-report');
+    const expensesCard = document.querySelector('#expensesChart').closest('.card-report');
+    const balanceCard = document.querySelector('#balanceChart').closest('.card-report');
+    
+    // Mostrar todos los gráficos inicialmente
+    incomeExpensesCard.style.display = 'block';
+    expensesCard.style.display = 'block';
+    balanceCard.style.display = 'block';
+    
+    // Si hay filtro de período activo (mensual, quincenal, semanal) Y NO hay filtro de categoría
+    if (currentPeriod && currentPeriod !== 'seleccion' && selectedCategories.length === 0 && selectedSubCategories.length === 0) {
+        // SOLO mostrar Ingresos vs Gastos, OCULTAR los otros dos
+        incomeExpensesCard.style.display = 'block';
+        expensesCard.style.display = 'none';
+        balanceCard.style.display = 'none';
+    }
+    // Si hay filtro de categoría o subcategoría activo Y NO hay filtro de período
+    else if ((selectedCategories.length > 0 || selectedSubCategories.length > 0) && (!currentPeriod || currentPeriod === 'seleccion')) {
+        // SOLO mostrar Distribución de Gastos, OCULTAR los otros dos
+        incomeExpensesCard.style.display = 'none';
+        expensesCard.style.display = 'block';
+        balanceCard.style.display = 'none';
+    }
+    // Si hay ambos filtros activos (período Y categoría)
+    else if ((selectedCategories.length > 0 || selectedSubCategories.length > 0) && currentPeriod && currentPeriod !== 'seleccion') {
+        // Mostrar ambos gráficos relevantes, OCULTAR Balance
+        incomeExpensesCard.style.display = 'block';
+        expensesCard.style.display = 'block';
+        balanceCard.style.display = 'none';
+    }
+    // Si no hay ningún filtro activo
+    else {
+        // Mostrar los tres gráficos
+        incomeExpensesCard.style.display = 'block';
+        expensesCard.style.display = 'block';
+        balanceCard.style.display = 'block';
+    }
+}
+
+// ---- FUNCIÓN MEJORADA PARA FILTROS DE INFORME ----
+function showReportFilter() {
+    const container = document.getElementById('informes-category-filter-container');
+    if (!container) return;
+    
+    let html = `
+        <div class="category-buttons" id="informes-category-buttons">
+            <button class="category-btn" data-category="vivienda">
+                <i class="bi bi-house"></i> Vivienda
+            </button>   
+            <button class="category-btn" data-category="transporte">
+                <i class="bi bi-car-front"></i> Transporte
+            </button>                         
+            <button class="category-btn" data-category="alimentacion">
+                <i class="bi bi-cup-straw"></i> Alimentacion
+            </button>
+            <button class="category-btn" data-category="salud">
+                <i class="bi bi-heart-pulse"></i> Cuidado Personal y Salud
+            </button>
+            <button class="category-btn" data-category="entretenimiento">
+                <i class="bi bi-controller"></i> Entretenimiento y Ocio
+            </button>
+            <button class="category-btn" data-category="ropa">
+                <i class="bi bi-bag"></i> Ropa
+            </button>
+            <button class="category-btn" data-category="electronica">
+                <i class="bi bi-pc-display"></i> Electrónica
+            </button>
+            <button class="category-btn" data-category="hogar">
+                <i class="bi bi-houses"></i> Artículos del Hogar
+            </button>
+            <button class="category-btn" data-category="educacion">
+                <i class="bi bi-book"></i> Educación
+            </button>
+        </div>
+
+        <div class="mt-3">
+            <button class="btn btn-sm btn-outline-success" id="show-subcategories-btn">
+                <i class="bi bi-arrow-down"></i> Ver Subcategorías
+            </button>
+        </div>
+
+        <div id="informes-subcategories-container" style="display: none;">
+            <!-- Las subcategorías se cargarán aquí dinámicamente -->
+        </div>
+    `;
+    
+    container.innerHTML = html;
+    
+    // Configurar event listeners
+    document.querySelectorAll('#informes-category-buttons .category-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const category = this.getAttribute('data-category');
+            
+            if (this.classList.contains('active')) {
+                this.classList.remove('active');
+                selectedCategories = selectedCategories.filter(cat => cat !== category);
+            } else {
+                this.classList.add('active');
+                selectedCategories.push(category);
+            }
+            
+            updateCharts();
+        });
+    });
+
+    // ---- FUNCIÓN PARA MOSTRAR SUBCATEGORÍAS EN INFORME ----
+    function showInformesSubcategories() {
+        const container = document.getElementById('informes-subcategories-container');
+        if (!container) return;
+        
+        if (selectedCategories.length === 0) {
+            container.innerHTML = `
+                <div class="alert alert-warning mt-3">
+                    <i class="bi bi-exclamation-triangle"></i> Selecciona al menos una categoría primero
+                </div>
+            `;
+            return;
+        }
+        
+        let html = `
+            <div class="section-divider mt-3"></div>
+            <h6 class="d-flex align-items-center gap-2 mb-3 text-warning">
+                <i class="bi bi-tags"></i> Sub-Categorías (Múltiple)
+            </h6>
+        `;
+        
+        // Mostrar subcategorías de todas las categorías seleccionadas
+        selectedCategories.forEach(category => {
+            const subcategories = subcategoriesMap[category] || customSubcategories[category] || [];
+            if (subcategories.length > 0) {
+                html += `
+                    <div class="mb-3">
+                        <h6 class="text-info">${getCategoryLabel(category)}</h6>
+                        <div class="category-buttons">
+                `;
+                
+                subcategories.forEach(sub => {
+                    const isActive = selectedSubCategories.includes(sub.name);
+                    html += `
+                        <button class="subcategory-btn ${isActive ? 'active' : ''}" data-category="${sub.name}">
+                            <i class="${sub.icon}"></i> ${sub.label}
+                        </button>
+                    `;
+                });
+                
+                html += `</div></div>`;
+            }
+        });
+        
+        container.innerHTML = html;
+        
+        // Añadir event listeners a los botones de subcategoría
+        document.querySelectorAll('#informes-subcategories-container .subcategory-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const subcategory = this.getAttribute('data-category');
+                
+                if (this.classList.contains('active')) {
+                    this.classList.remove('active');
+                    selectedSubCategories = selectedSubCategories.filter(sub => sub !== subcategory);
+                } else {
+                    this.classList.add('active');
+                    selectedSubCategories.push(subcategory);
+                }
+                
+                updateCharts();
+            });
+        });
+    }
+    
+    // Botón para mostrar subcategorías
+    const showSubcategoriesBtn = document.getElementById('show-subcategories-btn');
+    if (showSubcategoriesBtn) {
+        showSubcategoriesBtn.addEventListener('click', function() {
+            const subcontainer = document.getElementById('informes-subcategories-container');
+            if (subcontainer.style.display === 'none') {
+                subcontainer.style.display = 'block';
+                this.innerHTML = '<i class="bi bi-arrow-up"></i> Ocultar Subcategorías';
+                showInformesSubcategories();
+            } else {
+                subcontainer.style.display = 'none';
+                this.innerHTML = '<i class="bi bi-arrow-down"></i> Ver Subcategorías';
+            }
+        });
+    }
+
+    // Limpiar selecciones de categoría al mostrar el filtro
+    selectedCategories = [];
+    selectedSubCategories = [];
+    document.querySelectorAll('#informes-category-buttons .category-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+}
+
+// ---- MOSTRAR CONTROLES DE PERIODO EN INFORMES ----
+function showInformesPeriodFilter(period) {
+    const container = document.getElementById('informes-period-filter-container');
+    if (!container) return;
+    
+    const now = new Date();
+    let html = '';
+    
+    switch(period) {
+        case 'mensual':
+            const currentMonth = now.toISOString().slice(0, 7);
+            html = `
+                <div class="filter-group">
+                    <div class="filter-label">Selecciona un mes</div>
+                    <input type="month" class="form-control" id="informes-month-filter" value="${currentMonth}">
+                </div>
+            `;
+            break;
+        case 'quincenal':
+        case 'semanal':
+            const startDate = new Date(now);
+            const endDate = new Date(now);
+            
+            if (period === 'semanal') {
+                startDate.setDate(now.getDate() - now.getDay());
+                endDate.setDate(now.getDate() + (6 - now.getDay()));
+            } else { // quincenal
+                if (now.getDate() <= 15) {
+                    startDate.setDate(1);
+                    endDate.setDate(15);
+                } else {
+                    startDate.setDate(16);
+                    endDate.setDate(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate());
+                }
+            }
+            
+            html = `
+                <div class="filter-group">
+                    <div class="filter-label">Selecciona ${period === 'semanal' ? 'semana' : 'quincena'}</div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <input type="date" class="form-control" id="informes-start-date" 
+                                    value="${startDate.toISOString().slice(0, 10)}">
+                        </div>
+                        <div class="col-6">
+                            <input type="date" class="form-control" id="informes-end-date" 
+                                    value="${endDate.toISOString().slice(0, 10)}">
+                        </div>
+                    </div>
+                </div>
+            `;
+            break;
+    }
+    
+    container.innerHTML = html;
+    
+    // Agregar event listeners a los nuevos inputs
+    const inputs = container.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('change', () => {
+            updateCharts();
+        });
+    });
+}
+
 // Función auxiliar para filtrar transacciones en gráficos con selección múltiple
 function getFilteredTransactionsForCharts() {
     let filtered = [...transactions];
@@ -1893,6 +3006,9 @@ function viewTransaction(id) {
             subcategoryLabel = subcat ? subcat.label : transaction.subcategory;
         }
         
+        // Obtener la clase del método de pago
+        const paymentMethodClass = getPaymentMethodClass(transaction.paymentMethod);
+        
         modalBody.innerHTML = `
             <div class="transaction-detail-item">
                 <div class="transaction-detail-label">Categoría</div>
@@ -1913,14 +3029,16 @@ function viewTransaction(id) {
                 </div>
             </div>
             <div class="transaction-detail-item">
-                <div class="transaction-detail-label">Monto</div>
-                <div class="transaction-detail-value ${transaction.type === 'ingreso' ? 'transaction-amount-income' : 'transaction-amount-expense'}">
-                    ${transaction.type === 'ingreso' ? '+' : '-'}S/. ${transaction.amount.toFixed(2)}
+                <div class="transaction-detail-label">Método de Pago</div>
+                <div class="transaction-detail-value">
+                    <span class="payment-method-badge ${paymentMethodClass}">${transaction.paymentMethod}</span>
                 </div>
             </div>
             <div class="transaction-detail-item">
-                <div class="transaction-detail-label">Método de Pago</div>
-                <div class="transaction-detail-value">${transaction.paymentMethod || 'No especificado'}</div>
+                <div class="transaction-detail-label">Monto</div>
+                <div class="transaction-detail-value ${transaction.type === 'ingreso' ? 'transaction-amount-income text-success' : 'transaction-amount-expense'}">
+                    ${transaction.type === 'ingreso' ? '+' : '-'}S/. ${transaction.amount.toFixed(2)}
+                </div>
             </div>
             <div class="transaction-detail-item">
                 <div class="transaction-detail-label">Descripción</div>
@@ -1951,6 +3069,9 @@ function editTransaction(id) {
         editingTransactionId = id;
         
         const modalBody = document.getElementById('editTransactionModalBody');
+
+        // Obtener la clase del método de pago
+        const paymentMethodClass = getPaymentMethodClass(transaction.paymentMethod);
         
         // Determinar si estamos en la sección de Pagos
         const isPagosSection = document.getElementById('pagos').classList.contains('active');
@@ -1966,15 +3087,7 @@ function editTransaction(id) {
                 </div>
                 <div class="transaction-form-item">
                     <label class="form-label fw-semibold">Método de Pago</label>
-                    <select class="form-select" id="editPaymentMethod">
-                        <option value="efectivo" ${transaction.paymentMethod === 'efectivo' ? 'selected' : ''}>Efectivo</option>
-                        <option value="yape" ${transaction.paymentMethod === 'yape' ? 'selected' : ''}>Yape</option>
-                        <option value="plin" ${transaction.paymentMethod === 'plin' ? 'selected' : ''}>Plin</option>
-                        <option value="credito" ${transaction.paymentMethod === 'credito' ? 'selected' : ''}>Tarjeta de Crédito</option>
-                        <option value="debito" ${transaction.paymentMethod === 'debito' ? 'selected' : ''}>Tarjeta de Débito</option>
-                        <option value="paypal" ${transaction.paymentMethod === 'paypal' ? 'selected' : ''}>Paypal</option>
-                        <option value="transferencia" ${transaction.paymentMethod === 'transferencia' ? 'selected' : ''}>Transferencia Bancaria</option>
-                    </select>
+                    <span class="payment-method-badge ${paymentMethodClass}">${transaction.paymentMethod}</span>
                 </div>
                 <div class="transaction-form-item">
                     <label class="form-label fw-semibold">S/. monto</label>
@@ -2002,14 +3115,14 @@ function editTransaction(id) {
                 <div class="transaction-form-item">
                     <label class="form-label fw-semibold">${isPagosSection ? 'Nombre de Pago' : 'Descripción'}</label>
                     <input type="text" class="form-control" id="editTransactionDescription" value="${transaction.description || ''}" 
-                           placeholder="${isPagosSection ? 'Nombre de pago...' : 'Descripción de la transacción...'}">
+                        placeholder="${isPagosSection ? 'Nombre de pago...' : 'Descripción de la transacción...'}">
                 </div>
             </div>
 
             <div class="section-divider"></div>
             
             <h6 class="d-flex align-items-center gap-2 mb-3">
-                <i class="bi bi-tags text-primary"></i>Categoría
+                <i class="bi bi-tags text-success"></i>Categoría
             </h6>
             
             <div class="category-buttons" id="editCategoryButtons">
@@ -2160,7 +3273,7 @@ function saveEditedTransaction() {
         
         saveTransactionsToLocalStorage();
         renderTransactions();
-        renderTransactionsPagos();
+        renderScheduledPayments();
         updateBalance();
         updateCharts();
         
@@ -2180,17 +3293,31 @@ function confirmDeleteTransaction(id) {
 
 function deleteTransaction(id) {
     const transaction = transactions.find(t => t.id === id);
+    
+    // Si es un gasto, revertir el saldo en el método de pago
+    if (transaction && transaction.type === 'gasto') {
+        const method = paymentMethods.find(m => m.name === transaction.paymentMethod);
+        if (method) {
+            method.balance += transaction.amount;
+            savePaymentMethodsToLocalStorage();
+            renderPaymentMethods();
+            updatePaymentMethodsChart();
+        }
+    }
+    
     transactions = transactions.filter(t => t.id !== id);
     saveTransactionsToLocalStorage();
+    
+    // ACTUALIZAR TODAS LAS INTERFACES
     renderTransactions();
-    renderTransactionsPagos();
+    renderScheduledPayments();
     updateBalance();
     updateCharts();
     
+    // NOTIFICACIONES
     if (transaction) {
-        addNotification(`Transacción eliminada: ${transaction.description || 'Sin descripción'} - S/. ${transaction.amount}`, 'warning');
+        addNotification(`Transacción eliminada: ${transaction.description} - S/. ${transaction.amount.toFixed(2)}`, 'warning');
     }
-    
     showNotification('Transacción eliminada exitosamente', 'success');
 }
 
@@ -2205,105 +3332,124 @@ function viewImage(imageSrc) {
 
 // ---- SISTEMA DE NOTIFICACIONES ----
 function initializeNotifications() {
-    updateNotificationsUI();
+    updateNotificationsUI(); // Cargar iniciales en dropdown y badge
 }
 
 function addNotification(message, type = 'info') {
+    if (!message) return; // No añadir notificaciones vacías
+
     const notification = {
         id: Date.now(),
         message: message,
         type: type,
-        timestamp: new Date().toLocaleString(),
+        timestamp: new Date().toISOString(),
         read: false
     };
-    
-    notifications.unshift(notification);
-    
-    // Limitar a 50 notificaciones
+
+    notifications.unshift(notification); // Añadir al principio
+
+    // Limitar a ~50 notificaciones
     if (notifications.length > 50) {
         notifications = notifications.slice(0, 50);
     }
-    
-    // Guardar en localStorage
+
     saveNotificationsToLocalStorage();
-    
-    // Actualizar UI
-    updateNotificationsUI();
-    
-    // Mostrar notificación toast
-    showNotification(message, type);
+    updateNotificationsUI(); // Actualizar badge y dropdown
+
+    // Si estamos en la sección de notificaciones, actualizarla
+    if (document.getElementById('notificaciones')?.classList.contains('active')) {
+        renderNotificationsSection();
+    }
+
+    // Mostrar notificación toast emergente
+    showToastNotification(message, type);
 }
 
+// Actualiza el badge y el dropdown del header
 function updateNotificationsUI() {
-    const badge = document.querySelector('.badge');
-    const dropdown = document.querySelector('.dropdown-notifications');
-    
-    if (!badge || !dropdown) return;
-    
-    // Actualizar badge
+    const badge = document.querySelector('#notificationsDropdown .badge');
+    const dropdownMenu = document.querySelector('.dropdown-notifications');
+
+    if (!badge || !dropdownMenu) return;
+
+    // Contar no leídas
     const unreadCount = notifications.filter(n => !n.read).length;
-    badge.textContent = unreadCount;
-    
-    // Actualizar dropdown
-    let html = `
-        <li>
-            <h6 class="dropdown-header">Notificaciones</h6>
-        </li>
+    badge.textContent = unreadCount > 0 ? unreadCount : '';
+    badge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+
+    // Actualizar dropdown (mostrar ~5 más recientes)
+    let dropdownHTML = `
+        <li><h6 class="dropdown-header">Notificaciones (${unreadCount} nuevas)</h6></li>
         <li><hr class="dropdown-divider"></li>
     `;
-    
+
     if (notifications.length === 0) {
-        html += `
-            <li>
-                <a class="dropdown-item text-center small" href="#">
-                    No hay notificaciones
-                </a>
-            </li>
-        `;
+        dropdownHTML += `<li><span class="dropdown-item text-muted text-center small">No hay notificaciones</span></li>`;
     } else {
-        // Mostrar las 5 notificaciones más recientes
-        notifications.slice(0, 5).forEach(notification => {
-            const icon = getNotificationIcon(notification.type);
-            const textClass = getNotificationTextClass(notification.type);
-            
-            html += `
+        notifications.slice(0, 5).forEach(n => {
+            const icon = getNotificationIcon(n.type);
+            const textClass = getNotificationTextClass(n.type);
+            const timeAgo = formatTimeAgo(n.timestamp); 
+
+            dropdownHTML += `
                 <li>
-                    <a class="dropdown-item ${notification.read ? '' : 'fw-bold'}" href="#" onclick="markNotificationAsRead(${notification.id})">
-                        <div class="d-flex align-items-center">
-                            <i class="bi ${icon} ${textClass} me-2"></i>
+                    <a class="dropdown-item ${n.read ? 'opacity-75' : 'fw-bold'}" href="#" onclick="handleNotificationClick(${n.id})">
+                        <div class="d-flex align-items-start">
+                            <i class="bi ${icon} ${textClass} me-2 fs-5"></i>
                             <div class="flex-grow-1">
-                                <div class="small">${notification.message}</div>
-                                <div class="text-muted small">${notification.timestamp}</div>
+                                <div class="small">${n.message}</div>
+                                <div class="text-muted small">${timeAgo}</div>
                             </div>
-                            ${!notification.read ? '<span class="badge bg-primary ms-2">Nuevo</span>' : ''}
+                            ${!n.read ? '<span class="badge bg-success rounded-pill ms-2" style="font-size: 0.6em;">●</span>' : ''}
                         </div>
                     </a>
                 </li>
             `;
         });
-        
-        html += `
-            <li><hr class="dropdown-divider"></li>
-            <li>
-                <a class="dropdown-item text-center small" href="#" onclick="markAllNotificationsAsRead()">
-                    Marcar todas como leídas
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item text-center small" href="#" onclick="clearAllNotifications()">
-                    Limpiar todas las notificaciones
-                </a>
-            </li>
-        `;
+        dropdownHTML += `<li><hr class="dropdown-divider"></li>`;
     }
-    
-    dropdown.innerHTML = html;
+
+    dropdownHTML += `<li><a class="dropdown-item text-center small text-success" href="#" onclick="showSection('notificaciones'); return false;">Ver todas</a></li>`;
+
+    dropdownMenu.innerHTML = dropdownHTML;
+}
+
+// Formatear tiempo relativo (simple)
+function formatTimeAgo(isoTimestamp) {
+    try {
+        const date = new Date(isoTimestamp);
+        const now = new Date();
+        const seconds = Math.floor((now - date) / 1000);
+
+        if (seconds < 60) return `hace ${seconds} seg`;
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `hace ${minutes} min`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `hace ${hours} hr`;
+        const days = Math.floor(hours / 24);
+        if (days < 7) return `hace ${days} día${days > 1 ? 's' : ''}`;
+        return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    } catch (e) {
+        return 'hace un momento';
+    }
+}
+
+// Manejar clic en una notificación del dropdown
+function handleNotificationClick(id) {
+    markNotificationAsRead(id);
+    showSection('notificaciones');
+    setTimeout(() => {
+        const item = document.querySelector(`.notification-item[data-id="${id}"]`);
+        item?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        item?.classList.add('highlight');
+        setTimeout(() => item?.classList.remove('highlight'), 1500);
+    }, 300);
 }
 
 function getNotificationIcon(type) {
     switch(type) {
         case 'success': return 'bi-check-circle-fill';
-        case 'error': return 'bi-exclamation-circle-fill';
+        case 'error': return 'bi-x-octagon-fill';
         case 'warning': return 'bi-exclamation-triangle-fill';
         case 'info': return 'bi-info-circle-fill';
         default: return 'bi-bell-fill';
@@ -2322,26 +3468,82 @@ function getNotificationTextClass(type) {
 
 function markNotificationAsRead(id) {
     const notification = notifications.find(n => n.id === id);
-    if (notification) {
+    if (notification && !notification.read) {
         notification.read = true;
         saveNotificationsToLocalStorage();
         updateNotificationsUI();
+
+        // Si estamos en la sección de notificaciones, actualizarla
+        if (document.getElementById('notificaciones')?.classList.contains('active')) {
+            renderNotificationsSection();
+        }
     }
 }
 
 function markAllNotificationsAsRead() {
+    let changed = false;
     notifications.forEach(notification => {
-        notification.read = true;
+        if (!notification.read) {
+            notification.read = true;
+            changed = true;
+        }
     });
-    saveNotificationsToLocalStorage();
-    updateNotificationsUI();
+    if(changed) {
+        saveNotificationsToLocalStorage();
+        updateNotificationsUI();
+        if (document.getElementById('notificaciones')?.classList.contains('active')) {
+            renderNotificationsSection();
+        }
+        showToastNotification("Todas las notificaciones marcadas como leídas.", "info");
+    }
 }
 
 function clearAllNotifications() {
-    if (confirm('¿Estás seguro de que deseas eliminar todas las notificaciones?')) {
+    if (notifications.length > 0 && confirm('¿Estás seguro de que deseas eliminar TODAS las notificaciones?')) {
         notifications = [];
         saveNotificationsToLocalStorage();
         updateNotificationsUI();
+        if (document.getElementById('notificaciones')?.classList.contains('active')) {
+            renderNotificationsSection();
+        }
+        showToastNotification("Historial de notificaciones limpiado.", "success");
+    }
+}
+
+// Muestra notificación emergente (Toast)
+function showToastNotification(message, type = 'success') {
+    const toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        console.error("Toast container not found!");
+        return;
+    }
+
+    const toastId = 'toast-' + Date.now();
+    const iconClass = getNotificationIcon(type);
+    const textClass = getNotificationTextClass(type);
+    const headerColorClass = `text-bg-${type === 'error' ? 'danger' : (type === 'warning' ? 'warning' : 'secondary')}`;
+
+    const toastHTML = `
+        <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+            <div class="toast-header ${headerColorClass} text-white">
+                <i class="bi ${iconClass} me-2"></i>
+                <strong class="me-auto">FinLi Notificación</strong>
+                <small>Ahora</small>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button> 
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+        </div>
+    `;
+
+    toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+
+    const toastElement = document.getElementById(toastId);
+    if (toastElement) {
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+        toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
     }
 }
 
@@ -2706,7 +3908,10 @@ function getInitials(name) {
 // ---- PERSONALIZACIÓN DE CATEGORÍAS ----
 
 // Función para mostrar el modal de personalización de categorías
-function showCustomizeCategoriesModal() {
+function showCustomizeCategoriesModal(preselectedCategory = null) {
+    // Guardar la sección actual antes de abrir el modal
+    const previousSection = currentSection;
+    
     // Actualizar el contenido del modal
     updateCustomizeCategoriesModal();
     
@@ -2714,14 +3919,38 @@ function showCustomizeCategoriesModal() {
     const modalElement = document.getElementById('customizeCategoriesModal');
     if (modalElement) {
         const modal = new bootstrap.Modal(modalElement);
+        
+        // Agregar evento para restaurar la sección al cerrar el modal
+        modalElement.addEventListener('hidden.bs.modal', function() {
+            showSection(previousSection);
+        });
+        
         modal.show();
+
+        // Si se proporciona una categoría pre-seleccionada, establecerla en el select de categoría padre
+        if (preselectedCategory) {
+            // Esperar a que el modal se muestre para que los elementos estén visibles
+            modalElement.addEventListener('shown.bs.modal', function() {
+                // Activar la pestaña de nueva subcategoría
+                const newSubcategoryTab = document.getElementById('new-subcategory-tab');
+                if (newSubcategoryTab) {
+                    newSubcategoryTab.click();
+                }
+
+                // Establecer la categoría padre
+                const parentCategorySelect = document.getElementById('parentCategory');
+                if (parentCategorySelect) {
+                    parentCategorySelect.value = preselectedCategory;
+                }
+            }, { once: true });
+        }
     }
 }
 
 // Función para actualizar el contenido del modal
 function updateCustomizeCategoriesModal() {
     updateParentCategoryOptions();
-    updateCustomCategoriesList();
+    updateManageCategoriesTab();
 }
 
 // Función para actualizar las opciones de categorías padre
@@ -2798,7 +4027,7 @@ function addNewCategory() {
     
     // Verificar si la categoría ya existe
     const categoryExists = customCategories.some(cat => cat.name === name.toLowerCase()) || 
-                          Object.keys(subcategoriesMap).includes(name.toLowerCase());
+                        Object.keys(subcategoriesMap).includes(name.toLowerCase());
     
     if (categoryExists) {
         showNotification('Ya existe una categoría con ese nombre', 'error');
@@ -2844,7 +4073,10 @@ function addNewSubcategory() {
     const nameInput = document.getElementById('newSubcategoryName');
     const iconSelect = document.getElementById('newSubcategoryIcon');
     
-    if (!parentCategorySelect || !nameInput || !iconSelect) return;
+    if (!parentCategorySelect || !nameInput || !iconSelect) {
+        showNotification('Error: Elementos del formulario no encontrados', 'error');
+        return;
+    }
     
     const parentCategory = parentCategorySelect.value;
     const name = nameInput.value.trim();
@@ -2869,21 +4101,26 @@ function addNewSubcategory() {
         return;
     }
     
-    // Agregar la nueva subcategoría
+    // Crear la nueva subcategoría
     const newSubcategory = {
         name: name.toLowerCase(),
         label: name,
         icon: icon
     };
     
-    // Determinar si es una categoría predefinida o personalizada
+    // Determinar dónde guardar la subcategoría
     if (subcategoriesMap[parentCategory]) {
-        subcategoriesMap[parentCategory].push(newSubcategory);
-    } else if (customSubcategories[parentCategory]) {
+        // Es una categoría predefinida - guardar en customSubcategories
+        if (!customSubcategories[parentCategory]) {
+            customSubcategories[parentCategory] = [];
+        }
         customSubcategories[parentCategory].push(newSubcategory);
     } else {
-        // Si no existe, crear el array
-        customSubcategories[parentCategory] = [newSubcategory];
+        // Es una categoría personalizada
+        if (!customSubcategories[parentCategory]) {
+            customSubcategories[parentCategory] = [];
+        }
+        customSubcategories[parentCategory].push(newSubcategory);
     }
     
     // Guardar en localStorage
@@ -2892,13 +4129,18 @@ function addNewSubcategory() {
     // Limpiar formulario
     nameInput.value = '';
     
-    // Cerrar el modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('customizeCategoriesModal'));
-    if (modal) {
-        modal.hide();
-    }
+    // Actualizar la interfaz
+    updateParentCategoryOptions();
     
     showNotification('Subcategoría agregada exitosamente', 'success');
+    
+    // Cerrar el modal después de un breve delay
+    setTimeout(() => {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('customizeCategoriesModal'));
+        if (modal) {
+            modal.hide();
+        }
+    }, 1500);
 }
 
 // Función para eliminar categoría personalizada
@@ -2923,6 +4165,237 @@ function deleteCustomCategory(index) {
         
         showNotification('Categoría eliminada exitosamente', 'success');
     }
+}
+
+// Función para editar una categoría personalizada
+function editCustomCategory(index) {
+    const category = customCategories[index];
+    if (!category) return;
+    
+    const newName = prompt('Nuevo nombre para la categoría:', category.label);
+    if (newName && newName.trim()) {
+        const oldName = category.name;
+        category.label = newName.trim();
+        category.name = newName.trim().toLowerCase();
+        
+        // Actualizar también en customSubcategories si existe
+        if (customSubcategories[oldName]) {
+            customSubcategories[category.name] = customSubcategories[oldName];
+            delete customSubcategories[oldName];
+        }
+        
+        saveCustomCategoriesToLocalStorage();
+        updateCategoryButtons();
+        updateManageCategoriesTab();
+        showNotification('Categoría actualizada exitosamente', 'success');
+    }
+}
+
+// Función para editar una subcategoría
+function editSubcategory(categoryName, subcategoryIndex, isCustomCategory = false) {
+    let subcategories;
+    if (isCustomCategory) {
+        subcategories = customSubcategories[categoryName] || [];
+    } else {
+        subcategories = subcategoriesMap[categoryName] || [];
+    }
+    
+    const subcategory = subcategories[subcategoryIndex];
+    if (!subcategory) return;
+    
+    const newName = prompt('Nuevo nombre para la subcategoría:', subcategory.label);
+    if (newName && newName.trim()) {
+        subcategory.label = newName.trim();
+        subcategory.name = newName.trim().toLowerCase();
+        
+        // Actualizar icono
+        const newIcon = prompt('Nuevo icono (clase Bootstrap Icons):', subcategory.icon);
+        if (newIcon) {
+            subcategory.icon = newIcon;
+        }
+        
+        saveCustomCategoriesToLocalStorage();
+        updateManageCategoriesTab();
+        showNotification('Subcategoría actualizada exitosamente', 'success');
+    }
+}
+
+// Función mejorada para eliminar subcategorías
+function deleteSubcategory(categoryName, subcategoryName, isCustomCategory = false) {
+    if (!confirm('¿Estás seguro de que deseas eliminar esta subcategoría?')) {
+        return;
+    }
+    
+    if (isCustomCategory) {
+        // Eliminar de categorías personalizadas
+        if (customSubcategories[categoryName]) {
+            customSubcategories[categoryName] = customSubcategories[categoryName].filter(
+                sub => sub.name !== subcategoryName
+            );
+            // Si no quedan subcategorías, eliminar el array vacío
+            if (customSubcategories[categoryName].length === 0) {
+                delete customSubcategories[categoryName];
+            }
+        }
+    } else {
+        // Eliminar de categorías predefinidas (solo de customSubcategories)
+        if (customSubcategories[categoryName]) {
+            customSubcategories[categoryName] = customSubcategories[categoryName].filter(
+                sub => sub.name !== subcategoryName
+            );
+            if (customSubcategories[categoryName].length === 0) {
+                delete customSubcategories[categoryName];
+            }
+        }
+    }
+    
+    saveCustomCategoriesToLocalStorage();
+    updateManageCategoriesTab();
+    showNotification('Subcategoría eliminada exitosamente', 'success');
+}
+
+// Función mejorada para la pestaña de gestión
+function updateManageCategoriesTab() {
+    const categoriesList = document.getElementById('customCategoriesList');
+    if (!categoriesList) return;
+    
+    let html = '<div class="manage-categories-container">';
+    
+    // Categorías Predefinidas
+    html += `
+        <h6 class="text-success mb-3">
+            <i class="bi bi-star-fill me-2"></i>Categorías Predefinidas
+        </h6>
+        <div class="list-group mb-4">
+    `;
+    
+    Object.keys(subcategoriesMap).forEach(category => {
+        const subcategories = subcategoriesMap[category] || [];
+        const customSubs = customSubcategories[category] || [];
+        const allSubcategories = [...subcategories, ...customSubs];
+        
+        html += `
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-${getCategoryIcon(category)} me-2 text-success"></i>
+                        <strong>${getCategoryLabel(category)}</strong>
+                    </div>
+                    <span class="badge bg-secondary">Predefinida</span>
+                </div>
+                <div class="subcategories-list">
+                    <h6 class="small text-muted mb-2">Subcategorías:</h6>
+                    <div class="d-flex flex-wrap gap-2">
+        `;
+        
+        if (allSubcategories.length === 0) {
+            html += `<span class="text-muted small">No hay subcategorías</span>`;
+        } else {
+            allSubcategories.forEach((sub, index) => {
+                const isCustom = index >= subcategories.length;
+                html += `
+                    <div class="subcategory-item badge bg-light text-dark d-flex align-items-center">
+                        <i class="${sub.icon} me-1"></i>
+                        <span>${sub.label}</span>
+                        <div class="btn-group ms-2">
+                            <button class="btn btn-sm btn-outline-warning" 
+                                onclick="editSubcategory('${category}', ${index}, ${isCustom})"
+                                title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" 
+                                onclick="deleteSubcategory('${category}', '${sub.name}', ${isCustom})"
+                                title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        html += `</div></div></div>`;
+    });
+    
+    html += `</div>`;
+    
+    // Categorías Personalizadas
+    if (customCategories.length > 0) {
+        html += `
+            <h6 class="text-success mb-3">
+                <i class="bi bi-sliders me-2"></i>Categorías Personalizadas
+            </h6>
+            <div class="list-group">
+        `;
+        
+        customCategories.forEach((category, index) => {
+            const subcategories = customSubcategories[category.name] || [];
+            
+            html += `
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <i class="${category.icon} me-2 text-warning"></i>
+                            <strong>${category.label}</strong>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary" 
+                                onclick="editCustomCategory(${index})"
+                                title="Editar categoría">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" 
+                                onclick="deleteCustomCategory(${index})"
+                                title="Eliminar categoría">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="subcategories-list">
+                        <h6 class="small text-muted mb-2">Subcategorías:</h6>
+                        <div class="d-flex flex-wrap gap-2">
+            `;
+            
+            if (subcategories.length === 0) {
+                html += `<span class="text-muted small">No hay subcategorías</span>`;
+            } else {
+                subcategories.forEach((sub, subIndex) => {
+                    html += `
+                        <div class="subcategory-item badge bg-light text-dark d-flex align-items-center">
+                            <i class="${sub.icon} me-1"></i>
+                            <span>${sub.label}</span>
+                            <div class="btn-group ms-2">
+                                <button class="btn btn-sm btn-outline-warning" 
+                                    onclick="editSubcategory('${category.name}', ${subIndex}, true)"
+                                    title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" 
+                                    onclick="deleteSubcategory('${category.name}', '${sub.name}', true)"
+                                    title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            html += `</div></div></div>`;
+        });
+        
+        html += `</div>`;
+    } else {
+        html += `
+            <div class="text-center py-4">
+                <i class="bi bi-inbox display-4 text-muted"></i>
+                <p class="text-muted mt-3">No hay categorías personalizadas</p>
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    categoriesList.innerHTML = html;
 }
 
 // Función para actualizar botones de categorías en la interfaz
@@ -2972,23 +4445,6 @@ function updateCategoryButtonsInSection(sectionId) {
     `;
     
     container.innerHTML = html;
-    
-    // Reconfigurar event listeners
-    document.querySelectorAll(`#${sectionId} .category-btn`).forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (this.id.startsWith('personalize-categories-btn')) {
-                showCustomizeCategoriesModal();
-                return;
-            }
-            
-            document.querySelectorAll(`#${sectionId} .category-btn`).forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            selectedCategory = this.getAttribute('data-category');
-            
-            // Mostrar subcategorías
-            showSubcategories(sectionId, selectedCategory);
-        });
-    });
 }
 
 // Función auxiliar para obtener icono de categoría
@@ -2997,7 +4453,6 @@ function getCategoryIcon(category) {
         vivienda: 'house',
         transporte: 'car-front',
         alimentacion: 'cup-straw',
-        finanzas: 'cash-coin',
         salud: 'heart-pulse',
         entretenimiento: 'controller',
         ropa: 'bag',
@@ -3036,7 +4491,6 @@ function getCategoryLabel(category) {
         vivienda: 'Vivienda',
         transporte: 'Transporte',
         alimentacion: 'Alimentación',
-        finanzas: 'Finanzas Personales',
         salud: 'Cuidado Personal y Salud',
         entretenimiento: 'Entretenimiento y Ocio',
         ropa: 'Ropa',
@@ -3064,6 +4518,423 @@ function findSubcategory(category, subcategoryName) {
     
     const subcategories = subcategoriesMap[category] || customSubcategories[category] || [];
     return subcategories.find(sub => sub.name === subcategoryName) || null;
+}
+
+// ---- FUNCIONES PARA LA SECCIÓN NOTIFICACIONES ----
+
+// Función para renderizar la sección de notificaciones
+function renderNotificationsSection() {
+    const container = document.getElementById('notifications-list');
+    const emptyState = document.getElementById('empty-notifications');
+    
+    if (!container || !emptyState) return;
+    
+    // Obtener filtros
+    const typeFilter = document.getElementById('notificationTypeFilter').value;
+    const statusFilter = document.getElementById('notificationStatusFilter').value;
+    
+    // Filtrar notificaciones
+    let filteredNotifications = [...notifications];
+    
+    if (typeFilter !== 'all') {
+        filteredNotifications = filteredNotifications.filter(n => n.type === typeFilter);
+    }
+    
+    if (statusFilter !== 'all') {
+        const isRead = statusFilter === 'read';
+        filteredNotifications = filteredNotifications.filter(n => n.read === isRead);
+    }
+    
+    // Mostrar estado vacío si no hay notificaciones
+    if (filteredNotifications.length === 0) {
+        container.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    
+    // Renderizar notificaciones
+    let html = '';
+    
+    filteredNotifications.forEach(notification => {
+        const icon = getNotificationIcon(notification.type);
+        const textClass = getNotificationTextClass(notification.type);
+        const date = new Date(notification.timestamp);
+        const formattedDate = date.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        html += `
+            <div class="notification-item ${notification.read ? '' : 'unread'}" data-id="${notification.id}">
+                <div class="notification-icon ${notification.type}">
+                    <i class="bi ${icon}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-message">${notification.message}</div>
+                    <div class="notification-time">${formattedDate}</div>
+                </div>
+                <div class="notification-actions">
+                    <span class="notification-badge ${notification.read ? 'read' : 'unread'}">
+                        ${notification.read ? 'Leída' : 'No leída'}
+                    </span>
+                    ${!notification.read ? 
+                        `<button class="btn btn-sm btn-outline-primary mark-as-read" data-id="${notification.id}">
+                            <i class="bi bi-check"></i>
+                        </button>` : ''
+                    }
+                    <button class="btn btn-sm btn-outline-danger delete-notification" data-id="${notification.id}">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    
+    // Añadir event listeners a los botones
+    document.querySelectorAll('.mark-as-read').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = parseInt(this.getAttribute('data-id'));
+            markNotificationAsRead(id);
+        });
+    });
+    
+    document.querySelectorAll('.delete-notification').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = parseInt(this.getAttribute('data-id'));
+            deleteNotification(id);
+        });
+    });
+}
+
+// Función para eliminar una notificación específica
+function deleteNotification(id) {
+    notifications = notifications.filter(n => n.id !== id);
+    saveNotificationsToLocalStorage();
+    renderNotificationsSection();
+    updateNotificationsUI();
+    showNotification('Notificación eliminada', 'success');
+}
+
+// ---- FUNCIONES PARA INGRESOS ----
+
+// Función para actualizar el mensaje de tabla vacía en ingresos
+function updateIncomeTableMessage() {
+    const emptyIncomeMessage = document.getElementById('emptyIncomeMessage');
+    const incomeTable = document.getElementById('incomeTable');
+    
+    if (incomeRecords.length === 0) {
+        if (emptyIncomeMessage) {
+            emptyIncomeMessage.style.display = '';
+        }
+    } else {
+        if (emptyIncomeMessage) {
+            emptyIncomeMessage.style.display = 'none';
+        }
+    }
+}
+
+// ---- ACTUALIZAR TOTAL DE INGRESOS EN SECCIÓN INGRESOS ----
+function updateTotalIncome() {
+    const totalIncome = incomeRecords.reduce((sum, income) => sum + income.amount, 0);
+    const totalIncomeElement = document.getElementById('totalIncomeAmount');
+    
+    if (totalIncomeElement) {
+        totalIncomeElement.textContent = `S/. ${totalIncome.toFixed(2)}`;
+    }
+}
+
+// ---- AGREGAR INGRESO ----
+function addIncome() {
+    const methodId = parseInt(document.getElementById('incomePaymentMethod').value);
+    const amount = parseFloat(document.getElementById('incomeAmount').value);
+    const description = document.getElementById('incomeDescription').value.trim();
+    
+    if (!methodId) {
+        showNotification('Por favor selecciona un medio de pago', 'error');
+        return;
+    }
+    
+    if (isNaN(amount) || amount <= 0) {
+        showNotification('Por favor ingresa un monto válido', 'error');
+        return;
+    }
+    
+    const method = paymentMethods.find(m => m.id === methodId);
+    if (!method) {
+        showNotification('Error: Medio de pago no encontrado', 'error');
+        return;
+    }
+    
+    // Registrar el ingreso
+    method.balance += amount;
+    
+    const incomeRecord = {
+        id: Date.now(),
+        methodId: methodId,
+        methodName: method.name,
+        amount: amount,
+        description: description || 'Ingreso sin descripción',
+        date: new Date().toISOString(),
+        formattedDate: formatDateTime(new Date().toISOString()),
+        type: 'ingreso'
+    };
+    
+    incomeRecords.push(incomeRecord);
+    
+    // Guardar cambios
+    savePaymentMethodsToLocalStorage();
+    saveIncomeRecordsToLocalStorage();
+    
+    // ACTUALIZAR TODAS LAS INTERFACES
+    renderPaymentMethods();
+    syncIncomeTables();
+    updatePaymentMethodsChart();
+    updateTotalBalance();
+    updateBalance(); // ACTUALIZAR BALANCE GENERAL
+    updateTotalIncome(); // ACTUALIZAR TOTAL INGRESOS EN SECCIÓN INGRESOS
+    
+    // ACTUALIZAR LOS SELECTS DE MÉTODOS DE PAGO EN TIEMPO REAL
+    updateAllPaymentMethodSelects();
+
+    // Actualizar mensaje de tabla vacía
+    updateIncomeTableMessage();
+    
+    // Limpiar formulario
+    document.getElementById('incomePaymentMethod').value = '';
+    document.getElementById('incomeAmount').value = '';
+    document.getElementById('incomeDescription').value = '';
+    
+    // NOTIFICACIONES
+    addNotification(`Ingreso registrado: S/. ${amount.toFixed(2)} en ${method.name}`, 'success');
+    showNotification('Ingreso registrado exitosamente', 'success');
+}
+
+// ---- RENDERIZAR REGISTROS DE INGRESOS ----
+function renderIncomeRecords() {
+    const table = document.getElementById('incomeTable');
+    if (!table) return;
+    
+    // Ocultar el mensaje de tabla vacía si hay registros
+    updateIncomeTableMessage();
+    
+    // Limpiar tabla (excepto el mensaje de vacío)
+    const rows = table.querySelectorAll('tr:not(#emptyIncomeMessage)');
+    rows.forEach(row => row.remove());
+    
+    if (incomeRecords.length === 0) {
+        return;
+    }
+
+    const sortedIncome = [...incomeRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    sortedIncome.forEach(income => {
+        const paymentMethodClass = getPaymentMethodClass(income.methodName);
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${income.formattedDate}</td>
+            <td>
+                <div class="payment-method-with-logo-center">
+                    ${getPaymentMethodLogo(income.methodName)}
+                </div>
+            </td>
+            <td class="transaction-amount-income text-success">+S/. ${income.amount.toFixed(2)}</td>
+            <td>${income.description}</td>
+            <td>
+                <span class="badge ${income.type === 'ajuste_ingreso' ? 'bg-warning' : 'bg-success'}">
+                    ${income.type === 'ajuste_ingreso' ? 'Ajuste' : 'Ingreso'}
+                </span>
+            </td>
+            <td class="text-end">
+                <div class="action-buttons">
+                    <button class="action-btn edit-btn" onclick="editIncomeRecord(${income.id})" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="action-btn delete-btn" onclick="deleteIncomeRecord(${income.id})" title="Eliminar">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        table.appendChild(tr);
+    });
+}
+
+// ---- ELIMINAR REGISTRO DE INGRESO ----
+function deleteIncomeRecord(id) {
+    const income = incomeRecords.find(inc => inc.id === id);
+    if (!income) return;
+    
+    if (!confirm(`¿Estás seguro de que deseas eliminar este ingreso?\n${income.description} - S/. ${income.amount.toFixed(2)}`)) {
+        return;
+    }
+    
+    // Revertir el ingreso en el método de pago
+    const method = paymentMethods.find(m => m.id === income.methodId);
+    if (method) {
+        method.balance -= income.amount;
+    }
+    
+    // Eliminar el registro
+    incomeRecords = incomeRecords.filter(inc => inc.id !== id);
+    
+    savePaymentMethodsToLocalStorage();
+    saveIncomeRecordsToLocalStorage();
+    
+    renderPaymentMethods();
+    renderIncomeRecords();
+    updateAllPaymentMethodSelects();
+    updatePaymentMethodsChart();
+    updateTotalBalance();
+    updateBalance();
+    
+    // Actualizar total de ingresos
+    updateTotalIncome();
+    
+    // Actualizar mensaje de tabla vacía
+    updateIncomeTableMessage();
+    
+    addNotification(`Ingreso eliminado: ${income.description} - S/. ${income.amount.toFixed(2)}`, 'warning');
+    showNotification('Ingreso eliminado exitosamente', 'success');
+}
+
+// ---- EDITAR REGISTRO DE INGRESO ----
+function editIncomeRecord(id) {
+    const income = incomeRecords.find(inc => inc.id === id);
+    if (!income) return;
+    
+    const modalBody = `
+        <div class="mb-3">
+            <label class="form-label">Monto S/.</label>
+            <input type="number" class="form-control" id="editIncomeAmount" value="${income.amount.toFixed(2)}" step="0.01">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Descripción</label>
+            <input type="text" class="form-control" id="editIncomeDescription" value="${income.description}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Medio de Pago</label>
+            <select class="form-select" id="editIncomePaymentMethod">
+                ${paymentMethods.map(method => 
+                    `<option value="${method.id}" ${method.id === income.methodId ? 'selected' : ''}>
+                        ${method.name} (S/. ${method.balance.toFixed(2)})
+                    </option>`
+                ).join('')}
+            </select>
+        </div>
+    `;
+    
+    showCustomModal(
+        'Editar Registro de Ingreso',
+        modalBody,
+        'Guardar Cambios',
+        'success',
+        () => {
+            const newAmount = parseFloat(document.getElementById('editIncomeAmount').value);
+            const newDescription = document.getElementById('editIncomeDescription').value.trim();
+            const newMethodId = parseInt(document.getElementById('editIncomePaymentMethod').value);
+            
+            if (isNaN(newAmount) || newAmount <= 0) {
+                showNotification('Por favor ingresa un monto válido', 'error');
+                return false;
+            }
+            
+            if (!newDescription) {
+                showNotification('Por favor ingresa una descripción', 'error');
+                return false;
+            }
+            
+            const oldMethod = paymentMethods.find(m => m.id === income.methodId);
+            const newMethod = paymentMethods.find(m => m.id === newMethodId);
+            
+            if (!newMethod) {
+                showNotification('Error: Medio de pago no encontrado', 'error');
+                return false;
+            }
+            
+            // Revertir el ingreso anterior en el método de pago original
+            if (oldMethod) {
+                oldMethod.balance -= income.amount;
+            }
+            
+            // Aplicar el nuevo ingreso al método de pago seleccionado
+            newMethod.balance += newAmount;
+            
+            // Actualizar el registro de ingreso
+            income.amount = newAmount;
+            income.description = newDescription;
+            income.methodId = newMethodId;
+            income.methodName = newMethod.name;
+            
+            savePaymentMethodsToLocalStorage();
+            saveIncomeRecordsToLocalStorage();
+            
+            renderPaymentMethods();
+            renderIncomeRecords();
+            updateAllPaymentMethodSelects();
+            updatePaymentMethodsChart();
+            updateTotalBalance();
+            updateBalance();
+            
+            // Actualizar total de ingresos
+            updateTotalIncome();
+            
+            showNotification('Ingreso actualizado exitosamente', 'success');
+            return true;
+        }
+    );
+}
+
+// ---- ACTUALIZAR TODOS LOS SELECTS DE MÉTODOS DE PAGO ----
+function updateAllPaymentMethodSelects() {
+    // Actualizar todos los selects de métodos de pago en la aplicación
+    const selectIds = [
+        'paymentMethod',           // Inicio - Agregar transacción
+        'incomePaymentMethod',     // Inicio - Agregar ingreso
+        'transferFrom',            // Ingresos - Transferencia desde
+        'transferTo',              // Ingresos - Transferencia hacia
+        'paymentMethodPagos'       // Pagos - Método de pago
+    ];
+    
+    selectIds.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        
+        // Guardar valor seleccionado actual
+        const currentValue = select.value;
+        
+        // Limpiar y reconstruir opciones
+        select.innerHTML = selectId === 'paymentMethod' || selectId === 'paymentMethodPagos' ? 
+            '<option value="seleccion">Selecciona un metodo...</option>' : 
+            '<option value="">Selecciona el medio de pago</option>';
+        
+        if (paymentMethods.length === 0) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'No hay métodos de pago disponibles';
+            option.disabled = true;
+            select.appendChild(option);
+        } else {
+            paymentMethods.forEach(method => {
+                const option = document.createElement('option');
+                option.value = method.id;
+                option.textContent = `${method.name} (S/. ${method.balance.toFixed(2)})`;
+                select.appendChild(option);
+            });
+        }
+        
+        // Restaurar valor seleccionado si aún existe
+        if (currentValue && Array.from(select.options).some(opt => opt.value === currentValue)) {
+            select.value = currentValue;
+        }
+    });
 }
 
 // ---- FUNCIONES UTILITARIAS ----
@@ -3094,12 +4965,12 @@ function showNotification(message, type = 'success') {
     };
     
     const toastHTML = `
-        <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="toast-header">
-                <i class="bi bi-${typeIcons[type] || 'info-circle'}-fill text-${typeColors[type] || 'primary'} me-2"></i>
+        <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+            <div class="toast-header bg-${typeColors[type]} text-white">
+                <i class="bi bi-${typeIcons[type]} me-2"></i>
                 <strong class="me-auto">FinLi</strong>
                 <small>Ahora</small>
-                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
             <div class="toast-body">
                 ${message}
@@ -3147,14 +5018,12 @@ function resetForm() {
     const transactionDescription = document.getElementById('transactionDescription');
     const transactionDateTime = document.getElementById('transactionDateTime');
     const paymentMethod = document.getElementById('paymentMethod');
-    const transactionType = document.getElementById('transactionType');
     const imagePreview = document.getElementById('imagePreview');
     
     if (transactionAmount) transactionAmount.value = '';
     if (transactionDescription) transactionDescription.value = '';
     if (transactionDateTime) transactionDateTime.value = '';
     if (paymentMethod) paymentMethod.value = 'seleccion';
-    if (transactionType) transactionType.value = 'seleccion';
     if (imagePreview) {
         imagePreview.innerHTML = `
             <div class="image-preview-placeholder">
@@ -3179,14 +5048,12 @@ function resetFormPagos() {
     const NamePago = document.getElementById('NamePago');
     const transactionDateTimePagos = document.getElementById('transactionDateTimePagos');
     const paymentMethodPagos = document.getElementById('paymentMethodPagos');
-    const transactionTypePagos = document.getElementById('transactionTypePagos');
     const imagePreviewPagos = document.getElementById('imagePreviewPagos');
     
     if (transactionAmountPagos) transactionAmountPagos.value = '';
     if (NamePago) NamePago.value = '';
     if (transactionDateTimePagos) transactionDateTimePagos.value = '';
     if (paymentMethodPagos) paymentMethodPagos.value = 'seleccion';
-    if (transactionTypePagos) transactionTypePagos.value = 'seleccion';
     if (imagePreviewPagos) {
         imagePreviewPagos.innerHTML = `
             <div class="image-preview-placeholder">
@@ -3220,43 +5087,24 @@ function handleLogout() {
 
 // Función: Resetear filtros de informes
 function resetReportFilters() {
-    // Resetear periodo a mensual
-    currentPeriod = 'mensual';
+    // Resetear periodo
+    currentPeriod = null;
     document.querySelectorAll('#informes .btn-group .btn[data-period]').forEach(btn => {
         btn.classList.remove('active');
-        if (btn.getAttribute('data-period') === 'mensual') {
-            btn.classList.add('active');
-        }
     });
     
-    // Resetear filtro a categorías
-    currentFilter = 'categorias';
-    document.querySelectorAll('#informes .btn-group .btn[data-filter]').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.getAttribute('data-filter') === 'categorias') {
-            btn.classList.add('active');
-        }
-    });
-    
-    // Resetear categorías y subcategorías seleccionadas
+    // Resetear categorías y subcategorías
     selectedCategories = [];
     selectedSubCategories = [];
-    selectedCategory = null;
-    selectedSubCategory = null;
     
-    // Limpiar selecciones de categorías
-    document.querySelectorAll('#informes-category-filter .category-btn').forEach(btn => {
+    // Resetear botones de categoría
+    document.querySelectorAll('#informes .category-btn, #informes .subcategory-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     
-    document.querySelectorAll('#informes-subcategories-container .subcategory-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    // Limpiar contenedor de subcategorías
+    // Ocultar contenedor de subcategorías
     const subcontainer = document.getElementById('informes-subcategories-container');
     if (subcontainer) {
-        subcontainer.innerHTML = '';
         subcontainer.style.display = 'none';
     }
     
@@ -3266,54 +5114,91 @@ function resetReportFilters() {
         showSubcategoriesBtn.innerHTML = '<i class="bi bi-arrow-down"></i> Ver Subcategorías';
     }
     
-    // Resetear filtros de fecha
-    const now = new Date();
-    const currentMonth = now.toISOString().slice(0, 7);
-    const monthFilter = document.getElementById('informes-month-filter');
-    if (monthFilter) {
-        monthFilter.value = currentMonth;
-    }
-    
     // Mostrar todos los gráficos
-    showAllCharts();
-    
-    // Actualizar gráficos
     updateCharts();
     
     showNotification('Filtros reiniciados', 'info');
 }
 
-// Configurar event listeners para el modal de personalización
-document.addEventListener('DOMContentLoaded', function() {
-    // Configurar botones del modal de personalización
-    const addNewCategoryBtn = document.getElementById('addNewCategoryBtn');
-    const addNewSubcategoryBtn = document.getElementById('addNewSubcategoryBtn');
+// Función para mostrar una sección específica
+function showSection(sectionName) {
+    document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active'));
+    document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
     
-    if (addNewCategoryBtn) {
-        addNewCategoryBtn.addEventListener('click', addNewCategory);
+    document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+    document.getElementById(sectionName).classList.add('active');
+    
+    // Actualizar título y subtítulo
+    const sectionData = {
+        inicio: {
+            title: 'Bienvenido, <span class="text-gradient">Jairo</span>',
+            subtitle: 'Panel de control personal'
+        },
+        ingresos: {
+            title: 'Gestión de <span class="text-gradient">Ingresos</span>',
+            subtitle: 'Medios de pago y transferencias'
+        },
+        pagos: {
+            title: 'Tu <span class="text-gradient">Agenda</span> de Pagos',
+            subtitle: 'Reportes mensuales y semanales'
+        },
+        informes: {
+            title: 'Tus <span class="text-gradient">Finanzas</span> en Detalles',
+            subtitle: 'Análisis y reportes financieros'
+        },
+        notificaciones: {
+            title: 'Tus <span class="text-gradient">Notificaciones</span>',
+            subtitle: 'Gestiona tus alertas y notificaciones'
+        },
+        perfil: {
+            title: 'Mi <span class="text-gradient">Perfil</span>',
+            subtitle: 'Administra tu información personal'
+        }
+    };
+    
+    if (sectionData[sectionName]) {
+        document.getElementById('main-title').innerHTML = sectionData[sectionName].title;
+        document.getElementById('main-subtitle').textContent = sectionData[sectionName].subtitle;
     }
     
-    if (addNewSubcategoryBtn) {
-        addNewSubcategoryBtn.addEventListener('click', addNewSubcategory);
+    // Si es la sección de ingresos, inicializar la sección
+    if (sectionName === 'ingresos') {
+        initializeIncomeSection();
     }
     
-    // Configurar filtro de informes
-    const informesFilterBtn = document.getElementById('FiltroProfileBtn');
-    const informesFiltersContainer = document.querySelector('#informes .filters-container');
-    
-    if (informesFilterBtn && informesFiltersContainer) {
-        informesFilterBtn.addEventListener('click', function() {
-            informesFiltersContainer.classList.toggle('d-none');
-            
-            // Cambiar el ícono del botón según el estado
-            const icon = informesFilterBtn.querySelector('i');
-            if (informesFiltersContainer.classList.contains('d-none')) {
-                icon.className = 'bi bi-funnel';
-                informesFilterBtn.innerHTML = '<i class="bi bi-funnel"></i> Filtro';
-            } else {
-                icon.className = 'bi bi-funnel-fill';
-                informesFilterBtn.innerHTML = '<i class="bi bi-funnel-fill"></i> Ocultar Filtros';
-            }
-        });
+    // Si es la sección de notificaciones, renderizar las notificaciones
+    if (sectionName === 'notificaciones') {
+        renderNotificationsSection();
     }
-});
+    
+    // Si es la sección de pagos, renderizar los pagos programados
+    if (sectionName === 'pagos') {
+        renderScheduledPayments();
+    }
+}
+
+// Funciones adicionales para pagos programados
+function editScheduledPayment(id) {
+    const payment = scheduledPayments.find(p => p.id === id);
+    if (!payment) return;
+    
+    // Implementar lógica de edición similar a editTransaction
+    showNotification('Funcionalidad de edición de pagos programados en desarrollo', 'info');
+}
+
+function confirmDeleteScheduledPayment(id) {
+    if (confirm('¿Estás seguro de que deseas eliminar este pago programado?')) {
+        deleteScheduledPayment(id);
+    }
+}
+
+function deleteScheduledPayment(id) {
+    const payment = scheduledPayments.find(p => p.id === id);
+    if (!payment) return;
+    
+    scheduledPayments = scheduledPayments.filter(p => p.id !== id);
+    saveScheduledPaymentsToLocalStorage();
+    renderScheduledPayments();
+    
+    showNotification('Pago programado eliminado exitosamente', 'success');
+}

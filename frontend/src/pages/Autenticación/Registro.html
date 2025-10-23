@@ -228,43 +228,5 @@ toggleConfirmPassword.addEventListener('click', function() {
     this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
 });
 </script>
-
-<script>
-const formRegistro = document.querySelector('form');
-
-formRegistro.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const payload = {
-    nombre: document.getElementById('nombre').value.trim(),
-    apellidoPaterno: document.getElementById('apellido-paterno').value.trim(),
-    apellidoMaterno: document.getElementById('apellido-materno').value.trim(),
-    edad: parseInt(document.getElementById('edad').value, 10),
-    email: document.getElementById('email').value.trim(),
-    contrasena: document.getElementById('contrasena').value,
-    confirmarContrasena: document.getElementById('confirmarContrasena').value
-  };
-
-  if (payload.contrasena !== payload.confirmarContrasena) {
-    alert('Las contraseñas no coinciden');
-    return;
-  }
-
-  try {
-    const res = await fetch('http://localhost:8080/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    const msg = await res.text();
-    if (!res.ok) throw new Error(msg);
-    alert('Usuario creado: ' + msg);
-    location.href = 'login.html'; // ← redirige al login
-  } catch (err) {
-    alert('Error: ' + err.message);
-  }
-});
-</script>
 </body>
 </html>
