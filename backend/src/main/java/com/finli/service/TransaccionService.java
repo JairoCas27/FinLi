@@ -62,6 +62,6 @@ public class TransaccionService {
         Usuario usuario = authService.buscarPorCorreo(email)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
         log.info("Listando transacciones para usuario: {} entre {} y {}", email, inicio, fin);
-        return transaccionRepo.findByUsuarioAndFechaHoraBetween(usuario, inicio, fin);
+        return transaccionRepo.findByUsuarioAndFechaBetween(usuario, inicio, fin);
     }
 }
