@@ -1,3 +1,17 @@
+import * as api from './api.js';
+
+// Email del usuario logueado (lo guardamos al hacer login)
+const USER_EMAIL = localStorage.getItem("userEmail") || "jairo@utp.edu.pe";
+
+// Variables vacías al inicio
+let userProfile = {
+    name: '',
+    firstName: '',
+    lastName: '',
+    email: USER_EMAIL,
+    age: '',
+    avatar: null
+};
 // ---- VARIABLES GLOBALES ----
 let transactions = [];
 let selectedCategory = null;
@@ -15,16 +29,6 @@ let incomePaymentMethodSelect = null;
 // Variables globales para múltiples selecciones en informes
 let selectedCategories = [];
 let selectedSubCategories = [];
-
-// Perfil de usuario
-let userProfile = {
-    name: 'Jairo Castillo',
-    firstName: 'Jairo',
-    lastName: 'Castillo',
-    email: 'jairo@utp.edu.pe',
-    age: '20',
-    avatar: null
-};
 
 // Array para notificaciones
 let notifications = [];
@@ -135,7 +139,18 @@ const subcategoriesMap = {
 };
 
 // ---- INICIALIZACIÓN AL CARGAR LA PÁGINA ----
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async () => {
+    // 👤 Cargar datos del usuario
+    await cargarUsuario();
+    // 💳 Cargar medios de pago desde BD
+    await cargarMediosDePago();
+    // 🏷️ Cargar categorías desde BD
+    await cargarCategorias();
+    // 📊 Cargar transacciones desde BD
+    await cargarTransacciones();
+
+    // resto de tu código actual...
+    
     // Cargar datos desde localStorage
     loadDataFromLocalStorage();
     loadPaymentMethodsFromLocalStorage();
@@ -5201,4 +5216,61 @@ function deleteScheduledPayment(id) {
     renderScheduledPayments();
     
     showNotification('Pago programado eliminado exitosamente', 'success');
+}
+
+//NUEVOS FUNCIONES ASÍNCRONAS PARA CARGAR DATOS ----
+
+// 👤 Cargar datos del usuario por email
+async function cargarUsuario() {
+    const [nombre, apellido] = USER_EMAIL.split('@')[0].split('.');
+    userProfile.name = nombre.charAt(0).toUpperCase() + nombre.slice(1) + ' ' + apellido.charAt(0).toUpperCase() + apellido.slice(1);
+    userProfile.firstName = nombre.charAt(0).toUpperCase() + nombre.slice(1);
+    userProfile.lastName = apellido.charAt(0).toUpperCase() + apellido.slice(1);
+    userProfile.age = '21'; // puedes obtenerlo del backend si lo guardas
+    updateProfileInApp();
+}
+
+// 💳 Cargar medios de pago
+async function cargarMediosDePago() {
+    try {
+        paymentMethods = await api.obtenerMediosDePago(USER_EMAIL);
+        updateAllPaymentMethodSelects();
+    } catch (e) {
+        console.error(e);
+        showNotification("Error al cargar medios de pago", "error");
+    }
+}
+
+// 🏷️ Cargar categorías + subcategorías
+async function cargarCategorias() {
+    try {
+        const categorias = await api.obtenerCategorias(USER_EMAIL);
+        subcategoriesMap = {};
+        for (const cat of categorias) {
+            const subs = await api.obtenerSubcategorias(cat.idCategoria, USER_EMAIL);
+            subcategoriesMap[cat.nombreCategoria.toLowerCase()] = subs.map(s => ({
+                name: s.nombreSubcategoria.toLowerCase(),
+                label: s.nombreSubcategoria,
+                icon: "bi-tag"
+            }));
+        }
+        updateCategoryButtons();
+    } catch (e) {
+        console.error(e);
+        showNotification("Error al cargar categorías", "error");
+    }
+}
+
+// 📊 Cargar transacciones del usuario
+async function cargarTransacciones() {
+    try {
+        const inicio = new Date();
+        inicio.setMonth(inicio.getMonth() - 1);
+        const fin = new Date();
+        transactions = await api.obtenerTransacciones(USER_EMAIL, inicio, fin);
+        renderTransactions();
+    } catch (e) {
+        console.error(e);
+        showNotification("Error al cargar transacciones", "error");
+    }
 }
