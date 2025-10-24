@@ -1,0 +1,500 @@
+/* Estilos de colores y letras del contenido */
+:root{
+    --mint: #d7ffe3; /* tono mint */
+    --verdeCla: #d7ffe3; /* verde claro principal */
+    --verdeOs: #0ea46f; /* verde oscuro */
+    --blanco: #ffff; /* blanco puro */
+    --amarrillo: #ffee00; /* amarillo */
+    --plomo: #f7f7f7; /* gris claro */
+    font-size: 19px; /* tamaño base de letra */
+}
+
+
+/* Fondo animado mejorado */
+.animated-background {
+    position: fixed; /* fija el fondo a la ventana */
+    top: 0; /* arriba */
+    left: 0; /* izquierda */
+    width: 100%; /* ancho completo */
+    height: 100%; /* alto completo */
+    z-index: -1; /* queda detrás del contenido */
+    overflow: hidden; /* recorta lo que sobresalga */
+    background: linear-gradient(-45deg, #d7ffe3, #a8ffd1, #8dffc4, #0ea46f); /* degradado dinámico */
+    background-size: 400% 400%; /* escala para la animación */
+    animation: gradient 15s ease infinite; /* anima el degradado */
+}
+
+@keyframes gradient {
+    0% {
+    background-position: 0% 50%; /* inicio del movimiento */
+    }
+    50% {
+    background-position: 100% 50%; /* medio del movimiento */
+    }
+    100% {
+    background-position: 0% 50%; /* vuelta al inicio */
+    }
+}
+
+.shape {
+    position: absolute; /* posicionamiento libre */
+    border-radius: 50%; /* forma circular */
+    opacity: 0.15; /* baja visibilidad */
+    animation: float 20s infinite ease-in-out; /* movimiento flotante */
+    filter: blur(2px); /* ligero desenfoque */
+}
+
+.shape-1 {
+    width: 400px; /* ancho grande */
+    height: 400px; /* alto grande */
+    background: var(--verdeOs); /* color temático */
+    top: -150px; /* desplazamiento arriba */
+    left: -150px; /* desplazamiento izquierda */
+    animation-delay: 0s; /* sin retraso */
+}
+
+.shape-2 {
+    width: 300px; /* tamaño mediano */
+    height: 300px; /* tamaño mediano */
+    background: var(--mint); /* color mint */
+    bottom: -100px; /* fuera del borde inferior */
+    right: -100px; /* fuera del borde derecho */
+    animation-delay: -5s; /* ligera desincronía */
+}
+
+.shape-3 {
+    width: 250px; /* tamaño medio-pequeño */
+    height: 250px; /* tamaño medio-pequeño */
+    background: var(--verdeOs); /* verde oscuro */
+    top: 20%; /* posición relativa arriba */
+    left: 70%; /* posición relativa derecha */
+    animation-delay: -10s; /* desfasado para variedad */
+}
+
+.shape-4 {
+    width: 180px; /* pequeño */
+    height: 180px; /* pequeño */
+    background: var(--mint); /* tono mint */
+    bottom: 20%; /* desde abajo */
+    left: 15%; /* desde la izquierda */
+    animation-delay: -7s; /* desincronizado */
+}
+
+.shape-5 {
+    width: 220px; /* tamaño medio */
+    height: 220px; /* tamaño medio */
+    background: rgba(255, 255, 255, 0.3); /* blanco translúcido */
+    top: 60%; /* posición vertical */
+    left: 5%; /* cerca del borde izquierdo */
+    animation-delay: -12s; /* más desfasado */
+}
+
+.shape-6 {
+    width: 150px; /* pequeño */
+    height: 150px; /* pequeño */
+    background: rgba(255, 255, 255, 0.2); /* tenue translúcido */
+    top: 15%; /* arriba */
+    right: 10%; /* a la derecha */
+    animation-delay: -15s; /* desincronía larga */
+}
+
+@keyframes float {
+    0%, 100% {
+    transform: translate(0, 0) rotate(0deg) scale(1); /* posición base */
+    }
+    25% {
+    transform: translate(30px, 25px) rotate(10deg) scale(1.1); /* movimiento intermedio */
+    }
+    50% {
+    transform: translate(15px, 40px) rotate(-10deg) scale(0.9); /* vuelta y escala */
+    }
+    75% {
+    transform: translate(-20px, 25px) rotate(8deg) scale(1.05); /* oscilación final */
+    }
+}
+
+/* Efecto de partículas */
+.particles {
+    position: absolute; /* relativo al contenedor */
+    top: 0; /* arriba */
+    left: 0; /* izquierda */
+    width: 100%; /* cubre todo */
+    height: 100%; /* cubre todo */
+    pointer-events: none; /* no atrapa clicks */
+}
+
+.particle {
+    position: absolute; /* libre dentro del contenedor */
+    background-color: rgba(255, 255, 255, 0.6); /* color y opacidad */
+    border-radius: 50%; /* forma circular */
+    animation: particle-float 15s infinite linear; /* anima subida/rotación */
+}
+
+@keyframes particle-float {
+    0% {
+    transform: translateY(100vh) rotate(0deg) scale(0.5); /* aparece desde abajo */
+    opacity: 0; /* invisible al inicio */
+    }
+    10% {
+    opacity: 0.8; /* se vuelve visible */
+    }
+    90% {
+    opacity: 0.6; /* tenue antes de desaparecer */
+    }
+    100% {
+    transform: translateY(-100px) rotate(720deg) scale(1.2); /* sale arriba girando */
+    opacity: 0; /* desaparece al final */
+    }
+}
+
+/* Efecto de burbujas */
+.bubbles {
+    position: absolute; /* contenedor absoluto */
+    width: 100%; /* ancho completo */
+    height: 100%; /* alto completo */
+    overflow: hidden; /* recorta salientes */
+}
+
+.bubble {
+    position: absolute; /* posicionamiento libre */
+    bottom: -100px; /* inicia fuera de la pantalla */
+    width: 40px; /* tamaño de la burbuja */
+    height: 40px; /* tamaño de la burbuja */
+    background: rgba(255, 255, 255, 0.1); /* muy suave */
+    border-radius: 50%; /* circular */
+    opacity: 0.5; /* semi-transparente */
+    animation: bubble-rise 15s infinite ease-in; /* anima subida */
+}
+
+@keyframes bubble-rise {
+    0% {
+    transform: translateY(0) translateX(0) scale(0.5); /* inicio reducido */
+    opacity: 0; /* invisible al inicio */
+    }
+    10% {
+    opacity: 0.6; /* aparece */
+    }
+    90% {
+    opacity: 0.4; /* se atenúa */
+    }
+    100% {
+    transform: translateY(-100vh) translateX(100px) scale(1.2); /* sube y se desplaza */
+    opacity: 0; /* desaparece fuera de la pantalla */
+    }
+}
+
+/* Efecto de ondas */
+.waves {
+    position: absolute; /* anclado abajo */
+    bottom: 0; /* pegado al fondo */
+    left: 0; /* pegado a la izquierda */
+    width: 100%; /* ancho completo */
+    height: 15vh; /* altura relativa */
+    min-height: 100px; /* mínimo absoluto */
+    max-height: 150px; /* máximo absoluto */
+}
+
+.wave {
+    position: absolute; /* duplicado para capas */
+    bottom: 0; /* pegado al fondo */
+    left: 0; /* pegado a la izquierda */
+    width: 200%; /* ancho extendido para movimiento */
+    height: 100%; /* alto de la ola */
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z' fill='%23ffffff'%3E%3C/path%3E%3C/svg%3E") repeat-x; /* SVG en línea para la forma */
+    background-size: 1200px 100%; /* escala del SVG */
+    animation: wave 18s linear infinite; /* movimiento continuo */
+    opacity: 0.3; /* transparencia para sutileza */
+}
+
+.wave:nth-child(2) {
+    animation-delay: -10s; /* desfasado segunda ola */
+    animation-duration: 25s; /* duración distinta */
+    opacity: 0.2; /* más tenue */
+    background-position-y: 10px; /* ajuste vertical */
+}
+
+.wave:nth-child(3) {
+    animation-delay: -5s; /* desfasado tercer capa */
+    animation-duration: 20s; /* otra duración */
+    opacity: 0.1; /* muy tenue */
+    background-position-y: 15px; /* ajuste vertical */
+}
+
+@keyframes wave {
+    0% {
+    transform: translateX(0); /* inicio sin desplazamiento */
+    }
+    50% {
+    transform: translateX(-25%); /* mitad del recorrido */
+    }
+    100% {
+    transform: translateX(-50%); /* fin del ciclo */
+    }
+}
+
+/* Efectos de luz */
+.light-spot {
+    position: absolute; /* absoluto en el contenedor */
+    width: 300px; /* tamaño del foco */
+    height: 300px; /* tamaño del foco */
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 70%); /* degradado radial */
+    border-radius: 50%; /* redondo */
+    animation: light-move 20s infinite alternate ease-in-out; /* movimiento suave */
+    filter: blur(15px); /* difumina el foco */
+}
+
+.light-spot-1 {
+    top: 20%; /* posición relativa */
+    left: 10%; /* posición relativa */
+    animation-delay: -2s; /* pequeño desfase */
+}
+
+.light-spot-2 {
+    bottom: 30%; /* desde la parte inferior */
+    right: 15%; /* desde la derecha */
+    animation-delay: -8s; /* desfase mayor */
+    width: 400px; /* foco más grande */
+    height: 400px; /* foco más grande */
+}
+
+@keyframes light-move {
+    0%, 100% {
+    transform: translate(0, 0) scale(1); /* estado base */
+    }
+    50% {
+    transform: translate(100px, 50px) scale(1.2); /* movimiento intermedio */
+    }
+}
+
+/* FORMULARIO */
+.form-section {
+    padding: 4rem 0; /* espacio vertical generoso */
+    flex-grow: 1; /* crece si hay espacio */
+    display: flex; /* layout flexible */
+    align-items: center; /* centra contenido verticalmente */
+    position: relative; /* para capas internas */
+    z-index: 1; /* por encima del fondo animado */
+    font-family: 'Footlight MT Light', sans-serif; /* fuente específica */
+}
+
+.register-card {
+    padding: 2.5rem; /* espacio interno de la tarjeta */
+}
+
+.logo-header {
+    text-align: center; /* centra el logo */
+    margin-bottom: 2rem; /* separa del formulario */
+}
+
+.logo-header h1 {
+    font-weight: 700; /* título con peso */
+    color: black; /* color del título */
+    margin-bottom: 0.5rem; /* espacio inferior */
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1); /* sombra sutil */
+}
+
+.logo-header p {
+    color: #6c757d; /* texto de apoyo en gris */
+    font-size: 1.2rem; /* tamaño de texto */
+    font-family: 'Footlight MT Light', sans-serif; /* fuente consistente */
+}
+
+.form-label {
+    font-weight: 600; /* etiqueta destacada */
+    color: #495057; /* color neutro */
+    margin-bottom: 0.5rem; /* separación abajo */
+    font-family: 'Footlight MT Light', sans-serif; /* fuente */
+}
+
+.form-control {
+    padding: 0.75rem 1rem; /* espacio interno cómodo */
+    border-radius: 0.5rem; /* bordes redondeados */
+    border: 1px solid #ced4da; /* borde sutil */
+    font-size: 1rem; /* tamaño de texto */
+    transition: all 0.3s; /* transiciones suaves */
+    font-family: 'Footlight MT Light', sans-serif; /* fuente */
+}
+
+.form-control:focus {
+    border-color: var(--verdeOs); /* borde en foco con color temático */
+    box-shadow: 0 0 0 0.25rem rgba(14, 164, 111, 0.25); /* halo suave al enfocar */
+}
+
+.form-check-input:checked {
+    background-color: var(--verdeOs); /* fondo del checkbox marcado */
+    border-color: var(--verdeOs); /* borde del checkbox marcado */
+}
+
+.form-check-input:focus {
+    border-color: var(--verdeOs); /* borde al enfocar checkbox */
+    box-shadow: 0 0 0 0.25rem rgba(14, 164, 111, 0.25); /* halo al enfocar */
+}
+
+.terms-link {
+    color: var(--verdeOs); /* color del enlace de términos */
+    text-decoration: none; /* sin subrayado por defecto */
+    font-weight: 600; /* peso medio */
+    font-family: 'Footlight MT Light', sans-serif; /* fuente */
+    text-decoration: underline; /* subrayado explícito */
+}
+
+.terms-link:hover {
+    color: var(--verdeCla); /* color al pasar el cursor */
+}
+
+.login-redirect {
+    text-align: center; /* centrado */
+    margin-top: 1.5rem; /* espacio arriba */
+    color: #6c757d; /* tono gris */
+}
+
+.login-link {
+    color: var(--verdeOs); /* color del enlace de login */
+    font-weight: 600; /* peso visible */
+    text-decoration: none; /* sin subrayado por defecto */
+    text-decoration: underline; /* subrayado explícito */
+}
+
+.login-link:hover {
+    color: var(--verdeCla); /* color al pasar el cursor */
+}
+
+a{
+    text-decoration: underline; /* enlaces subrayados */
+    font-family: 'Footlight MT Light', sans-serif; /* fuente consistente */
+}
+
+.two-cols { 
+    display:flex; 
+    gap:0.5rem; 
+}
+
+.two-cols input { 
+    flex:1; 
+}
+
+/* Estilos para el contenedor de contraseña */
+.password-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-container .form-control {
+    padding-right: 45px; /* Espacio para el botón del ojo */
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--verdeOs);
+    cursor: pointer;
+    padding: 5px;
+    z-index: 2;
+}
+
+
+/* ---ESTILOS RECUPERAR CONTRASEÑA--- */
+/* Estilos para la notificación */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    background-color: #0ea46f;
+    color: #d7ffe3;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1050;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    animation: slideIn 0.3s ease-out;
+    max-width: 350px;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.notification.show {
+    display: flex;
+}
+
+.notification-icon {
+    font-size: 1rem;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+/* Estilos para el botón de carga */
+.btn-loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    border: 2px solid transparent;
+    border-top-color: #000000;
+    border-radius: 50%;
+    animation: loading-spinner 1s ease infinite;
+}
+
+@keyframes loading-spinner {
+    from {
+        transform: rotate(0turn);
+    }
+    to {
+        transform: rotate(1turn);
+    }
+}
+
+/* ---ESTILOS DE NUEVA CONTRASEÑA--- */
+.timer {
+    font-size: 1rem;
+    color: #0ea46f;
+}
+
+.timer.expired {
+    color: #e74c3c;
+}
+
+.resend-link {
+    display: none;
+    color: #0ea46f;
+    cursor: pointer;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.resend-link:hover {
+    text-decoration: underline;
+}
