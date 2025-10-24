@@ -1,4 +1,4 @@
-import * as api from './api.js';
+//import * as api from './api.js';
 
 // Email del usuario logueado (lo guardamos al hacer login)
 const USER_EMAIL = localStorage.getItem("userEmail") || "jairo@utp.edu.pe";
@@ -5222,11 +5222,19 @@ function deleteScheduledPayment(id) {
 
 // 👤 Cargar datos del usuario por email
 async function cargarUsuario() {
-    const [nombre, apellido] = USER_EMAIL.split('@')[0].split('.');
+    // 🔒 Protección: asegúrate de que haya un email válido
+    const email = localStorage.getItem("userEmail") || "jairo@utp.edu.pe";
+
+    if (!email || !email.includes('@')) {
+        console.warn("⚠️ Email no válido, usando default");
+        return; // evitas romper el flujo
+    }
+
+    const [nombre, apellido] = email.split('@')[0].split('.');
     userProfile.name = nombre.charAt(0).toUpperCase() + nombre.slice(1) + ' ' + apellido.charAt(0).toUpperCase() + apellido.slice(1);
     userProfile.firstName = nombre.charAt(0).toUpperCase() + nombre.slice(1);
     userProfile.lastName = apellido.charAt(0).toUpperCase() + apellido.slice(1);
-    userProfile.age = '21'; // puedes obtenerlo del backend si lo guardas
+    userProfile.age = '21';
     updateProfileInApp();
 }
 
