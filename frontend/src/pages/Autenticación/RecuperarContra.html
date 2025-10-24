@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinLi - Recuperar Contraseña</title>
+    <link rel="icon" href="/frontend/public/img/Logo/LogoFinLi.png">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Iconos de Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- CSS -->
+    <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="/frontend/src/pages/Inicio/inicio.css">
+</head>
+<body>
+    <!-- Fondo animado -->
+    <div class="animated-background">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+        <div class="shape shape-5"></div>
+        <div class="shape shape-6"></div>
+        
+        <div class="light-spot light-spot-1"></div>
+        <div class="light-spot light-spot-2"></div>
+        
+        <div class="particles" id="particles"></div>
+        <div class="bubbles" id="bubbles"></div>
+        
+        <div class="waves">
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+        </div>
+    </div>
+
+    <!-- Notificación de éxito -->
+    <div class="notification" id="successNotification">
+        <i class="bi bi-check-circle-fill notification-icon"></i>
+        <div class="notification-content">
+            <strong>¡Éxito!</strong>
+            <p class="mb-0">Código de recuperación enviado exitosamente.</p>
+        </div>
+        <button class="notification-close" id="closeNotification">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+
+    <!-- Barra de Navegacion -->
+    <nav class="navbar navbar-expand-lg bg-white py-3">
+        <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="/frontend/src/pages/Inicio/inicio.html">
+            <img src="/frontend/public/img/Logo/LogoFinLi.png" alt="Logo FinLi" width="50" height="50">
+            <span class="fw-semibold fs-5">FinLi</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>  
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto gap-2 gap-md-4">
+            <li class="nav-item">
+                <a class="nav-link" href="/frontend/src/pages/Inicio/inicio.html">Inicio</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/frontend/src/pages/Nosotros/nosotros.html">Nosotros</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/frontend/src/pages/Servicios/servicios.html">Servicios</a>
+            </li>
+            </ul>
+            
+            <div class="d-flex">
+            <a href="login.html" class="btn btn-custom">Iniciar Sesión</a>
+            </div>
+        </div>
+        </div>
+    </nav>
+
+    <!-- Formulario de Registro -->
+    <section class="form-section">
+        <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+            <div class="card card-shadow register-card">
+                <div class="logo-header">
+                <img src="/frontend/public/img/Logo/LogoFinLi.png" alt="Logo FinLi" width="100" height="100">
+                <h1>FinLi</h1>
+                <p>RECUPERAR CONTRASEÑA</p>
+                </div>
+                
+                <form id="recoveryForm">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Introduzca su correo electrónico</label>
+                    <input type="email" class="form-control" id="email" placeholder="Ejm. utepino@gmail.com" required>
+                </div>
+
+                <button type="submit" class="btn btn-custom mt-3" id="updateButton">
+                    <span id="buttonText">Enviar</span>
+                </button>
+
+                <div class="login-redirect">
+                    <a href="Registro.html" class="login-link">Crear Cuenta</a>
+                </div>
+                
+                <div class="login-redirect">
+                    <a href="/frontend/src/pages/Inicio/inicio.html" class="login-link">Regresar al Inicio</a>
+                </div>
+                </form>
+            </div>
+            </div>
+        </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+        <div class="row">
+            <div class="col-lg-4 mb-5 mb-lg-0 logo-section">
+            <div id="img" class="d-flex justify-content-center justify-content-lg-start align-items-center gap-3 mb-4">
+                <img src="/frontend/public/img/Logo/LogoFinLi2.png" alt="Logo FinLi" width="50" height="70">
+            </div>
+            <p class="footer-content text-center text-lg-start">Toma el control de tu dinero, de manera sencilla y con ayuda real.</p>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-5 mb-md-0">
+            <h5 class="footer-title text-center text-md-start">Navegación</h5>
+            <ul class="footer-links">
+                <li class="text-center text-md-start"><a href="#">Inicio</a></li>
+                <li class="text-center text-md-start"><a href="#">Nosotros</a></li>
+                <li class="text-center text-md-start"><a href="#">Servicios</a></li>
+            </ul>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-5 mb-md-0">
+            <h5 class="footer-title text-center text-md-start">Legal</h5>
+            <ul class="footer-links">
+                <li class="text-center text-md-start"><a href="#">Términos y Condiciones</a></li>
+                <li class="text-center text-md-start"><a href="#">Política de Privacidad</a></li>
+            </ul>
+            </div> 
+            <div class="col-lg-4 col-md-4">
+            <h5 class="footer-title text-center text-md-start">Conéctate con nosotros</h5>
+            <div class="social-icons mb-4 text-center text-md-start">
+                <a href="#"><i class="bi bi-facebook"></i></a>
+                <a href="#"><i class="bi bi-twitter"></i></a>
+                <a href="#"><i class="bi bi-instagram"></i></a>
+                <a href="#"><i class="bi bi-linkedin"></i></a>
+            </div>
+            <p class="footer-content text-center text-md-start">Síguenos en nuestras redes sociales para mantenerte actualizado.</p>
+            </div>
+        </div>
+        </div>
+        <div class="copyright-container">
+        <p class="copyright">© 2025 FinLi. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Manejo del formulario de recuperación
+        document.getElementById('recoveryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const emailInput = document.getElementById('email');
+            const updateButton = document.getElementById('updateButton');
+            const buttonText = document.getElementById('buttonText');
+            const notification = document.getElementById('successNotification');
+            
+            // Validar que el email no esté vacío
+            if (!emailInput.value.trim()) {
+                alert('Por favor, ingrese su correo electrónico');
+                return;
+            }
+            
+            // Cambiar el estado del botón a "cargando"
+            updateButton.classList.add('btn-loading');
+            buttonText.textContent = 'Enviando código de recuperacion...';
+            updateButton.disabled = true;
+            
+            // Simular el envío del código (2 segundos de espera)
+            setTimeout(function() {
+                // Restaurar el botón
+                updateButton.classList.remove('btn-loading');
+                buttonText.textContent = 'Enviar';
+                updateButton.disabled = false;
+                
+                // Mostrar la notificación de éxito
+                notification.classList.add('show');
+                
+                // Redirigir a la página NuevaContra.html después de 2 segundos
+                setTimeout(function() {
+                    window.location.href = 'NuevaContra.html';
+                }, 2500);
+                
+                // Ocultar la notificación automáticamente después de 5 segundos
+                setTimeout(function() {
+                    notification.classList.remove('show');
+                }, 5000);
+            }, 2000);
+        });
+        
+        // Cerrar la notificación manualmente
+        document.getElementById('closeNotification').addEventListener('click', function() {
+            document.getElementById('successNotification').classList.remove('show');
+        });
+    </script>
+</body>
+</html>

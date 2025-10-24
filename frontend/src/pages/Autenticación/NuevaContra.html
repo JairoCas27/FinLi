@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinLi - Recuperar Contraseña</title>
+    <link rel="icon" href="/frontend/public/img/Logo/LogoFinLi.png">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Iconos de Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- CSS -->
+    <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="/frontend/src/pages/Inicio/inicio.css">
+</head>
+<body>
+    <!-- Fondo animado -->
+    <div class="animated-background">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+        <div class="shape shape-5"></div>
+        <div class="shape shape-6"></div>
+        
+        <div class="light-spot light-spot-1"></div>
+        <div class="light-spot light-spot-2"></div>
+        
+        <div class="particles" id="particles"></div>
+        <div class="bubbles" id="bubbles"></div>
+        
+        <div class="waves">
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+        </div>
+    </div>
+
+    <!-- Barra de Navegacion -->
+    <nav class="navbar navbar-expand-lg bg-white py-3">
+        <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="/frontend/src/pages/Inicio/inicio.html">
+            <img src="/frontend/public/img/Logo/LogoFinLi.png" alt="Logo FinLi" width="50" height="50">
+            <span class="fw-semibold fs-5">FinLi</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>  
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto gap-2 gap-md-4">
+            <li class="nav-item">
+                <a class="nav-link" href="/frontend/src/pages/Inicio/inicio.html">Inicio</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/frontend/src/pages/Nosotros/nosotros.html">Nosotros</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/frontend/src/pages/Servicios/servicios.html">Servicios</a>
+            </li>
+            </ul>
+            
+            <div class="d-flex">
+            <a href="login.html" class="btn btn-custom">Iniciar Sesión</a>
+            </div>
+        </div>
+        </div>
+    </nav>
+
+    <!-- Formulario de Registro -->
+    <section class="form-section">
+        <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+            <div class="card card-shadow register-card">
+                <div class="logo-header">
+                <img src="/frontend/public/img/Logo/LogoFinLi.png" alt="Logo FinLi" width="100" height="100">
+                <h1>FinLi</h1>
+                <p>NUEVA CONTRASEÑA</p>
+                <!-- Temporizador agregado aquí -->
+                <div class="timer-container">
+                    <div class="timer" id="countdown">El código expira en <span id="time">30</span> segundos</div>
+                    <a class="resend-link" id="resendCode">Reenviar código</a>
+                </div>
+                </div>
+                
+                <form>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Introduzca su correo electrónico</label>
+                    <input type="email" class="form-control" id="email" placeholder="Ejm. utepino@gmail.com" required>
+                </div>
+                <div class="mb-3">
+                    <label for="recuperacion" class="form-label">Código de Recuperación</label>
+                    <input type="recuperacion" class="form-control" id="recuperacion" placeholder="XXX-XXX" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Nueva Contraseña</label>
+                    <div class="password-container">
+                        <input type="password" class="form-control" id="contrasena" placeholder="**********" required>
+                        <button type="button" class="password-toggle" id="togglePassword">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Confirmar Contraseña</label>
+                    <div class="password-container">
+                        <input type="password" class="form-control" id="confirmarContrasena" placeholder="**********" required>
+                        <button type="button" class="password-toggle" id="toggleConfirmPassword">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-custom mt-3">Actualizar Contraseña</button>
+                
+                <div class="login-redirect">
+                    <a href="/frontend/src/pages/Inicio/inicio.html" class="login-link">Regresar al Inicio</a>
+                </div>
+            </div>
+            </div>
+        </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+        <div class="row">
+            <div class="col-lg-4 mb-5 mb-lg-0 logo-section">
+            <div id="img" class="d-flex justify-content-center justify-content-lg-start align-items-center gap-3 mb-4">
+                <img src="/frontend/public/img/Logo/LogoFinLi2.png" alt="Logo FinLi" width="50" height="70">
+            </div>
+            <p class="footer-content text-center text-lg-start">Toma el control de tu dinero, de manera sencilla y con ayuda real.</p>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-5 mb-md-0">
+            <h5 class="footer-title text-center text-md-start">Navegación</h5>
+            <ul class="footer-links">
+                <li class="text-center text-md-start"><a href="#">Inicio</a></li>
+                <li class="text-center text-md-start"><a href="#">Nosotros</a></li>
+                <li class="text-center text-md-start"><a href="#">Servicios</a></li>
+            </ul>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-5 mb-md-0">
+            <h5 class="footer-title text-center text-md-start">Legal</h5>
+            <ul class="footer-links">
+                <li class="text-center text-md-start"><a href="#">Términos y Condiciones</a></li>
+                <li class="text-center text-md-start"><a href="#">Política de Privacidad</a></li>
+            </ul>
+            </div> 
+            <div class="col-lg-4 col-md-4">
+            <h5 class="footer-title text-center text-md-start">Conéctate con nosotros</h5>
+            <div class="social-icons mb-4 text-center text-md-start">
+                <a href="#"><i class="bi bi-facebook"></i></a>
+                <a href="#"><i class="bi bi-twitter"></i></a>
+                <a href="#"><i class="bi bi-instagram"></i></a>
+                <a href="#"><i class="bi bi-linkedin"></i></a>
+            </div>
+            <p class="footer-content text-center text-md-start">Síguenos en nuestras redes sociales para mantenerte actualizado.</p>
+            </div>
+        </div>
+        </div>
+        <div class="copyright-container">
+        <p class="copyright">© 2025 FinLi. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+</body>
+<script>
+// Toggle para mostrar/ocultar contraseñas
+const togglePassword = document.getElementById('togglePassword');
+const passwordInput = document.getElementById('contrasena');
+const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+const confirmPasswordInput = document.getElementById('confirmarContrasena');
+
+togglePassword.addEventListener('click', function() {
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordInput.setAttribute('type', type);
+    
+    // Cambiar el icono
+    this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+});
+
+toggleConfirmPassword.addEventListener('click', function() {
+    const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    confirmPasswordInput.setAttribute('type', type);
+    
+    // Cambiar el icono
+    this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+});
+
+// Temporizador de 30 segundos 
+let timeLeft = 60;
+let countdownInterval = null;
+
+const timerElement = document.getElementById('time');
+const countdownElement = document.getElementById('countdown');
+const resendLink = document.getElementById('resendCode');
+
+if (!timerElement || !countdownElement || !resendLink) {
+  console.warn('Faltan elementos en el DOM: verifica #time, #countdown y #resendCode');
+} else {
+  // Actualiza la UI con el estado actual del temporizador
+  function render() {
+    timerElement.textContent = timeLeft;
+    countdownElement.textContent = timeLeft > 0
+      ? `El código expira en ${timeLeft} segundos`
+      : 'El código ha expirado';
+    // añadir o quitar clase de expirado según corresponda
+    countdownElement.classList.toggle('expired', timeLeft <= 0);
+    // mostrar/ocultar el link de reenvío
+    resendLink.style.display = timeLeft <= 0 ? 'inline' : 'none';
+  }
+
+  // Inicia (o reinicia) el temporizador. Si ya hay un intervalo, lo limpia.
+  function startTimer(initialSeconds = 60) {
+    clearInterval(countdownInterval);
+    timeLeft = initialSeconds;
+    render(); // actualizar inmediatamente para evitar 1s de delay
+
+    countdownInterval = setInterval(() => {
+      timeLeft--;
+      render();
+
+      if (timeLeft <= 0) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+    }, 1000);
+  }
+
+  // Función simulada para reenviar código (reemplaza con tu llamada real)
+  function resendCodeAction() {
+    console.log('Solicitud de reenvío de código enviada');
+  }
+
+  // Listener único para reenviar
+  resendLink.addEventListener('click', function (evt) {
+    evt.preventDefault();
+    resendCodeAction();
+    // reiniciar temporizador a 30s y ocultar link
+    startTimer(60);
+  });
+
+  // Arrancar al cargar la página
+  startTimer(60);
+}
+
+</script>
+</html>

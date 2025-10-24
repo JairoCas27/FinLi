@@ -1,9 +1,5 @@
-//logica de la web
-//Servicio de autenticación
+package com.finli.service;
 
-<<<<<<< HEAD
-package main.java.com.finli.service;
-=======
 import com.finli.dto.RegistroRequest;
 import com.finli.dto.UsuarioResponse;
 import com.finli.model.Usuario;
@@ -15,13 +11,12 @@ import org.apache.commons.lang3.StringUtils;
 import com.google.common.base.Preconditions;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.stereotype.Service;
->>>>>>> a1f7586 (Funcion Registro de Usuario completado)
 
+import java.util.Optional;
+
+@Service
+@RequiredArgsConstructor
 public class ServicioAutenticacion {
-<<<<<<< HEAD
-    
-}
-=======
 
     private final UsuarioRepository repo;
 
@@ -76,4 +71,3 @@ public class ServicioAutenticacion {
                 .build();
     }
 }
->>>>>>> a1f7586 (Funcion Registro de Usuario completado)

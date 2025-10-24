@@ -1,12 +1,18 @@
-//Entidades (modelos de base de datos)
-//Entidad Usuario
+package com.finli.model;
 
-package main.java.com.finli.model;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Entity
+@Table(name = "Usuarios")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Usuario {
-<<<<<<< HEAD
-    
-=======
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -32,5 +38,4 @@ public class Usuario {
     @ManyToOne(fetch = FetchType.LAZY) 
     @JoinColumn(name = "id_estadoUsuario", nullable = false) 
     private EstadoUsuario estadoUsuario;
->>>>>>> a1f7586 (Funcion Registro de Usuario completado)
 }
