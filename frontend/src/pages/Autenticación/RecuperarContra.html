@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinLi - Iniciar Sesión</title>
+    <title>FinLi - Recuperar Contraseña</title>
     <link rel="icon" href="/frontend/public/img/Logo/LogoFinLi.png">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -38,6 +38,18 @@
         </div>
     </div>
 
+    <!-- Notificación de éxito -->
+    <div class="notification" id="successNotification">
+        <i class="bi bi-check-circle-fill notification-icon"></i>
+        <div class="notification-content">
+            <strong>¡Éxito!</strong>
+            <p class="mb-0">Código de recuperación enviado exitosamente.</p>
+        </div>
+        <button class="notification-close" id="closeNotification">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+
     <!-- Barra de Navegacion -->
     <nav class="navbar navbar-expand-lg bg-white py-3">
         <div class="container">
@@ -62,7 +74,7 @@
             </ul>
             
             <div class="d-flex">
-            <a href="Registro.html" class="btn btn-custom">Registrarse</a>
+            <a href="login.html" class="btn btn-custom">Iniciar Sesión</a>
             </div>
         </div>
         </div>
@@ -77,32 +89,27 @@
                 <div class="logo-header">
                 <img src="/frontend/public/img/Logo/LogoFinLi.png" alt="Logo FinLi" width="100" height="100">
                 <h1>FinLi</h1>
-                <p>INICIAR SESIÓN</p>
+                <p>RECUPERAR CONTRASEÑA</p>
                 </div>
                 
-                <form>
+                <form id="recoveryForm">
                 <div class="mb-3">
-                    <label for="email" class="form-label">Correo electrónico</label>
+                    <label for="email" class="form-label">Introduzca su correo electrónico</label>
                     <input type="email" class="form-control" id="email" placeholder="Ejm. utepino@gmail.com" required>
                 </div>
-                
-                <div class="mb-3">
-                    <label for="password" class="form-label">Contraseña</label>
-                    <div class="password-container">
-                        <input type="password" class="form-control" id="contrasena" placeholder="**********" required>
-                        <button type="button" class="password-toggle" id="togglePassword">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                    </div>
+
+                <button type="submit" class="btn btn-custom mt-3" id="updateButton">
+                    <span id="buttonText">Enviar</span>
+                </button>
+
+                <div class="login-redirect">
+                    <a href="Registro.html" class="login-link">Crear Cuenta</a>
                 </div>
-                
-                <a href="RecuperarContra.html" class="login-link">¿Olvidaste tu contraseña?</a>
-                
-                <button type="submit" class="btn btn-custom mt-4">Enviar</button>
                 
                 <div class="login-redirect">
-                ¿Aún no tienes una cuenta? <a href="Registro.html" class="login-link">Registrarse aqui</a>
+                    <a href="/frontend/src/pages/Inicio/inicio.html" class="login-link">Regresar al Inicio</a>
                 </div>
+                </form>
             </div>
             </div>
         </div>
@@ -152,18 +159,82 @@
     </footer>
 
 <script>
-// Toggle para mostrar/ocultar contraseña
-const togglePassword = document.getElementById('togglePassword');
-const passwordInput = document.getElementById('contrasena');
+    // URL de su endpoint de Spring Boot
+    const API_URL = 'http://localhost:8080/api/auth/forgot-password';
 
-togglePassword.addEventListener('click', function() {
-    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-    passwordInput.setAttribute('type', type);
+    document.getElementById('recoveryForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const emailInput = document.getElementById('email');
+        const email = emailInput.value.trim();
+        const updateButton = document.getElementById('updateButton');
+        const buttonText = document.getElementById('buttonText');
+        const notification = document.getElementById('successNotification');
+        
+        // 1. Validación de email
+        if (!email) {
+            alert('Por favor, ingrese su correo electrónico');
+            return;
+        }
+        
+        // 2. Cambiar el estado del botón a "cargando"
+        updateButton.classList.add('btn-loading');
+        buttonText.textContent = 'Enviando código de recuperacion...';
+        updateButton.disabled = true;
+        
+        // 3. LLAMADA REAL A LA API
+        fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                // La llave DEBE ser "email" para coincidir con el backend
+                email: email
+            })
+        })
+        .then(response => {
+            // Manejar errores de servidor (4xx o 5xx)
+            if (!response.ok) {
+                // Si la respuesta no es OK (ej. 400 Bad Request o 500 Internal Error)
+                return response.text().then(errorText => {
+                    // Extraer el mensaje de error del backend (Spring Boot)
+                    throw new Error(errorText || 'Error desconocido al solicitar recuperación.');
+                });
+            }
+            // Si la respuesta es 200 OK, continuar
+            return response.text();
+        })
+        .then(data => {
+            // 4. Éxito: Mostrar notificación y redirigir
+            
+            // Mostrar la notificación de éxito (puede personalizar el mensaje si lo necesita)
+            document.querySelector('#successNotification p').textContent = data; // Usar el mensaje de éxito del backend
+            notification.classList.add('show');
+
+            // Redirigir a la página NuevaContra.html después de 2.5 segundos
+            setTimeout(function() {
+                window.location.href = 'NuevaContra.html';
+            }, 2500);
+
+        })
+        .catch(error => {
+            // 5. Fallo: Mostrar alerta de error
+            console.error('Error en la recuperación:', error.message);
+            alert('Error: ' + error.message);
+        })
+        .finally(() => {
+            // 6. Restaurar el botón al finalizar (éxito o fallo)
+            updateButton.classList.remove('btn-loading');
+            buttonText.textContent = 'Enviar';
+            updateButton.disabled = false;
+        });
+    });
     
-    // Cambiar el icono
-    this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
-});
+    // Cerrar la notificación manualmente (código existente)
+    document.getElementById('closeNotification').addEventListener('click', function() {
+        document.getElementById('successNotification').classList.remove('show');
+    });
 </script>
-<script src="/frontend/src/pages/Autenticación/login.js"></script>
 </body>
 </html>

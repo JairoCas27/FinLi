@@ -1,0 +1,205 @@
+/* sección nuestra historia */
+.historia-hero {
+    background: linear-gradient(135deg, var(--plomo) 0%, var(--plomo) 100%); /* fondo plomo */
+    padding: 4rem 0 3rem; /* espacio vertical superior e inferior */
+    position: relative; /* permite elementos posicionados dentro */
+    overflow: hidden; /* recorta elementos que sobresalgan */
+    border-bottom-left-radius: 60% 20%; /* borde curviado en la parte de abajo a la izquierda */
+    border-bottom-right-radius: 60% 20%; /* borde curviado en la parte de abajo a la derecha */
+    z-index: 10; /* por encima de elementos */
+    margin-bottom: -5rem; /* sobreposicion */
+}
+
+/* imagen representativa de la historia */
+.historia-img{
+    display:block; /* evita espacios inline */
+    width:100%; /* ocupa el ancho de la columna */
+    height:auto; /* mantiene proporción completa */
+    border:0 none; /* sin borde */
+    box-shadow:none; /* sin sombra predeterminada */
+    border-radius:0;  /* sin esquinas redondeadas */
+    background:transparent; /* fondo transparente */
+    object-fit: contain; /* no necesaria, pero segura */
+}
+
+/* sección nuestra vision */
+.nosotros-hero {
+    background: linear-gradient(135deg, var(--mint) 0%, var(--verdeCla) 100%); /* degradado verde suave */
+    padding: 8rem 0 3rem; /* espacio vertical superior e inferior */
+    position: relative; /* permite elementos posicionados dentro */
+    overflow: hidden; /* recorta elementos que sobresalgan */
+    border-bottom-left-radius: 60% 15%; /* borde curviado en la parte de abajo a la izquierda */
+    border-bottom-right-radius: 60% 15%; /* borde curviado en la parte de abajo a la derecha */
+    
+}
+
+/* títulos principales de sección */
+.nosotros-title, .mision-vision-title {
+    font-size: 2.5rem; /* tamaño */
+    font-weight: 700; /* negrita */
+    margin-bottom: 1.5rem;  /* separación inferior */
+    color: var(--verdeOs); /* color verde oscuro */
+    text-shadow: 2px 2px 0px rgba(0,0,0,0.1); /* sombra */
+}
+
+/* subtítulo descriptivo */
+.nosotros-subtitle {
+    font-size: 1.2rem; /* tamaño */
+    color: #444; /* gris oscuro */
+    margin-bottom: 2rem; /* separación inferior */
+    font-family: var(--letra); /* fuente del proyecto */
+}
+
+/* sección que contiene misión y visión */
+.mision-vision-section {
+    padding: 6rem 0; /* Aumentado el padding */
+    position: relative; /* permite posicionar */
+    display: flex; /* layout en fila por defecto */
+    align-items: center; /* centra verticalmente los elementos */
+    min-height: 80vh; /* Aseguramos que ocupe buena parte de la pantalla */
+}
+
+/* tarjeta circular de visión */
+.mision-vision-card {
+    width: 420px; /* ancho */
+    height: 420px; /* alto */
+    padding: 2rem; /* espacio interno */
+    border-radius: 50%; /* la hace circular */
+    background: var(--blanco); /* fondo blanco */
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1); /* sombra pronunciada */
+    position: relative; /* contexto para elementos internos */
+    text-align: center; /* centra texto */
+    z-index: 2; /* por encima de fondos */
+    margin: 0 auto; /* Centrado horizontal perfecto */
+    display: flex; /* usa flexbox para centrar contenido */
+    flex-direction: column; /* organiza en columna */
+    justify-content: center; /* centra verticalmente */
+    align-items: center; /* centra horizontalmente */
+    transition: all 0.4s ease; /* Transición suave para todos los cambios */
+}
+
+/* interacción al pasar el cursor */
+.mision-vision-card:hover {
+    transform: scale(1.05); /* Efecto de zoom al pasar el cursor */
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15); /* Sombra más pronunciada en hover */
+}
+
+/* texto dentro de la tarjeta */
+.mision-vision-content {
+    font-size: 1rem; /* tamaño */
+    line-height: 1.5; /* espacio entre líneas */
+    margin-bottom: 1.5rem; /* separación inferior */
+    font-family: var(--letra); /* fuente del proyecto */
+}
+
+/* contenedor flexible para los valores */
+.valores-container {
+    display: flex; /* layout flexible */
+    flex-wrap: wrap; /* permite múltiples filas */
+    justify-content: center; /* centra elementos horizontalmente */
+    gap: 2rem; /* espacio consistente entre items */
+    margin-top: 3rem; /* separación superior */
+}
+
+/* cada tarjeta de valor */
+.valor-item {
+    flex: 1; /* crece según espacio disponible */
+    min-width: 250px; /* ancho mínimo */
+    max-width: 300px; /* ancho máximo */
+    display: flex; /* usa flexbox */
+    flex-direction: column; /* organiza verticalmente */
+    align-items: center; /* centra contenido */
+    text-align: center; /* texto centrado */
+    padding: 1.5rem;  /* espacio interno */
+    background: rgba(255, 255, 255, 0.8); /* fondo semitransparente */
+    border-radius: 16px; /* esquinas */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08); /* sombra */
+    transition: transform 0.3s ease; /* Transición para el efecto de hover */
+}
+
+/* interacción de cada valor */
+.valor-item:hover {
+    transform: scale(1.05); /* Efecto de zoom al pasar el cursor */
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15); /* Sombra más pronunciada en hover */
+}
+
+/* icono circular dentro del valor */
+.valor-icon {
+    background: var(--verdeOs); /* fondo verde oscuro */
+    color: white; /* icono en blanco */
+    border-radius: 50%; /* circular */
+    padding: 1rem; /* espacio interno */
+    font-size: 1.8rem; /* tamaño del icono */
+    display: inline-flex; /* alinea el icono */
+    align-items: center; /* centra verticalmente */
+    justify-content: center; /* centra horizontalmente */
+    width: 70px; /* ancho */
+    height: 70px; /* alto */
+    margin-bottom: 1.5rem; /* no interfieren con clicks */
+}
+
+/* burbuja individual */
+.bubbles {
+    position: fixed; /* posicionamiento libre */
+    top: 0; /* circular */
+    left: 0; /* para centrar texto si lo hay */
+    width: 100%; /* centra horizontalmente */
+    height: 100%; /* centra verticalmente */
+    z-index: -1; /* texto visible dentro */
+    overflow: hidden; /* fuente para el contenido */
+    pointer-events: none; /* transparencia */
+}
+
+/* burbuja de forma individual */
+.bubble {
+    position: absolute; /* posicionamiento libre */
+    border-radius: 50%; /* forma circular */
+    display: flex; /* para centrar texto */
+    justify-content: center; /* centra horizontalmente */
+    align-items: center; /* centra verticalmente */
+    font-weight: bold; /* texto visible dentro */
+    font-family: 'Poppins', sans-serif;  /* fuente */
+    opacity: 0.5; /* transparencia */
+}
+
+/* burbuja version pequeña */
+.bubble-small {
+    width: 40px; /* ancho */
+    height: 40px; /* alto */
+    font-size: 16px; /* tamaño del texto */
+}
+
+/* burbuja version mediana */
+.bubble-medium {
+    width: 60px; /* ancho */
+    height: 60px; /* alto */
+    font-size: 22px; /* texto más grande */
+}
+
+/* burbuja version grande */
+.bubble-large {
+    width: 80px; /* ancho */
+    height: 80px; /* alto */
+    font-size: 28px; /* texto aún más grande */
+}
+
+/* Colores de burbujas */
+.bubble-verdeCla {
+    background-color: #a7ffc2; /* verde claro */
+    color: var(--verdeOs); /* verde oscuro */
+}
+
+.bubble-verdeOs {
+    background-color: #39f3b2; /* verde encendido*/
+    color: #38ae83; /* contrastante del verde */
+}
+
+.bubble-amarrillo {
+    background-color: rgb(255, 255, 145); /* amarillo suave */
+    color: #cc9900; /* dorado */
+}
+
+.bubble-plomo {
+    background-color: #a2a2a2; /* color gris */
+    color: rgb(99, 99, 99); /* texto gris oscuro */
+}

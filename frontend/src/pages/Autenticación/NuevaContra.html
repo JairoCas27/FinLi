@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinLi - Recuperar Contraseña</title>
+    <link rel="icon" href="/frontend/public/img/Logo/LogoFinLi.png">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Iconos de Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- CSS -->
+    <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="/frontend/src/pages/Inicio/inicio.css">
+</head>
+<body>
+    <!-- Fondo animado -->
+    <div class="animated-background">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+        <div class="shape shape-5"></div>
+        <div class="shape shape-6"></div>
+        
+        <div class="light-spot light-spot-1"></div>
+        <div class="light-spot light-spot-2"></div>
+        
+        <div class="particles" id="particles"></div>
+        <div class="bubbles" id="bubbles"></div>
+        
+        <div class="waves">
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+        </div>
+    </div>
+
+    <!-- Barra de Navegacion -->
+    <nav class="navbar navbar-expand-lg bg-white py-3">
+        <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="/frontend/src/pages/Inicio/inicio.html">
+            <img src="/frontend/public/img/Logo/LogoFinLi.png" alt="Logo FinLi" width="50" height="50">
+            <span class="fw-semibold fs-5">FinLi</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>  
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto gap-2 gap-md-4">
+            <li class="nav-item">
+                <a class="nav-link" href="/frontend/src/pages/Inicio/inicio.html">Inicio</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/frontend/src/pages/Nosotros/nosotros.html">Nosotros</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/frontend/src/pages/Servicios/servicios.html">Servicios</a>
+            </li>
+            </ul>
+            
+            <div class="d-flex">
+            <a href="login.html" class="btn btn-custom">Iniciar Sesión</a>
+            </div>
+        </div>
+        </div>
+    </nav>
+
+    <!-- Formulario de Registro -->
+    <section class="form-section">
+        <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+            <div class="card card-shadow register-card">
+                <div class="logo-header">
+                <img src="/frontend/public/img/Logo/LogoFinLi.png" alt="Logo FinLi" width="100" height="100">
+                <h1>FinLi</h1>
+                <p>NUEVA CONTRASEÑA</p>
+                <!-- Temporizador agregado aquí -->
+                <div class="timer-container">
+                    <div class="timer" id="countdown">El código expira en <span id="time">30</span> segundos</div>
+                    <a class="resend-link" id="resendCode">Reenviar código</a>
+                </div>
+                </div>
+                
+                <form id="resetPasswordForm">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Introduzca su correo electrónico</label>
+                    <input type="email" class="form-control" id="email" placeholder="Ejm. utepino@gmail.com" required>
+                </div>
+                <div class="mb-3">
+                    <label for="recuperacion" class="form-label">Código de Recuperación</label>
+                    <input type="recuperacion" class="form-control" id="recuperacion" placeholder="XXX-XXX" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Nueva Contraseña</label>
+                    <div class="password-container">
+                        <input type="password" class="form-control" id="contrasena" placeholder="**********" required>
+                        <button type="button" class="password-toggle" id="togglePassword">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Confirmar Contraseña</label>
+                    <div class="password-container">
+                        <input type="password" class="form-control" id="confirmarContrasena" placeholder="**********" required>
+                        <button type="button" class="password-toggle" id="toggleConfirmPassword">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-custom mt-3">Actualizar Contraseña</button>
+                
+                <div class="login-redirect">
+                    <a href="/frontend/src/pages/Inicio/inicio.html" class="login-link">Regresar al Inicio</a>
+                </div>
+            </div>
+            </div>
+        </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+        <div class="row">
+            <div class="col-lg-4 mb-5 mb-lg-0 logo-section">
+            <div id="img" class="d-flex justify-content-center justify-content-lg-start align-items-center gap-3 mb-4">
+                <img src="/frontend/public/img/Logo/LogoFinLi2.png" alt="Logo FinLi" width="50" height="70">
+            </div>
+            <p class="footer-content text-center text-lg-start">Toma el control de tu dinero, de manera sencilla y con ayuda real.</p>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-5 mb-md-0">
+            <h5 class="footer-title text-center text-md-start">Navegación</h5>
+            <ul class="footer-links">
+                <li class="text-center text-md-start"><a href="#">Inicio</a></li>
+                <li class="text-center text-md-start"><a href="#">Nosotros</a></li>
+                <li class="text-center text-md-start"><a href="#">Servicios</a></li>
+            </ul>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-5 mb-md-0">
+            <h5 class="footer-title text-center text-md-start">Legal</h5>
+            <ul class="footer-links">
+                <li class="text-center text-md-start"><a href="#">Términos y Condiciones</a></li>
+                <li class="text-center text-md-start"><a href="#">Política de Privacidad</a></li>
+            </ul>
+            </div> 
+            <div class="col-lg-4 col-md-4">
+            <h5 class="footer-title text-center text-md-start">Conéctate con nosotros</h5>
+            <div class="social-icons mb-4 text-center text-md-start">
+                <a href="#"><i class="bi bi-facebook"></i></a>
+                <a href="#"><i class="bi bi-twitter"></i></a>
+                <a href="#"><i class="bi bi-instagram"></i></a>
+                <a href="#"><i class="bi bi-linkedin"></i></a>
+            </div>
+            <p class="footer-content text-center text-md-start">Síguenos en nuestras redes sociales para mantenerte actualizado.</p>
+            </div>
+        </div>
+        </div>
+        <div class="copyright-container">
+        <p class="copyright">© 2025 FinLi. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+</body>
+<script>
+// =================================================================
+// Manejo de Toggles de Contraseña
+// =================================================================
+const togglePassword = document.getElementById('togglePassword');
+const passwordInput = document.getElementById('contrasena');
+const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+const confirmPasswordInput = document.getElementById('confirmarContrasena');
+
+function setupToggle(toggleBtn, input) {
+    toggleBtn.addEventListener('click', function() {
+        const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+        input.setAttribute('type', type);
+        
+        // Cambiar el icono
+        this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+    });
+}
+
+if(togglePassword && passwordInput) setupToggle(togglePassword, passwordInput);
+if(toggleConfirmPassword && confirmPasswordInput) setupToggle(toggleConfirmPassword, confirmPasswordInput);
+
+// =================================================================
+// Temporizador (código existente)
+// =================================================================
+let timeLeft = 60;
+let countdownInterval = null;
+
+const timerElement = document.getElementById('time');
+const countdownElement = document.getElementById('countdown');
+const resendLink = document.getElementById('resendCode');
+
+if (timerElement && countdownElement && resendLink) {
+    function render() {
+        timerElement.textContent = timeLeft;
+        countdownElement.textContent = timeLeft > 0
+            ? `El código expira en ${timeLeft} segundos`
+            : 'El código ha expirado';
+        countdownElement.classList.toggle('expired', timeLeft <= 0);
+        resendLink.style.display = timeLeft <= 0 ? 'inline' : 'none';
+    }
+
+    function startTimer(initialSeconds = 60) {
+        clearInterval(countdownInterval);
+        timeLeft = initialSeconds;
+        render(); 
+
+        countdownInterval = setInterval(() => {
+            timeLeft--;
+            render();
+
+            if (timeLeft <= 0) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+        }, 1000);
+    }
+
+    // Función simulada de reenvío
+    function resendCodeAction() {
+        alert('Funcionalidad de Reenvío no implementada en el Backend.');
+    }
+
+    resendLink.addEventListener('click', function (evt) {
+        evt.preventDefault();
+        resendCodeAction();
+        startTimer(60);
+    });
+
+    startTimer(60);
+}
+
+
+// =================================================================
+// LÓGICA DE LA API PARA RESTABLECER CONTRASEÑA
+// =================================================================
+
+const RESET_API_URL = 'http://localhost:8080/api/auth/reset-password';
+const resetForm = document.getElementById('resetPasswordForm'); 
+const statusNotification = document.getElementById('statusNotification'); // Debe agregar esta notificación en el HTML
+
+// Función para mostrar la notificación de estado (éxito o error)
+function showStatusNotification(isSuccess, message) {
+    // --- Necesita agregar en NuevaContra.html el HTML de la notificación (similar al paso 31) ---
+    // Si ya lo tiene, solo ajuste los IDs
+    // ---
+    
+    // Aquí iría su lógica para mostrar la notificación
+    alert(message); // Por ahora, usamos alert para no detenernos si falta el CSS de la notificación
+}
+
+if(resetForm) {
+    resetForm.addEventListener('submit', function(e) {
+        // 1. EVITAR LA RECARGA DE LA PÁGINA
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value.trim();
+        const token = document.getElementById('recuperacion').value.trim(); // ID es 'recuperacion'
+        const nuevaContrasena = document.getElementById('contrasena').value;
+        const confirmarContrasena = document.getElementById('confirmarContrasena').value;
+        
+        const updateButton = resetForm.querySelector('button[type="submit"]');
+
+        // Validación de campos
+        if (!email || !token || !nuevaContrasena || !confirmarContrasena) {
+            showStatusNotification(false, 'Todos los campos son obligatorios.');
+            return;
+        }
+
+        if (nuevaContrasena !== confirmarContrasena) {
+            showStatusNotification(false, 'Las contraseñas no coinciden.');
+            return;
+        }
+
+        // Preparar botón de carga
+        const originalText = updateButton.textContent;
+        updateButton.textContent = 'Actualizando...';
+        updateButton.disabled = true;
+
+        // LLAMADA AL ENDPOINT /api/auth/reset-password
+        fetch(RESET_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: email,
+                token: token,
+                nuevaContrasena: nuevaContrasena // La llave DEBE ser "nuevaContrasena"
+            })
+        })
+        .then(async response => {
+            const responseText = await response.text();
+            if (!response.ok) {
+                // El backend devuelve el mensaje de error aquí
+                throw new Error(responseText || 'Error desconocido al cambiar la contraseña.');
+            }
+            return responseText;
+        })
+        .then(data => {
+            // Éxito: Mostrar notificación y redirigir
+            showStatusNotification(true, data); 
+            
+            // Redirigir a la página de login después de 3 segundos
+            setTimeout(function() {
+                window.location.href = 'login.html';
+            }, 3000);
+
+        })
+        .catch(error => {
+            // Fallo: Mostrar error
+            console.error('Error al restablecer contraseña:', error.message);
+            
+            // El backend devuelve el mensaje de error exacto
+            showStatusNotification(false, error.message);
+        })
+        .finally(() => {
+            // Restaurar el botón al finalizar
+            updateButton.textContent = originalText;
+            updateButton.disabled = false;
+        });
+    });
+}
+
+</script>
+</html>

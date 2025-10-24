@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinLi - Iniciar Sesión</title>
-    <link rel="icon" href="/frontend/public/img/Logo/LogoFinLi.png">
+    <title>FinLi - Registrarse</title>
+    <link rel="icon" href="/frontend/public/img/Logo/LogoFinLi.png"/>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Fonts -->
@@ -12,8 +12,8 @@
     <!-- Iconos de Bootstrap -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <!-- CSS -->
-    <link rel="stylesheet" href="login.css">
     <link rel="stylesheet" href="/frontend/src/pages/Inicio/inicio.css">
+    <link rel="stylesheet" href="login.css">
 </head>
 <body>
     <!-- Fondo animado -->
@@ -62,14 +62,14 @@
             </ul>
             
             <div class="d-flex">
-            <a href="Registro.html" class="btn btn-custom">Registrarse</a>
+            <a href="login.html" class="btn btn-custom">Iniciar Sesión</a>
             </div>
         </div>
         </div>
     </nav>
 
     <!-- Formulario de Registro -->
-    <section class="form-section">
+    <section class="form-section" i="form-register">
         <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-8 col-lg-6">
@@ -77,10 +77,31 @@
                 <div class="logo-header">
                 <img src="/frontend/public/img/Logo/LogoFinLi.png" alt="Logo FinLi" width="100" height="100">
                 <h1>FinLi</h1>
-                <p>INICIAR SESIÓN</p>
+                <p>REGISTRARSE</p>
                 </div>
                 
                 <form>
+                <div class="mb-3">
+                    <label for="username" class="form-label">Nombres</label>
+                    <input type="text" class="form-control" id="nombre" placeholder="Nombres completos" required>
+                </div>
+
+                <div class="mb-3">
+                <label class="form-label">Apellidos</label>
+                <div class="two-cols">
+                    <input type="text" class="form-control" id="apellido-paterno" placeholder="Apellido paterno" required>
+                    <input type="text" class="form-control" id="apellido-materno" placeholder="Apellido materno" required>
+                </div>
+                </div>
+
+                <div class="mb-3">
+                <label class="form-label">Fecha de Nacimiento</label>
+                <div class="two-cols">
+                    <input type="date" class="form-control" id="fecha-nacimiento" placeholder="DD/MM/AAAA" required>
+                    <input type="number" class="form-control" id="edad" placeholder="Edad" min="0" max="150" readonly>
+                </div>
+                </div>
+                
                 <div class="mb-3">
                     <label for="email" class="form-label">Correo electrónico</label>
                     <input type="email" class="form-control" id="email" placeholder="Ejm. utepino@gmail.com" required>
@@ -95,13 +116,26 @@
                         </button>
                     </div>
                 </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Confirmar Contraseña</label>
+                    <div class="password-container">
+                        <input type="password" class="form-control" id="confirmarContrasena" placeholder="**********" required>
+                        <button type="button" class="password-toggle" id="toggleConfirmPassword">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
                 
-                <a href="RecuperarContra.html" class="login-link">¿Olvidaste tu contraseña?</a>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="terms">
+                    <label class="form-check-label" for="terms">He leído y acepto los <a href="#" class="terms-link">Términos y Condiciones</a></label>
+                </div>
                 
-                <button type="submit" class="btn btn-custom mt-4">Enviar</button>
+                <button type="submit" class="btn btn-custom mt-4" id="btn-register">Enviar</button>
                 
                 <div class="login-redirect">
-                ¿Aún no tienes una cuenta? <a href="Registro.html" class="login-link">Registrarse aqui</a>
+                ¿Ya tienes una cuenta? <a href="login.html" class="login-link">Inicia sesión aquí</a>
                 </div>
             </div>
             </div>
@@ -152,9 +186,31 @@
     </footer>
 
 <script>
-// Toggle para mostrar/ocultar contraseña
+const fechaInput = document.getElementById('fecha-nacimiento');
+const edadInput = document.getElementById('edad');
+
+function calcularEdad(fechaValue) {
+    if (!fechaValue) { edadInput.value = ''; return; }
+    const nacimiento = new Date(fechaValue); // fechaValue viene en formato yyyy-mm-dd
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - nacimiento.getFullYear();
+    const mesDiff = hoy.getMonth() - nacimiento.getMonth();
+    if (mesDiff < 0 || (mesDiff === 0 && hoy.getDate() < nacimiento.getDate())) edad--;
+    if (isNaN(edad) || edad < 0) { edadInput.value = ''; return; }
+    edadInput.value = edad;
+}
+
+// Actualiza al cambiar la fecha y al cargar si ya hay valor
+fechaInput.addEventListener('change', (e) => calcularEdad(e.target.value));
+window.addEventListener('DOMContentLoaded', () => {
+    if (fechaInput.value) calcularEdad(fechaInput.value);
+});
+
+// Toggle para mostrar/ocultar contraseñas
 const togglePassword = document.getElementById('togglePassword');
 const passwordInput = document.getElementById('contrasena');
+const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+const confirmPasswordInput = document.getElementById('confirmarContrasena');
 
 togglePassword.addEventListener('click', function() {
     const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -163,7 +219,15 @@ togglePassword.addEventListener('click', function() {
     // Cambiar el icono
     this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
 });
+
+toggleConfirmPassword.addEventListener('click', function() {
+    const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    confirmPasswordInput.setAttribute('type', type);
+    
+    // Cambiar el icono
+    this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+});
 </script>
-<script src="/frontend/src/pages/Autenticación/login.js"></script>
+<script src="/frontend/src/pages/Autenticación/registro.js"></script>
 </body>
 </html>

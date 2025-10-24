@@ -1,0 +1,574 @@
+:root {
+    /* --- Variables globales de diseño --- */
+    --bg: #f5f7fb;                     /* color base de fondo */
+    --glass: rgba(255,255,255,0.75);   /* color tipo vidrio translúcido */
+    --accent: #0ea46f;                 /* color principal (verde) */
+    --accent-2: #838e98;               /* segundo color de acento (gris azulado) */
+    --accent-3: #8e44ad;               /* acento alternativo (morado) */
+    --accent-4: #ff6b6b;               /* acento de alerta (rojo) */
+    --muted: #6c757d;                  /* color de texto secundario/atenuado */
+    --card-shadow: 0 8px 32px rgba(12, 37, 24, 0.08); /* sombra por defecto para cards */
+    --hover-shadow: 0 12px 40px rgba(12, 37, 24, 0.12); /* sombra al pasar el mouse */
+}
+
+html, body {
+    /* Ajustes globales del documento */
+    height: 100%;
+    font-family: 'Poppins', sans-serif; /* tipografía principal */
+    background: linear-gradient(135deg, #f7fbff 0%, var(--bg) 100%); /* degradado suave de fondo */
+    color: #222; /* color principal de texto */
+    -webkit-font-smoothing: antialiased; /* renderizado de fuentes más nítido */
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden; /* evitar scroll horizontal no deseado */
+}
+
+/* LAYOUT */
+/* Contenedor principal que contiene sidebar + área principal */
+.app-shell {
+    display: flex;
+    min-height: 100vh;
+    gap: 1.5rem; /* separación entre columnas */
+    padding: 1rem;
+}
+
+/* SIDEBAR */
+/* Barra lateral tipo card con efecto glass y scroll interno */
+.sidebar {
+    width: 270px; /* ancho fijo de la sidebar */
+    background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.8) 100%); /* look vidrio */
+    backdrop-filter: blur(16px); /* desenfoque de fondo (glassmorphism) */
+    -webkit-backdrop-filter: blur(16px);
+    padding: 1.5rem 1.25rem; /* espacio interno */
+    border-radius: 20px; /* esquinas redondeadas */
+    box-shadow: var(--card-shadow); /* sombra definida por variable */
+    position: sticky; /* queda fija al scrollear dentro del viewport */
+    top: 1rem;
+    height: calc(100vh - 2rem); /* altura ajustada al viewport */
+    overflow: auto; /* scroll interno cuando hay mucho contenido */
+    border: 1px solid rgba(255,255,255,0.4); /* borde sutil para separación */
+    transition: all 0.3s ease; /* transición suave para hover/ajustes */
+}
+
+/* Aumenta la sombra al pasar el mouse sobre la sidebar */
+.sidebar:hover {
+    box-shadow: var(--hover-shadow);
+}
+
+/* Marca / logo dentro de la sidebar */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(0,0,0,0.05); /* separador inferior */
+}
+
+/* Efecto pequeño al poner hover sobre la imagen de la marca */
+.brand img:hover {
+    transform: scale(1.05);
+}
+
+/* Título de la marca con gradiente de texto */
+.brand h3 {
+    margin: 0;
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    background-clip: text;
+    -webkit-text-fill-color: transparent; /* hace que el texto tome el gradiente */
+}
+
+/* Enlaces de navegación dentro de la sidebar */
+.nav-link {
+    color: rgba(0,0,0,0.65); /* color base */
+    padding: .75rem .85rem;  /* espacio interno del item */
+    border-radius: 12px;     /* radios para efecto de botón */
+    margin-bottom: .4rem;    /* separación entre items */
+    display: flex;
+    align-items: center;
+    gap: .6rem;              /* espacio entre icono y texto */
+    transition: all 0.3s ease;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;   /* quitar subrayado en caso de <a> */
+}
+
+/* Iconos dentro del nav (espacio reservado y tamaño) */
+.nav-link i {
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+}
+
+/* Estado activo del link: fondo degradado y texto blanco */
+.nav-link.active {
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(14, 164, 111, 0.3); /* sombra destacada */
+}
+
+/* Hover para links no activos: sutil desplazamiento y color */
+.nav-link:hover:not(.active) {
+    background: rgba(6, 163, 255, 0.08);
+    color: var(--accent-2);
+    transform: translateX(4px); /* micro-movimiento para interactividad */
+}
+
+/* Botón de cerrar sesión/logout en la parte inferior de la sidebar */
+.btn-logout {
+    width: 100%;
+    margin-top: 1.5rem;
+    border-radius: 12px;
+    padding: 0.6rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-logout:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* MAIN */
+/* Contenedor principal donde van los contenidos (cards, tablas, charts) */
+.main {
+    flex: 1; /* ocupa el espacio restante */
+    padding: 1.5rem;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.6); /* fondo translúcido */
+    backdrop-filter: blur(10px); /* efecto glass */
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(255,255,255,0.4);
+}
+
+/* Barra superior dentro del main (título, acciones, search) */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(0,0,0,0.05); /* separador sutil */
+}
+
+/* Caja de búsqueda con icono integrado */
+.search-box {
+    max-width: 420px;
+    position: relative;
+}
+
+.search-box input {
+    border-radius: 12px;
+    padding-left: 2.5rem; /* espacio para el icono */
+    border: 1px solid rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+/* Estado focus para input (anillo y cambio de borde) */
+.search-box input:focus {
+    box-shadow: 0 0 0 3px rgba(6, 163, 255, 0.2);
+    border-color: var(--accent-2);
+}
+
+/* Icono dentro de la search-box (usa fuente de iconos) */
+.search-box::before {
+    content: "\F52A"; /* glyph de bootstrap-icons (ejemplo) */
+    font-family: "bootstrap-icons";
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    z-index: 5;
+}
+
+/* CONTENT SECTIONS */
+/* Secciones de contenido tipo tab: ocultas por defecto */
+.content-section {
+    display: none;
+}
+
+/* Sección visible con animación de entrada */
+.content-section.active {
+    display: block;
+    animation: fadeIn 0.5s ease;
+}
+
+/* CARDS */
+/* Grid responsivo para tarjetas de estadísticas */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Estilo base de una tarjeta de estadísticas */
+.card-stat {
+    border-radius: 16px;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); /* sutil glass */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(255,255,255,0.4);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden; /* esconder elementos que sobresalgan */
+}
+
+/* Línea superior en la tarjeta para un acento visual */
+.card-stat::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
+/* Hover sobre la tarjeta: levanta y cambia sombra */
+.card-stat:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--hover-shadow);
+}
+
+/* Icono grande dentro de la tarjeta (cuadro coloreado) */
+.card-stat .icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Variaciones por tipo de tarjeta (usuarios, transacciones, subscripciones) */
+.users .icon {
+    background: linear-gradient(135deg, rgba(14,164,111,0.14), rgba(14,164,111,0.06));
+    color: var(--accent);
+}
+
+.tx .icon {
+    background: linear-gradient(135deg, rgba(6,163,255,0.12), rgba(6,163,255,0.06));
+    color: var(--accent-2);
+}
+
+.subs .icon {
+    background: linear-gradient(135deg, rgba(255,193,7,0.12), rgba(255,193,7,0.06));
+    color: #ffc107;
+}
+
+/* Valor destacado en la tarjeta (número grande con gradiente de texto) */
+.stat-value {
+    font-weight: 700;
+    font-size: 1.8rem;
+    margin-bottom: 0.25rem;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Etiqueta o descripción del stat (texto secundario) */
+.stat-label {
+    color: var(--muted);
+    font-size: .92rem;
+    font-weight: 500;
+}
+
+/* CHART */
+/* Card específica para gráficos (misma estética que card-stat) */
+.chart-card {
+    border-radius: 16px;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(255,255,255,0.4);
+    transition: all 0.3s ease;
+}
+
+.chart-card:hover {
+    box-shadow: var(--hover-shadow);
+}
+
+/* Contenedor con altura fija para canvases / charts */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* TABLE */
+/* Card que contiene tablas con la misma estética general */
+.table-card {
+    border-radius: 16px;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(255,255,255,0.4);
+    transition: all 0.3s ease;
+}
+
+.table-card:hover {
+    box-shadow: var(--hover-shadow);
+}
+
+/* Encabezados de tabla: separación y texto atenuado */
+.table thead th {
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    background: transparent;
+    color: var(--muted);
+    font-weight: 600;
+    padding: 1rem 0.75rem;
+}
+
+/* Celdas de la tabla con padding y separación */
+.table tbody td {
+    padding: 1rem 0.75rem;
+    border-bottom: 1px solid rgba(0,0,0,0.03);
+    transition: all 0.2s ease;
+}
+
+/* Hover sobre fila: fondo muy sutil para indicar selección */
+.table tbody tr:hover td {
+    background: rgba(6, 163, 255, 0.03);
+}
+
+/* Avatar pequeño para listas/tabla (imagen o iniciales) */
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.avatar-sm img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+/* Badges / etiquetas pequeñas */
+.badge {
+    font-weight: 500;
+    padding: 0.35rem 0.75rem;
+}
+
+/* REPORTS SECTION */
+/* Card para filtros / opciones en la sección de reportes */
+.filters-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(255,255,255,0.4);
+}
+
+/* Grupo de filtros (espaciado entre controles) */
+.filter-group {
+    margin-bottom: 1.5rem;
+}
+
+/* Etiqueta de cada filtro */
+.filter-label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+/* Resumen destacado de estadísticas (fondo gradiente, texto blanco) */
+.stats-highlight {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: white;
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.stats-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.stats-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+/* Buttons */
+/* Botón base con radios y transición */
+.btn {
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px); /* micro elevación en hover */
+}
+
+/* Botón pequeño (tamaño compacto) */
+.btn-sm {
+    padding: 0.4rem 0.75rem;
+    border-radius: 8px;
+}
+
+/* Grupo de botones */
+.btn-group .btn {
+    border-radius: 8px;
+}
+
+/* small helpers */
+/* Texto atenuado */
+.muted {
+    color: var(--muted);
+}
+
+/* Texto con gradiente (útil para títulos pequeños) */
+.text-gradient {
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Títulos de página y subtítulos */
+.page-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.page-subtitle {
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+}
+
+/* Dropdown Notifications */
+/* Ancho mínimo para el dropdown de notificaciones */
+.dropdown-notifications {
+    min-width: 320px;
+}
+
+/* Items dentro del dropdown de notificaciones */
+.notification-item {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+}
+
+.notification-item:hover {
+    background-color: rgba(0,0,0,0.02);
+}
+
+.notification-item:last-child {
+    border-bottom: none; /* último item no necesita borde inferior */
+}
+
+/* Tiempo / sello de cada notificación (letra pequeña) */
+.notification-time {
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+
+/* RESPONSIVE: sidebar becomes top on small */
+/* Ajustes para pantallas menores a 991px: sidebar se vuelve bloque superior */
+@media (max-width: 991px) {
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        margin-left: 0;
+        margin-right: 0;
+    }
+    
+    .app-shell {
+        flex-direction: column; /* apila sidebar encima del main */
+        padding: 0.5rem;
+    }
+    
+    .main {
+        margin: 0;
+    }
+    
+    /* Ajuste para que el dropdown de notificaciones se posicione correctamente */
+    .dropdown-notifications {
+        position: fixed !important;
+        top: 80px !important;
+        right: 20px !important;
+        left: auto !important;
+        transform: none !important;
+    }
+}
+
+/* micro animations */
+/* Clase utilitaria para animar aparición */
+.fade-in {
+    animation: fadeIn .6s ease both;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px); /* empieza ligeramente abajo */
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Scrollbar styling */
+/* Estilos personalizados para webkit (Chrome, Safari) */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,0,0,0.3);
+}
+
+/* Preview de imagen: cubierta para mostrar miniatura al subir imagen */
+.photo-preview {
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 2px dashed #ddd; /* borde punteado para indicar área de preview */
+    margin-top: 10px;
+    display: none; /* oculto por defecto; mostrar con JS cuando haya imagen */
+}
+
+.photo-preview-container {
+    text-align: center;
+    margin-bottom: 15px;
+}
