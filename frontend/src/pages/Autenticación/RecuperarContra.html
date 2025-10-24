@@ -158,53 +158,83 @@
         </div>
     </footer>
 
-    <script>
-        // Manejo del formulario de recuperación
-        document.getElementById('recoveryForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const emailInput = document.getElementById('email');
-            const updateButton = document.getElementById('updateButton');
-            const buttonText = document.getElementById('buttonText');
-            const notification = document.getElementById('successNotification');
-            
-            // Validar que el email no esté vacío
-            if (!emailInput.value.trim()) {
-                alert('Por favor, ingrese su correo electrónico');
-                return;
-            }
-            
-            // Cambiar el estado del botón a "cargando"
-            updateButton.classList.add('btn-loading');
-            buttonText.textContent = 'Enviando código de recuperacion...';
-            updateButton.disabled = true;
-            
-            // Simular el envío del código (2 segundos de espera)
-            setTimeout(function() {
-                // Restaurar el botón
-                updateButton.classList.remove('btn-loading');
-                buttonText.textContent = 'Enviar';
-                updateButton.disabled = false;
-                
-                // Mostrar la notificación de éxito
-                notification.classList.add('show');
-                
-                // Redirigir a la página NuevaContra.html después de 2 segundos
-                setTimeout(function() {
-                    window.location.href = 'NuevaContra.html';
-                }, 2500);
-                
-                // Ocultar la notificación automáticamente después de 5 segundos
-                setTimeout(function() {
-                    notification.classList.remove('show');
-                }, 5000);
-            }, 2000);
-        });
+<script>
+    // URL de su endpoint de Spring Boot
+    const API_URL = 'http://localhost:8080/api/auth/forgot-password';
+
+    document.getElementById('recoveryForm').addEventListener('submit', function(e) {
+        e.preventDefault();
         
-        // Cerrar la notificación manualmente
-        document.getElementById('closeNotification').addEventListener('click', function() {
-            document.getElementById('successNotification').classList.remove('show');
+        const emailInput = document.getElementById('email');
+        const email = emailInput.value.trim();
+        const updateButton = document.getElementById('updateButton');
+        const buttonText = document.getElementById('buttonText');
+        const notification = document.getElementById('successNotification');
+        
+        // 1. Validación de email
+        if (!email) {
+            alert('Por favor, ingrese su correo electrónico');
+            return;
+        }
+        
+        // 2. Cambiar el estado del botón a "cargando"
+        updateButton.classList.add('btn-loading');
+        buttonText.textContent = 'Enviando código de recuperacion...';
+        updateButton.disabled = true;
+        
+        // 3. LLAMADA REAL A LA API
+        fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                // La llave DEBE ser "email" para coincidir con el backend
+                email: email
+            })
+        })
+        .then(response => {
+            // Manejar errores de servidor (4xx o 5xx)
+            if (!response.ok) {
+                // Si la respuesta no es OK (ej. 400 Bad Request o 500 Internal Error)
+                return response.text().then(errorText => {
+                    // Extraer el mensaje de error del backend (Spring Boot)
+                    throw new Error(errorText || 'Error desconocido al solicitar recuperación.');
+                });
+            }
+            // Si la respuesta es 200 OK, continuar
+            return response.text();
+        })
+        .then(data => {
+            // 4. Éxito: Mostrar notificación y redirigir
+            
+            // Mostrar la notificación de éxito (puede personalizar el mensaje si lo necesita)
+            document.querySelector('#successNotification p').textContent = data; // Usar el mensaje de éxito del backend
+            notification.classList.add('show');
+
+            // Redirigir a la página NuevaContra.html después de 2.5 segundos
+            setTimeout(function() {
+                window.location.href = 'NuevaContra.html';
+            }, 2500);
+
+        })
+        .catch(error => {
+            // 5. Fallo: Mostrar alerta de error
+            console.error('Error en la recuperación:', error.message);
+            alert('Error: ' + error.message);
+        })
+        .finally(() => {
+            // 6. Restaurar el botón al finalizar (éxito o fallo)
+            updateButton.classList.remove('btn-loading');
+            buttonText.textContent = 'Enviar';
+            updateButton.disabled = false;
         });
-    </script>
+    });
+    
+    // Cerrar la notificación manualmente (código existente)
+    document.getElementById('closeNotification').addEventListener('click', function() {
+        document.getElementById('successNotification').classList.remove('show');
+    });
+</script>
 </body>
 </html>
