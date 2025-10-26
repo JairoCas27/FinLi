@@ -190,7 +190,7 @@ if(togglePassword && passwordInput) setupToggle(togglePassword, passwordInput);
 if(toggleConfirmPassword && confirmPasswordInput) setupToggle(toggleConfirmPassword, confirmPasswordInput);
 
 // =================================================================
-// Temporizador (código existente)
+// Temporizador 
 // =================================================================
 let timeLeft = 60;
 let countdownInterval = null;
@@ -240,31 +240,26 @@ if (timerElement && countdownElement && resendLink) {
 }
 
 
-// =================================================================
 // LÓGICA DE LA API PARA RESTABLECER CONTRASEÑA
-// =================================================================
+
 
 const RESET_API_URL = 'http://localhost:8080/api/auth/reset-password';
 const resetForm = document.getElementById('resetPasswordForm'); 
-const statusNotification = document.getElementById('statusNotification'); // Debe agregar esta notificación en el HTML
+const statusNotification = document.getElementById('statusNotification'); 
 
 // Función para mostrar la notificación de estado (éxito o error)
 function showStatusNotification(isSuccess, message) {
-    // --- Necesita agregar en NuevaContra.html el HTML de la notificación (similar al paso 31) ---
-    // Si ya lo tiene, solo ajuste los IDs
-    // ---
-    
-    // Aquí iría su lógica para mostrar la notificación
-    alert(message); // Por ahora, usamos alert para no detenernos si falta el CSS de la notificación
+
+    alert(message); 
 }
 
 if(resetForm) {
     resetForm.addEventListener('submit', function(e) {
-        // 1. EVITAR LA RECARGA DE LA PÁGINA
+        //  EVITAR LA RECARGA DE LA PÁGINA
         e.preventDefault();
         
         const email = document.getElementById('email').value.trim();
-        const token = document.getElementById('recuperacion').value.trim(); // ID es 'recuperacion'
+        const token = document.getElementById('recuperacion').value.trim(); 
         const nuevaContrasena = document.getElementById('contrasena').value;
         const confirmarContrasena = document.getElementById('confirmarContrasena').value;
         
@@ -286,7 +281,7 @@ if(resetForm) {
         updateButton.textContent = 'Actualizando...';
         updateButton.disabled = true;
 
-        // LLAMADA AL ENDPOINT /api/auth/reset-password
+        // LLAMADA AL ENDPOINT 
         fetch(RESET_API_URL, {
             method: 'POST',
             headers: {
@@ -295,7 +290,7 @@ if(resetForm) {
             body: JSON.stringify({
                 email: email,
                 token: token,
-                nuevaContrasena: nuevaContrasena // La llave DEBE ser "nuevaContrasena"
+                nuevaContrasena: nuevaContrasena 
             })
         })
         .then(async response => {

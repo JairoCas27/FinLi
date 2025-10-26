@@ -2,7 +2,7 @@ package com.finli.controller;
 
 import com.finli.dto.LoginRequest;
 import com.finli.dto.RegistroRequest;
-import com.finli.dto.PasswordResetRequest; // ¡NUEVA IMPORTACIÓN DE DTO!
+import com.finli.dto.PasswordResetRequest; 
 import com.finli.model.Usuario;
 import com.finli.service.ServicioAutenticacion;
 import lombok.RequiredArgsConstructor;
@@ -40,9 +40,8 @@ public class AuthController {
         }
     }
 
-    /* ========================================================== */
-    /* === 1. ENDPOINT: SOLICITAR RECUPERACIÓN (FORGOT PASSWORD) === */
-    /* ========================================================== */
+    // ENDPOINT: SOLICITAR RECUPERACIÓN 
+ 
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestBody Map<String, String> request) {
         String email = request.get("email");
@@ -55,26 +54,25 @@ public class AuthController {
             servicio.iniciarRecuperacion(email);
             return ResponseEntity.ok("Se ha enviado un código de recuperación a su correo.");
         } catch (RuntimeException e) {
-            // Manejamos errores del servicio (ej. Correo no registrado, fallo de envío)
+            // Manejamos errores del servicio ( Correo no registrado, fallo de envío)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                  .body("Error al iniciar la recuperación: " + e.getMessage());
         }
     }
 
-    /* ========================================================== */
-    /* === 2. ENDPOINT: RESTABLECER CONTRASEÑA (RESET PASSWORD) === */
-    /* ========================================================== */
+    // RESTABLECER CONTRASEÑA 
+
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(@RequestBody PasswordResetRequest request) {
         try {
-            // Llama al nuevo método del servicio
+            // Llama al método del servicio
             servicio.restablecerContrasena(request);
             return ResponseEntity.ok("Contraseña restablecida exitosamente.");
         } catch (RuntimeException e) {
             // Captura errores de token inválido, expirado o correo no coincidente
             return ResponseEntity.badRequest().body("Error al restablecer: " + e.getMessage());
         } catch (Exception e) {
-            // Otros errores, como fallo de base de datos
+            // Otros errores (fallo de base de datos)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                  .body("Error interno: " + e.getMessage());
         }

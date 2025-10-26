@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UsuarioResponse {
     private Integer id;
-    private String email;   // mismo valor que correo
+    private String email;  
     private String nombre;
     private String apellidoPaterno;
     private String apellidoMaterno;

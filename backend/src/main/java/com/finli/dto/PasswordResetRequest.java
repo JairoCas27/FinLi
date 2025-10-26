@@ -12,7 +12,7 @@ public class PasswordResetRequest {
     // El correo para identificar al usuario
     private String email; 
     
-    // El código de 6 dígitos que se envió por correo
+    // El código de 6 dígitos enviado por correo
     private String token; 
     
     // La nueva contraseña que el usuario quiere usar

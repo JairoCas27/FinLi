@@ -180,7 +180,6 @@
                     </tr>
                     </thead>
                     <tbody id="tbodyInicio">
-                    <!-- Los usuarios se cargarán dinámicamente aquí -->
                     </tbody>
                 </table>
                 </div>
@@ -231,7 +230,6 @@
                     </tr>
                     </thead>
                     <tbody id="tbodyUsuarios">
-                    <!-- Los usuarios se cargarán dinámicamente aquí -->
                     </tbody>
                 </table>
                 </div>
@@ -384,99 +382,133 @@
     <!-- Modals -->
     <!-- Add User Modal -->
     <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-            <h5 class="modal-title" id="addUserModalLabel">Agregar Nuevo Usuario</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="addUserModalLabel">Agregar Nuevo Usuario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-            <form id="addUserForm">
-                <div class="photo-preview-container">
-                <img id="addPhotoPreview" class="photo-preview" alt="Vista previa de la foto">
-                </div>
-                <div class="mb-3">
-                <label for="userPhoto" class="form-label">Foto de perfil</label>
-                <input type="file" class="form-control" id="userPhoto" accept="image/*">
-                </div>
-                <div class="mb-3">
-                <label for="userName" class="form-label">Nombre completo</label>
-                <input type="text" class="form-control" id="userName" required>
-                </div>
-                <div class="mb-3">
-                <label for="userEmail" class="form-label">Correo electrónico</label>
-                <input type="email" class="form-control" id="userEmail" required>
-                </div>
-                <div class="mb-3">
-                <label for="userType" class="form-label">Tipo de cuenta</label>
-                <select class="form-select" id="userType" required>
-                    <option value="Normal">Normal</option>
-                    <option value="Premium">Premium</option>
-                </select>
-                </div>
-                <div class="mb-3">
-                <label for="userRegistrationDate" class="form-label">Fecha de Registro</label>
-                <input type="date" class="form-control" id="userRegistrationDate" required>
-                </div>
-                <div class="mb-3">
-                <label for="userPassword" class="form-label">Contraseña</label>
-                <input type="password" class="form-control" id="userPassword" required>
-                </div>
-            </form>
+                <form id="addUserForm" novalidate>
+                    <div class="alert d-none" id="add-user-alert" role="alert"></div>
+                    
+                    <div class="photo-preview-container">
+                        <img id="addPhotoPreview" class="photo-preview" alt="Vista previa de la foto">
+                    </div>
+                    <div class="mb-3">
+                        <label for="userPhoto" class="form-label">Foto de perfil</label>
+                        <input type="file" class="form-control" id="userPhoto" accept="image/*">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="nombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="apellidoPaterno" class="form-label">Apellido Paterno</label>
+                            <input type="text" class="form-control" id="apellidoPaterno" name="apellidoPaterno" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="apellidoMaterno" class="form-label">Apellido Materno</label>
+                            <input type="text" class="form-control" id="apellidoMaterno" name="apellidoMaterno">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="correo" class="form-label">Correo electrónico</label>
+                        <input type="email" class="form-control" id="correo" name="correo" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="contrasena" class="form-label">Contraseña</label>
+                            <input type="password" class="form-control" id="contrasena" name="contrasena" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edad" class="form-label">Edad</label>
+                            <input type="number" class="form-control" id="edad" name="edad" min="18" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="estadoUsuarioId" class="form-label">Estado de Usuario</label>
+                        <select class="form-select" id="estadoUsuarioId" name="estadoUsuarioId" required>
+                            <option value="">Cargando estados...</option>
+                        </select>
+                    </div>
+
+                    </form>
             </div>
             <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="saveUserBtn">Guardar Usuario</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveUserBtn">Guardar Usuario</button>
             </div>
         </div>
-        </div>
     </div>
+</div>
 
     <!-- Edit User Modal -->
-    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-            <h5 class="modal-title" id="editUserModalLabel">Editar Usuario</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="editUserModalLabel">Editar Usuario <span class="text-primary" id="editUserIdDisplay"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-            <form id="editUserForm">
-                <div class="photo-preview-container">
-                <img id="editPhotoPreview" class="photo-preview" alt="Vista previa de la foto">
-                </div>
-                <div class="mb-3">
-                <label for="editUserPhoto" class="form-label">Foto de perfil</label>
-                <input type="file" class="form-control" id="editUserPhoto" accept="image/*">
-                </div>
-                <div class="mb-3">
-                <label for="editUserName" class="form-label">Nombre completo</label>
-                <input type="text" class="form-control" id="editUserName" required>
-                </div>
-                <div class="mb-3">
-                <label for="editUserEmail" class="form-label">Correo electrónico</label>
-                <input type="email" class="form-control" id="editUserEmail" required>
-                </div>
-                <div class="mb-3">
-                <label for="editUserType" class="form-label">Tipo de cuenta</label>
-                <select class="form-select" id="editUserType" required>
-                    <option value="Normal">Normal</option>
-                    <option value="Premium">Premium</option>
-                </select>
-                </div>
-                <div class="mb-3">
-                <label for="editUserRegistrationDate" class="form-label">Fecha de Registro</label>
-                <input type="date" class="form-control" id="editUserRegistrationDate" required>
-                </div>
-            </form>
+                <form id="editUserForm" novalidate>
+                    <input type="hidden" id="editUserId" name="id"> <div class="alert d-none" id="edit-user-alert" role="alert"></div>
+
+                    <div class="photo-preview-container">
+                        <img id="editPhotoPreview" class="photo-preview" alt="Vista previa de la foto">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editUserPhoto" class="form-label">Foto de perfil</label>
+                        <input type="file" class="form-control" id="editUserPhoto" accept="image/*">
+                        <small class="text-muted">Dejar vacío para mantener la foto actual.</small>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="editNombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="editNombre" name="nombre" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="editApellidoPaterno" class="form-label">Apellido Paterno</label>
+                            <input type="text" class="form-control" id="editApellidoPaterno" name="apellidoPaterno" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="editApellidoMaterno" class="form-label">Apellido Materno</label>
+                            <input type="text" class="form-control" id="editApellidoMaterno" name="apellidoMaterno">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editCorreo" class="form-label">Correo electrónico</label>
+                        <input type="email" class="form-control" id="editCorreo" name="correo" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editEdad" class="form-label">Edad</label>
+                        <input type="number" class="form-control" id="editEdad" name="edad" min="18" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editEstadoUsuarioId" class="form-label">Estado de Usuario</label>
+                        <select class="form-select" id="editEstadoUsuarioId" name="estadoUsuarioId" required>
+                            </select>
+                    </div>
+
+                    </form>
             </div>
             <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="updateUserBtn">Actualizar Usuario</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="updateUserBtn">Actualizar Usuario</button>
             </div>
         </div>
-        </div>
     </div>
+</div>
 
     <!-- Delete User Modal -->
     <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">

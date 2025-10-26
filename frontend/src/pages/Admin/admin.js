@@ -3,19 +3,37 @@
 // ==============================================================================
 const API_URL_BASE = 'http://localhost:8080'; // <-- Ajusta el puerto si es diferente al 8080
 const ENDPOINT_USUARIOS = '/api/admin/usuarios'; 
+const ENDPOINT_ESTADOS = '/api/admin/estados-usuario'; // NUEVO ENDPOINT
 
 // ==============================================================================
 // === VARIABLES GLOBALES ===
 // ==============================================================================
 let users = [];
 let currentEditingUserId = null;
-let currentDeletingUserId = null;
+let currentDeletingUserId = null; 
+const API_BASE_URL = API_URL_BASE; 
+
+// Referencias a modales de Bootstrap
+const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
+const deleteUserModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal')); // NUEVA REFERENCIA
+
+// Referencias para la navegación y títulos
+const navLinks = document.querySelectorAll('.sidebar .nav-link');
+const contentSections = document.querySelectorAll('.content-section');
+const mainTitle = document.getElementById('main-title');
+const mainSubtitle = document.getElementById('main-subtitle');
+const titleMap = {
+    'inicio': { title: 'Bienvenido, <span class="text-gradient">Administrador</span>', subtitle: 'Panel de control' },
+    'usuarios': { title: 'Gestión de Usuarios', subtitle: 'Administra y controla todos los usuarios del sistema FinLi' },
+    'reportes': { title: 'Reportes Financieros', subtitle: 'Analiza el rendimiento y crecimiento de FinLi' }
+};
 
 // Ayudante para la fecha
 document.getElementById('year').textContent = new Date().getFullYear();
 
 // ==============================================================================
-// === LÓGICA DE CARGA DE DATOS DESDE EL BACKEND (REEMPLAZO DE localStorage) ===
+// === LÓGICA DE CARGA DE DATOS DESDE EL BACKEND ===
 // ==============================================================================
 
 /**
@@ -41,18 +59,15 @@ async function cargarUsuariosDesdeAPI() {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                // PENDIENTE: AUTENTICACIÓN. SI USAS JWT, DESCOMENTA Y AJUSTA ESTO:
-                // 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
+                // PENDIENTE: AUTENTICACIÓN.
             }
         });
 
         if (!response.ok) {
-            // Maneja errores de servidor (401, 403, 500, etc.)
             throw new Error(`Error ${response.status}: ${response.statusText}`);
         }
 
         const data = await response.json();
-        // Asigna el arreglo de usuarios obtenido del backend a la variable global 'users'
         users = data; 
 
     } catch (error) {
@@ -65,26 +80,24 @@ async function cargarUsuariosDesdeAPI() {
 // --- FUNCIONES EXISTENTES MODIFICADAS ---
 // --------------------------------------------------------------------------------
 
-// NO ES NECESARIA, EL BACKEND SE ENCARGA DE GUARDAR LOS DATOS
-// function saveUsers() {
-//     // NO IMPLEMENTADA. Los datos se manejan en el servidor.
-// }
-
-// Función original para actualizar contadores
 function updateUserCount() {
-    // Usamos 'users.length' que ahora se llena con los datos de la API
     document.getElementById('totalUsers').textContent = users.length;
     document.getElementById('totalUsers2').textContent = users.length;
     document.getElementById('countInicio').textContent = Math.min(4, users.length);
-    document.getElementById('countUsuarios').textContent = Math.min(10, users.length);
+    document.getElementById('countUsuarios').textContent = users.length; 
 }
 
-// Función original para renderizar usuarios en las tablas
+/**
+ * FUNCIÓN CORREGIDA: Eliminación del filtro estricto que vaciaba la tabla.
+ */
 function renderUsers() {
-    // Ordenar usuarios por ID (o por el campo de fecha si se agrega al DTO)
-    const sortedUsers = [...users].sort((a, b) => (b.id || 0) - (a.id || 0));
+    // ❌ CÓDIGO ANTERIOR: const activeUsers = users.filter(user => user.estadoUsuario && user.estadoUsuario.idEstado !== 2);
+    // ✅ CÓDIGO CORREGIDO: Usamos la lista completa de usuarios para asegurar que se muestren.
+    const usersToRender = users;
     
-    // Renderizar en la tabla de Inicio (solo los 4 más recientes)
+    const sortedUsers = [...usersToRender].sort((a, b) => (b.id || 0) - (a.id || 0));
+    
+    // Renderizado para la sección de Inicio (últimos 4)
     const tbodyInicio = document.getElementById('tbodyInicio');
     if (tbodyInicio) {
         tbodyInicio.innerHTML = '';
@@ -94,7 +107,7 @@ function renderUsers() {
         });
     }
     
-    // Renderizar en la tabla de Usuarios (todos los usuarios)
+    // Renderizado para la sección de Usuarios (todos)
     const tbodyUsuarios = document.getElementById('tbodyUsuarios');
     if (tbodyUsuarios) {
         tbodyUsuarios.innerHTML = '';
@@ -108,25 +121,26 @@ function renderUsers() {
 
 /**
  * Función que crea una fila de usuario usando los campos de UsuarioResponse.java.
- * DTO: id, email, nombre, apellidoPaterno, apellidoMaterno
+ * NOTA: Asumimos que el DTO ya trae 'estadoUsuario' con 'nombreEstado'.
  */
 function createUserRow(user, section = 'inicio') {
     const tr = document.createElement('tr');
     
-    // CONCATENACIÓN DE NOMBRE
+    // Usamos los campos reales: nombre, apellidoPaterno, apellidoMaterno
     const nombreCompleto = `${user.nombre || ''} ${user.apellidoPaterno || ''} ${user.apellidoMaterno || ''}`.trim();
-    
-    // Obtener iniciales
     const initials = nombreCompleto.split(' ').map(n => n[0]).join('').toUpperCase();
     
-    // Determinar color de fondo para el avatar
     const colors = ['var(--accent-3)', 'var(--accent)', 'var(--accent-4)', 'var(--muted)', '#3498db', '#e74c3c', '#2ecc71', '#9b59b6', '#f39c12', '#1abc9c'];
     const colorIndex = (user.id || 0) % colors.length;
     const bgColor = colors[colorIndex];
     
-    // DATOS PENDIENTES DE IMPLEMENTACIÓN EN DTO (usamos placeholders)
-    const formattedDate = "N/A (Falta Fecha)"; 
-    const userType = "Estándar"; 
+    // Asumiendo que el DTO de respuesta no incluye fecha de registro por ahora
+    const formattedDate = "N/A"; 
+    
+    // Determinando el tipo de cuenta y estado (Ajuste según tu DTO)
+    // ESTA LÍNEA ES SEGURA y usa operadores de protección, por eso los estados sí se cargaban.
+    const userType = user.estadoUsuario ? user.estadoUsuario.nombreEstado : "Desconocido"; 
+    const isPremium = userType.includes("Premium") ? 'bg-warning text-dark' : 'bg-light text-dark';
     
     tr.innerHTML = `
     <td><span class="badge bg-light text-dark">${user.id || 'N/A'}</span></td>
@@ -143,215 +157,365 @@ function createUserRow(user, section = 'inicio') {
     <td>
         <div style="font-weight:600">${nombreCompleto}</div>
     </td>
-    <td>${user.email || 'N/A'}</td>
-    <td><span class="badge rounded-pill ${userType === 'Premium' ? 'bg-warning text-dark' : 'bg-light text-dark'}">${userType}</span></td>
+    <td>${user.correo || 'N/A'}</td>
+    <td><span class="badge rounded-pill ${isPremium}">${userType}</span></td>
     <td>${formattedDate}</td>
     <td class="text-end">
         <button class="btn btn-sm btn-light edit-user" data-id="${user.id}" title="Editar"><i class="bi bi-pencil"></i></button>
-        <button class="btn btn-sm btn-light delete-user" data-id="${user.id}" title="Eliminar"><i class="bi bi-trash"></i></button>
+        <button class="btn btn-sm btn-light delete-user" data-id="${user.id}" data-name="${nombreCompleto}" title="Eliminar"><i class="bi bi-trash"></i></button>
     </td>
     `;
     
     return tr;
 }
 
-// Formatear fecha (Esta función queda sin uso por ahora al faltar el campo en el DTO)
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+// ==============================================================================
+// === LÓGICA COMPARTIDA: ESTADOS DE USUARIO ===
+// ==============================================================================
+
+/**
+ * Carga los estados de usuario desde el backend a un elemento select.
+ * @param {string} selectId El ID del select (e.g., 'estadoUsuarioId', 'editEstadoUsuarioId').
+ */
+async function cargarEstadosUsuario(selectId) {
+    const selectElement = document.getElementById(selectId);
+    if (!selectElement) return;
+    
+    selectElement.innerHTML = '<option value="">Cargando...</option>';
+
+    try {
+        const response = await fetch(API_BASE_URL + ENDPOINT_ESTADOS);
+        if (!response.ok) throw new Error('Error al obtener estados: ' + response.statusText);
+
+        const estados = await response.json();
+        
+        selectElement.innerHTML = '<option value="">-- Seleccione un Estado --</option>'; 
+        estados.forEach(estado => {
+            const option = document.createElement('option');
+            option.value = estado.idEstado; 
+            option.textContent = estado.nombreEstado;
+            selectElement.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error("Error al cargar estados:", error);
+        selectElement.innerHTML = '<option value="">Error de carga</option>';
+        // Aquí podrías agregar una alerta visual específica si es necesario
+    }
 }
 
-// --------------------------------------------------------------------------------
-// --- RESTO DE TU CÓDIGO (Navegación, Modales, Gráficos) ---
-// --------------------------------------------------------------------------------
+// Evento para cargar estados al abrir el modal de Agregar Usuario
+const addUserModalElement = document.getElementById('addUserModal');
+if (addUserModalElement) {
+    addUserModalElement.addEventListener('show.bs.modal', () => cargarEstadosUsuario('estadoUsuarioId'));
+}
 
-// Navigation system (MANTENER SIN CAMBIOS)
-const navLinks = document.querySelectorAll('.nav-link');
-const contentSections = document.querySelectorAll('.content-section');
-const mainTitle = document.getElementById('main-title');
-const mainSubtitle = document.getElementById('main-subtitle');
-const searchInput = document.getElementById('search-input');
+// Evento para cargar estados al abrir el modal de Editar Usuario
+const editUserModalElement = document.getElementById('editUserModal');
+if (editUserModalElement) {
+    editUserModalElement.addEventListener('show.bs.modal', async () => {
+        await cargarEstadosUsuario('editEstadoUsuarioId');
+        // Esto garantiza que los estados se carguen antes de rellenar los datos
+        cargarDatosUsuarioParaEdicion(currentEditingUserId);
+    });
+}
 
-// Titles and placeholders for each section (MANTENER SIN CAMBIOS)
-const sectionData = {
-    inicio: {
-        title: 'Bienvenido, <span class="text-gradient">Administrador</span>',
-        subtitle: 'Panel de control',
-        placeholder: 'Buscar usuarios...'
-    },
-    usuarios: {
-        title: 'Bienvenido, <span class="text-gradient">Administrador</span>',
-        subtitle: 'Gestión de usuarios',
-        placeholder: 'Buscar usuarios...'
-    },
-    reportes: {
-        title: 'Bienvenido, <span class="text-gradient">Administrador</span>',
-        subtitle: 'Reportes y análisis',
-        placeholder: 'Buscar reportes...'
+
+// ==============================================================================
+// === LÓGICA DE CREACIÓN DE USUARIO (CRUD - C) ===
+// ==============================================================================
+
+document.getElementById('saveUserBtn').addEventListener('click', async function() {
+    const form = document.getElementById('addUserForm');
+    const alertDiv = document.getElementById('add-user-alert');
+    
+    alertDiv.classList.add('d-none'); 
+    alertDiv.className = 'alert d-none'; 
+    
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
     }
-};
 
-// Initialize navigation (MANTENER SIN CAMBIOS)
-navLinks.forEach(link => {
-    link.addEventListener('click', function() {
-        const targetSection = this.getAttribute('data-section');
-        
-        // Update active states
-        navLinks.forEach(nav => nav.classList.remove('active'));
-        this.classList.add('active');
-        
-        // Show/hide sections
-        contentSections.forEach(section => {
-            section.classList.remove('active');
-            if (section.id === targetSection) {
-                section.classList.add('active');
-            }
+    const nuevoCliente = {
+        nombre: form.nombre.value,
+        apellidoPaterno: form.apellidoPaterno.value,
+        apellidoMaterno: form.apellidoMaterno.value,
+        correo: form.correo.value,
+        contrasena: form.contrasena.value,
+        edad: parseInt(form.edad.value, 10),
+        estadoUsuario: { 
+            idEstado: parseInt(form.estadoUsuarioId.value, 10) 
+        }
+    };
+    
+    this.disabled = true; 
+    
+    try {
+        const response = await fetch(API_BASE_URL + ENDPOINT_USUARIOS, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(nuevoCliente)
         });
-        
-        // Update titles and placeholder
-        if (sectionData[targetSection]) {
-            mainTitle.innerHTML = sectionData[targetSection].title;
-            mainSubtitle.textContent = sectionData[targetSection].subtitle;
-            searchInput.placeholder = sectionData[targetSection].placeholder;
+
+        const data = await response.json();
+
+        if (response.status === 201) { 
+            alertDiv.textContent = `✅ Cliente ${data.nombre} agregado con ID: ${data.id}.`;
+            alertDiv.className = 'alert alert-success';
+            form.reset(); 
+            addUserModal.hide(); 
+            initializeUsers(); 
+        } else {
+            alertDiv.textContent = `❌ Error al crear cliente: ${data.message || 'Error desconocido'}`;
+            alertDiv.className = 'alert alert-danger';
         }
 
-        // Initialize charts if showing reports section
-        if (targetSection === 'reportes') {
+    } catch (error) {
+        console.error("Error de red/conexión:", error);
+        alertDiv.textContent = '❌ Error de conexión con el servidor.';
+        alertDiv.className = 'alert alert-danger';
+
+    } finally {
+        alertDiv.classList.remove('d-none'); 
+        this.disabled = false; 
+    }
+});
+
+
+// ==============================================================================
+// === LÓGICA DE ACTUALIZACIÓN DE USUARIO (CRUD - U) ===
+// ==============================================================================
+
+/**
+ * Función que busca el usuario y rellena el modal de edición.
+ * @param {number} id El ID del usuario a cargar.
+ */
+function cargarDatosUsuarioParaEdicion(id) {
+    const user = users.find(u => u.id === id);
+    if (!user) {
+        console.error("Usuario no encontrado para editar:", id);
+        return;
+    }
+
+    // Rellenar campos del modal de Edición
+    document.getElementById('editUserId').value = user.id;
+    document.getElementById('editUserIdDisplay').textContent = `#${user.id}`;
+    document.getElementById('editNombre').value = user.nombre || '';
+    document.getElementById('editApellidoPaterno').value = user.apellidoPaterno || '';
+    document.getElementById('editApellidoMaterno').value = user.apellidoMaterno || '';
+    document.getElementById('editCorreo').value = user.correo || '';
+    document.getElementById('editEdad').value = user.edad || '';
+    
+    // Seleccionar el estado actual
+    const estadoUsuarioId = user.estadoUsuario ? user.estadoUsuario.idEstado : null;
+    document.getElementById('editEstadoUsuarioId').value = estadoUsuarioId;
+
+    // Ya no es necesario mostrar el modal aquí, se hace en el manejador del evento show.bs.modal
+}
+
+/**
+ * Maneja el envío del formulario de Actualización.
+ */
+document.getElementById('updateUserBtn').addEventListener('click', async function() {
+    const form = document.getElementById('editUserForm');
+    const alertDiv = document.getElementById('edit-user-alert');
+    
+    alertDiv.classList.add('d-none'); 
+    alertDiv.className = 'alert d-none'; 
+    
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const userId = parseInt(form.editUserId.value, 10);
+    
+    // Mapeo de campos HTML a la estructura JSON esperada por Usuario.java
+    const usuarioActualizado = {
+        id: userId, // Necesario para el PUT
+        nombre: form.editNombre.value,
+        apellidoPaterno: form.editApellidoPaterno.value,
+        apellidoMaterno: form.editApellidoMaterno.value,
+        correo: form.editCorreo.value,
+        edad: parseInt(form.editEdad.value, 10),
+        estadoUsuario: { 
+            idEstado: parseInt(form.editEstadoUsuarioId.value, 10) 
+        }
+        // Nota: La contraseña y la foto se omiten en esta actualización
+    };
+    
+    this.disabled = true; 
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}${ENDPOINT_USUARIOS}/${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(usuarioActualizado)
+        });
+
+        const data = await response.json();
+
+        if (response.status === 200) { // 200 OK
+            alertDiv.textContent = `✅ Usuario ID ${userId} actualizado correctamente.`;
+            alertDiv.className = 'alert alert-success';
+            
+            // Recargar la tabla y cerrar el modal
+            editUserModal.hide(); 
+            initializeUsers(); 
+        } else if (response.status === 404) {
+            alertDiv.textContent = `❌ Error: Usuario ID ${userId} no encontrado.`;
+            alertDiv.className = 'alert alert-danger';
+        } else {
+            alertDiv.textContent = `❌ Error al actualizar usuario: ${data.message || 'Error desconocido'}`;
+            alertDiv.className = 'alert alert-danger';
+        }
+
+    } catch (error) {
+        console.error("Error de red/conexión:", error);
+        alertDiv.textContent = '❌ Error de conexión con el servidor.';
+        alertDiv.className = 'alert alert-danger';
+    } finally {
+        alertDiv.classList.remove('d-none'); 
+        this.disabled = false; 
+    }
+});
+
+
+// ==============================================================================
+// === LÓGICA DE ELIMINACIÓN DE USUARIO (CRUD - D) ===
+// ==============================================================================
+
+/**
+ * Event Listener principal para los botones de la tabla (Eliminar/Editar).
+ */
+document.addEventListener('click', function(e) {
+    
+    // --- Lógica de ELIMINAR ---
+    if (e.target.closest('.delete-user')) {
+        const deleteButton = e.target.closest('.delete-user');
+        const userId = deleteButton.getAttribute('data-id');
+        const userName = deleteButton.getAttribute('data-name');
+        
+        if (userId && userName) {
+            currentDeletingUserId = parseInt(userId, 10);
+            document.getElementById('deleteUserName').textContent = userName;
+            deleteUserModal.show();
+        }
+        
+    }
+    
+    // --- Lógica de EDITAR (Ahora implementada) ---
+    if (e.target.closest('.edit-user')) {
+        const editButton = e.target.closest('.edit-user');
+        const userId = editButton.getAttribute('data-id');
+        
+        if (userId) {
+            currentEditingUserId = parseInt(userId, 10);
+            // El modal se abre en el manejador 'show.bs.modal'
+            // donde primero carga los estados y luego los datos.
+            editUserModal.show(); 
+        }
+    }
+});
+
+
+/**
+ * Maneja la confirmación de la eliminación (Reemplaza la lógica local).
+ */
+document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+    if (!currentDeletingUserId) return;
+
+    this.disabled = true;
+    this.textContent = 'Eliminando...';
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}${ENDPOINT_USUARIOS}/${currentDeletingUserId}`, {
+            method: 'DELETE',
+        });
+
+        if (response.status === 204) { // 204 No Content (Éxito en eliminación lógica)
+            // No usamos alert() en producción, pero lo mantenemos por ahora
+            alert(`✅ Usuario ID ${currentDeletingUserId} eliminado lógicamente (Estado Inactivo).`); 
+            
+            deleteUserModal.hide(); 
+            initializeUsers(); 
+
+        } else if (response.status === 404) {
+            alert('❌ Error: El usuario no fue encontrado.');
+        } else {
+            alert('❌ Error al procesar la solicitud de eliminación.');
+        }
+
+    } catch (error) {
+        console.error("Error de red/conexión:", error);
+        alert('❌ Error de conexión con el servidor.');
+    } finally {
+        this.disabled = false;
+        this.textContent = 'Eliminar Usuario';
+        currentDeletingUserId = null; 
+    }
+});
+
+
+// ==============================================================================
+// === LÓGICA DE NAVEGACIÓN DE LA BARRA LATERAL (Solución al problema) ===
+// ==============================================================================
+
+/**
+ * Función que maneja el cambio de sección.
+ * @param {string} sectionId El ID de la sección a mostrar (e.g., 'usuarios').
+ */
+function switchSection(sectionId) {
+    
+    // 1. Ocultar todas las secciones de contenido y desactivar enlaces
+    contentSections.forEach(section => {
+        section.classList.remove('active');
+    });
+    navLinks.forEach(link => {
+        link.classList.remove('active');
+    });
+
+    // 2. Mostrar la sección deseada y activar el enlace
+    const targetSection = document.getElementById(sectionId);
+    const targetLink = document.querySelector(`.sidebar a[data-section="${sectionId}"]`);
+    
+    if (targetSection && targetLink) {
+        targetSection.classList.add('active');
+        targetLink.classList.add('active');
+        
+        // 3. Actualizar el título principal y subtítulo
+        const titles = titleMap[sectionId] || titleMap['inicio'];
+        mainTitle.innerHTML = titles.title;
+        mainSubtitle.textContent = titles.subtitle;
+        
+        // 4. Si navegamos a la sección de Reportes, inicializamos los gráficos.
+        if (sectionId === 'reportes') {
             initializeCharts();
         }
-    });
-});
-
-// Export table to CSV functions (MANTENER SIN CAMBIOS)
-document.getElementById('exportBtnInicio').addEventListener('click', function(){
-    exportTableToCSV('inicio');
-});
-
-document.getElementById('exportBtnUsuarios').addEventListener('click', function(){
-    exportTableToCSV('usuarios');
-});
-
-function exportTableToCSV(section) {
-    const table = document.querySelector(`#${section} table`);
-    const rows = Array.from(table.querySelectorAll('tbody tr'));
-    const csv = [];
-    
-    // Get headers
-    const headers = Array.from(table.querySelectorAll('thead th'));
-    const headerText = headers.map(th => th.textContent.trim()).join(',');
-    csv.push(headerText);
-    
-    // Get rows data
-    rows.forEach(r => {
-        const cols = Array.from(r.querySelectorAll('td'));
-        const rowData = cols.map(td => {
-            // Skip photo column
-            if (td.querySelector('.avatar-sm')) {
-                return '';
-            }
-            return td.innerText.trim();
-        });
-        csv.push(rowData.join(','));
-    });
-    
-    const blob = new Blob([csv.join('\n')], {type: 'text/csv'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); 
-    a.href = url; 
-    a.download = `usuarios_${section}.csv`; 
-    a.click(); 
-    URL.revokeObjectURL(url);
-}
-
-// Add hover effects to cards (MANTENER SIN CAMBIOS)
-document.querySelectorAll('.card-stat, .chart-card, .table-card, .card-report').forEach(card => {
-    card.addEventListener('mouseenter', function() {
-        this.style.transform = 'translateY(-5px)';
-    });
-    
-    card.addEventListener('mouseleave', function() {
-        this.style.transform = 'translateY(0)';
-    });
-});
-
-// Preview de imagen al seleccionar archivo (MANTENER SIN CAMBIOS)
-document.getElementById('userPhoto').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            document.getElementById('addPhotoPreview').src = event.target.result;
-            document.getElementById('addPhotoPreview').style.display = 'block';
-        };
-        reader.readAsDataURL(file);
+    } else {
+        console.error(`Sección o enlace para ID '${sectionId}' no encontrado.`);
     }
-});
-
-document.getElementById('editUserPhoto').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            document.getElementById('editPhotoPreview').src = event.target.result;
-            document.getElementById('editPhotoPreview').style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-    }
-});
-
-// Agregar nuevo usuario (MANTENER SIN CAMBIOS, PERO DEBERÍA LLAMAR A LA API EN EL FUTURO)
-document.getElementById('saveUserBtn').addEventListener('click', function() {
-    // ESTA LÓGICA DEBE SER REEMPLAZADA POR UNA LLAMADA A LA API POST /api/admin/users/add
-    alert('ADVERTENCIA: Esta función aún usa lógica local y debe ser actualizada para usar la API de Spring Boot.');
-
-    // ... TU LÓGICA EXISTENTE PARA AÑADIR USUARIO ...
-});
-
-function addUserToSystem(id, name, email, type, registrationDate, photoData) {
-    // ESTA LÓGICA DEBE SER REEMPLAZADA POR UNA LLAMADA A LA API POST /api/admin/users/add
-    alert('ADVERTENCIA: Esta función aún usa lógica local y debe ser actualizada para usar la API de Spring Boot.');
-
-    // ... TU LÓGICA EXISTENTE PARA AÑADIR USUARIO ...
-    // Después de guardar en la API, debes llamar a initializeUsers() para recargar la tabla.
 }
 
-// Editar usuario (MANTENER SIN CAMBIOS, PERO DEBERÍA LLAMAR A LA API EN EL FUTURO)
-document.addEventListener('click', function(e) {
-    // ... TU LÓGICA EXISTENTE PARA ABRIR MODAL DE EDICIÓN ...
+// --------------------------------------------------------------------------------
+// --- ASIGNACIÓN DE EVENTOS A LOS BOTONES DE NAVEGACIÓN ---
+// --------------------------------------------------------------------------------
+
+navLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+        e.preventDefault(); 
+        const sectionId = this.getAttribute('data-section');
+        if (sectionId) {
+            switchSection(sectionId);
+        }
+    });
 });
 
-document.getElementById('updateUserBtn').addEventListener('click', function() {
-    // ESTA LÓGICA DEBE SER REEMPLAZADA POR UNA LLAMADA A LA API PUT /api/admin/users/{id}
-    alert('ADVERTENCIA: Esta función aún usa lógica local y debe ser actualizada para usar la API de Spring Boot.');
 
-    // ... TU LÓGICA EXISTENTE PARA ACTUALIZAR USUARIO ...
-});
-
-function updateUserInSystem(userIndex, name, email, type, registrationDate) {
-    // ESTA LÓGICA DEBE SER REEMPLAZADA POR UNA LLAMADA A LA API PUT /api/admin/users/{id}
-    alert('ADVERTENCIA: Esta función aún usa lógica local y debe ser actualizada para usar la API de Spring Boot.');
-    
-    // ... TU LÓGICA EXISTENTE PARA ACTUALIZAR USUARIO ...
-    // Después de actualizar en la API, debes llamar a initializeUsers() para recargar la tabla.
-}
-
-// Eliminar usuario (MANTENER SIN CAMBIOS, PERO DEBERÍA LLAMAR A LA API EN EL FUTURO)
-document.addEventListener('click', function(e) {
-    // ... TU LÓGICA EXISTENTE PARA ABRIR MODAL DE ELIMINACIÓN ...
-});
-
-document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
-    // ESTA LÓGICA DEBE SER REEMPLAZADA POR UNA LLAMADA A LA API DELETE /api/admin/users/{id}
-    alert('ADVERTENCIA: Esta función aún usa lógica local y debe ser actualizada para usar la API de Spring Boot.');
-
-    // ... TU LÓGICA EXISTENTE PARA ELIMINAR USUARIO ...
-    // Después de eliminar en la API, debes llamar a initializeUsers() para recargar la tabla.
-});
-
-// Inicialización de gráficos (MANTENER SIN CAMBIOS)
+// ==============================================================================
+// === INICIALIZACIÓN DE GRÁFICOS (Se mantiene el esqueleto) ===
+// ==============================================================================
 const userGrowthCtxInicio = document.getElementById('userGrowthChartInicio').getContext('2d');
 // ... CÓDIGO DEL GRÁFICO ...
 
@@ -359,15 +523,15 @@ let chartsInitialized = false;
 
 function initializeCharts() {
     if (chartsInitialized) return;
-    // ... CÓDIGO DE INICIALIZACIÓN DE GRÁFICOS ...
+
     chartsInitialized = true;
+    console.log("Gráficos inicializados.");
 }
 
-// Inicializar la aplicación (MANTENER SIN CAMBIOS)
+// Inicializar la aplicación
 document.addEventListener('DOMContentLoaded', function() {
-    initializeUsers(); // <-- Aquí llamamos a la nueva función de carga de la API
+    initializeUsers(); 
     
-    // Establecer fecha actual como valor por defecto en el formulario de agregar usuario
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('userRegistrationDate').value = today;
+    // 5. Asegurar que la sección de Inicio esté activa al cargar
+    switchSection('inicio'); 
 });
