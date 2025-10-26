@@ -3,7 +3,8 @@
 // ==============================================================================
 const API_URL_BASE = 'http://localhost:8080'; // <-- Ajusta el puerto si es diferente al 8080
 const ENDPOINT_USUARIOS = '/api/admin/usuarios'; 
-const ENDPOINT_ESTADOS = '/api/admin/estados-usuario'; // NUEVO ENDPOINT
+const ENDPOINT_ESTADOS = '/api/admin/estados-usuario'; 
+const ENDPOINT_EXPORTAR = '/api/admin/usuarios/exportar'; // Nuevo ENDPOINT de Excel
 
 // ==============================================================================
 // === VARIABLES GLOBALES ===
@@ -16,7 +17,7 @@ const API_BASE_URL = API_URL_BASE;
 // Referencias a modales de Bootstrap
 const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
 const deleteUserModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
-const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal')); // NUEVA REFERENCIA
+const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal')); 
 
 // Referencias para la navegación y títulos
 const navLinks = document.querySelectorAll('.sidebar .nav-link');
@@ -51,7 +52,7 @@ async function initializeUsers() {
 }
 
 /**
- * Realiza la petición HTTP al nuevo endpoint de Spring Boot.
+ * Realiza la petición HTTP al endpoint de usuarios.
  */
 async function cargarUsuariosDesdeAPI() {
     try {
@@ -77,7 +78,7 @@ async function cargarUsuariosDesdeAPI() {
 }
 
 // --------------------------------------------------------------------------------
-// --- FUNCIONES EXISTENTES MODIFICADAS ---
+// --- FUNCIONES DE RENDERIZADO Y UTILIDAD ---
 // --------------------------------------------------------------------------------
 
 function updateUserCount() {
@@ -88,11 +89,9 @@ function updateUserCount() {
 }
 
 /**
- * FUNCIÓN CORREGIDA: Eliminación del filtro estricto que vaciaba la tabla.
+ * Renderiza la tabla de usuarios.
  */
 function renderUsers() {
-    // ❌ CÓDIGO ANTERIOR: const activeUsers = users.filter(user => user.estadoUsuario && user.estadoUsuario.idEstado !== 2);
-    // ✅ CÓDIGO CORREGIDO: Usamos la lista completa de usuarios para asegurar que se muestren.
     const usersToRender = users;
     
     const sortedUsers = [...usersToRender].sort((a, b) => (b.id || 0) - (a.id || 0));
@@ -121,7 +120,6 @@ function renderUsers() {
 
 /**
  * Función que crea una fila de usuario usando los campos de UsuarioResponse.java.
- * NOTA: Asumimos que el DTO ya trae 'estadoUsuario' con 'nombreEstado'.
  */
 function createUserRow(user, section = 'inicio') {
     const tr = document.createElement('tr');
@@ -134,11 +132,8 @@ function createUserRow(user, section = 'inicio') {
     const colorIndex = (user.id || 0) % colors.length;
     const bgColor = colors[colorIndex];
     
-    // Asumiendo que el DTO de respuesta no incluye fecha de registro por ahora
     const formattedDate = "N/A"; 
     
-    // Determinando el tipo de cuenta y estado (Ajuste según tu DTO)
-    // ESTA LÍNEA ES SEGURA y usa operadores de protección, por eso los estados sí se cargaban.
     const userType = user.estadoUsuario ? user.estadoUsuario.nombreEstado : "Desconocido"; 
     const isPremium = userType.includes("Premium") ? 'bg-warning text-dark' : 'bg-light text-dark';
     
@@ -168,6 +163,71 @@ function createUserRow(user, section = 'inicio') {
     
     return tr;
 }
+
+// ==============================================================================
+// === LÓGICA DE EXPORTACIÓN A EXCEL (NUEVA) ===
+// ==============================================================================
+
+/**
+ * Llama al endpoint de Spring Boot, recibe el archivo binario (Blob) y fuerza la descarga.
+ */
+async function manejarExportacionExcel() {
+    const exportButton = document.getElementById('exportBtnUsuarios'); // Asumiendo el ID 'exportCsvBtn' en tu HTML
+    if (!exportButton) {
+        console.error("Botón de exportar (ID 'exportCsvBtn') no encontrado.");
+        return;
+    }
+    
+    exportButton.disabled = true;
+    const originalText = exportButton.innerHTML;
+    exportButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Exportando...';
+    
+    try {
+        const response = await fetch(API_BASE_URL + ENDPOINT_EXPORTAR, {
+            method: 'GET',
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al generar el archivo Excel: ' + response.statusText);
+        }
+
+        // Obtener el contenido del archivo como Blob
+        const blob = await response.blob();
+        
+        // Obtener el nombre del archivo del encabezado 'Content-Disposition'
+        const disposition = response.headers.get('Content-Disposition');
+        let filename = 'usuarios_finli.xlsx'; // Nombre de archivo por defecto
+        if (disposition && disposition.indexOf('attachment') !== -1) {
+            const filenameRegex = /filename="?(.+?)"?$/;
+            const matches = filenameRegex.exec(disposition);
+            if (matches != null && matches[1]) {
+                filename = matches[1].replace(/['"]/g, '');
+            }
+        }
+
+        // Crear un link temporal para forzar la descarga
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        
+        // Limpieza
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        alert(`✅ Archivo '${filename}' generado y descargado correctamente.`);
+
+    } catch (error) {
+        console.error("Fallo en la exportación a Excel:", error);
+        alert('❌ Error al exportar los datos a Excel. Revisa la consola para más detalles.');
+    } finally {
+        exportButton.disabled = false;
+        exportButton.innerHTML = originalText;
+    }
+}
+
 
 // ==============================================================================
 // === LÓGICA COMPARTIDA: ESTADOS DE USUARIO ===
@@ -200,7 +260,6 @@ async function cargarEstadosUsuario(selectId) {
     } catch (error) {
         console.error("Error al cargar estados:", error);
         selectElement.innerHTML = '<option value="">Error de carga</option>';
-        // Aquí podrías agregar una alerta visual específica si es necesario
     }
 }
 
@@ -215,7 +274,6 @@ const editUserModalElement = document.getElementById('editUserModal');
 if (editUserModalElement) {
     editUserModalElement.addEventListener('show.bs.modal', async () => {
         await cargarEstadosUsuario('editEstadoUsuarioId');
-        // Esto garantiza que los estados se carguen antes de rellenar los datos
         cargarDatosUsuarioParaEdicion(currentEditingUserId);
     });
 }
@@ -310,8 +368,6 @@ function cargarDatosUsuarioParaEdicion(id) {
     // Seleccionar el estado actual
     const estadoUsuarioId = user.estadoUsuario ? user.estadoUsuario.idEstado : null;
     document.getElementById('editEstadoUsuarioId').value = estadoUsuarioId;
-
-    // Ya no es necesario mostrar el modal aquí, se hace en el manejador del evento show.bs.modal
 }
 
 /**
@@ -342,7 +398,6 @@ document.getElementById('updateUserBtn').addEventListener('click', async functio
         estadoUsuario: { 
             idEstado: parseInt(form.editEstadoUsuarioId.value, 10) 
         }
-        // Nota: La contraseña y la foto se omiten en esta actualización
     };
     
     this.disabled = true; 
@@ -405,15 +460,13 @@ document.addEventListener('click', function(e) {
         
     }
     
-    // --- Lógica de EDITAR (Ahora implementada) ---
+    // --- Lógica de EDITAR ---
     if (e.target.closest('.edit-user')) {
         const editButton = e.target.closest('.edit-user');
         const userId = editButton.getAttribute('data-id');
         
         if (userId) {
             currentEditingUserId = parseInt(userId, 10);
-            // El modal se abre en el manejador 'show.bs.modal'
-            // donde primero carga los estados y luego los datos.
             editUserModal.show(); 
         }
     }
@@ -421,7 +474,7 @@ document.addEventListener('click', function(e) {
 
 
 /**
- * Maneja la confirmación de la eliminación (Reemplaza la lógica local).
+ * Maneja la confirmación de la eliminación (Llamada DELETE lógica).
  */
 document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
     if (!currentDeletingUserId) return;
@@ -435,7 +488,6 @@ document.getElementById('confirmDeleteBtn').addEventListener('click', async func
         });
 
         if (response.status === 204) { // 204 No Content (Éxito en eliminación lógica)
-            // No usamos alert() en producción, pero lo mantenemos por ahora
             alert(`✅ Usuario ID ${currentDeletingUserId} eliminado lógicamente (Estado Inactivo).`); 
             
             deleteUserModal.hide(); 
@@ -459,7 +511,7 @@ document.getElementById('confirmDeleteBtn').addEventListener('click', async func
 
 
 // ==============================================================================
-// === LÓGICA DE NAVEGACIÓN DE LA BARRA LATERAL (Solución al problema) ===
+// === LÓGICA DE NAVEGACIÓN DE LA BARRA LATERAL ===
 // ==============================================================================
 
 /**
@@ -516,7 +568,9 @@ navLinks.forEach(link => {
 // ==============================================================================
 // === INICIALIZACIÓN DE GRÁFICOS (Se mantiene el esqueleto) ===
 // ==============================================================================
-const userGrowthCtxInicio = document.getElementById('userGrowthChartInicio').getContext('2d');
+
+// El contexto del gráfico debe existir en admin.html
+const userGrowthCtxInicio = document.getElementById('userGrowthChartInicio')?.getContext('2d');
 // ... CÓDIGO DEL GRÁFICO ...
 
 let chartsInitialized = false;
@@ -528,10 +582,20 @@ function initializeCharts() {
     console.log("Gráficos inicializados.");
 }
 
+// ==============================================================================
+// === INICIALIZACIÓN DE LA APLICACIÓN Y ASIGNACIÓN DE EVENTO EXPORTAR ===
+// ==============================================================================
+
+// Asignación de Evento al botón de exportar (Debe estar después de la función)
+const exportButtonListener = document.getElementById('exportBtnUsuarios');
+if (exportButtonListener) {
+    exportButtonListener.addEventListener('click', manejarExportacionExcel);
+}
+
 // Inicializar la aplicación
 document.addEventListener('DOMContentLoaded', function() {
     initializeUsers(); 
     
-    // 5. Asegurar que la sección de Inicio esté activa al cargar
+    // Asegurar que la sección de Inicio esté activa al cargar
     switchSection('inicio'); 
 });
