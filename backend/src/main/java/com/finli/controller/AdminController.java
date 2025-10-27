@@ -1,6 +1,11 @@
 package com.finli.controller;
 
-import com.finli.dto.UsuarioResponse;
+// NUEVA IMPORTACIÓN NECESARIA
+import com.finli.dto.PaginacionUsuarioResponse;
+// La importación de UsuarioResponse ya no es necesaria en el método listarUsuarios,
+// pero la dejamos si se usa en otros métodos.
+
+
 import com.finli.model.EstadoUsuario;
 import com.finli.model.Usuario;
 import com.finli.service.AdministradorService;
@@ -25,21 +30,42 @@ public class AdminController {
     private final AdministradorService administradorService;
     private final ExcelExportService excelExportService;
 
-    // LISTAR USUARIOS
-    @GetMapping("/usuarios")
-    public ResponseEntity<List<UsuarioResponse>> listarUsuarios() {
-        List<UsuarioResponse> usuarios = administradorService.obtenerTodosLosUsuarios();
-        return ResponseEntity.ok(usuarios);
-    }
+    // =================================================================================
+    // === LISTAR USUARIOS (REEMPLAZADO por Paginación y Filtro) ===
+    // =================================================================================
+    /**
+     * Endpoint para obtener usuarios con paginación y filtrado por estado.
+     * Endpoint: GET /api/admin/usuarios?page=1&limit=10&status=all
+     */
+    @GetMapping("/usuarios") // Mapeado a /api/admin/usuarios
+    public ResponseEntity<PaginacionUsuarioResponse> getUsuariosPaginadosYFiltrados(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "all") String status) {
 
-    // CREAR CLIENTE
+        // Opcional: Validar que el estado del filtro sea uno de los permitidos
+        if (!status.equalsIgnoreCase("all") && 
+            !status.equalsIgnoreCase("active") && 
+            !status.equalsIgnoreCase("inactive")) {
+            status = "all";
+        }
+        
+        // La llamada al servicio AdministradorService que creamos en el Paso 5.
+        PaginacionUsuarioResponse response = administradorService.getUsuariosPaginadosYFiltrados(page, limit, status);
+
+        return ResponseEntity.ok(response);
+    }
+    // =================================================================================
+    // =================================================================================
+
+    // CREAR CLIENTE (Se mantiene)
     @PostMapping("/usuarios")
     public ResponseEntity<Usuario> crearCliente(@RequestBody Usuario usuario) {
         Usuario nuevoUsuario = administradorService.guardarCliente(usuario);
         return new ResponseEntity<>(nuevoUsuario, HttpStatus.CREATED);
     }
 
-    // ACTUALIZAR USUARIO
+    // ACTUALIZAR USUARIO (Se mantiene)
     @PutMapping("/usuarios/{id}")
     public ResponseEntity<Usuario> actualizarUsuario(@PathVariable Integer id, @RequestBody Usuario usuario) {
         usuario.setId(id);
@@ -51,14 +77,14 @@ public class AdminController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // LISTAR ESTADOS DE USUARIO
+    // LISTAR ESTADOS DE USUARIO (Se mantiene)
     @GetMapping("/estados-usuario")
     public ResponseEntity<List<EstadoUsuario>> listarEstados() {
         List<EstadoUsuario> estados = administradorService.listarTodosEstadosUsuario();
         return ResponseEntity.ok(estados);
     }
 
-    // ELIMINAR USUARIO (ELIMINACIÓN LÓGICA)
+    // ELIMINAR USUARIO (ELIMINACIÓN LÓGICA - Se mantiene)
     @DeleteMapping("/usuarios/{id}")
     public ResponseEntity<Void> eliminarUsuario(@PathVariable Integer id) {
         boolean eliminado = administradorService.eliminarUsuarioLogico(id);
@@ -70,7 +96,7 @@ public class AdminController {
         }
     }
 
-    // EXPORTAR A EXCEL
+    // EXPORTAR A EXCEL (Se mantiene)
     @GetMapping("/usuarios/exportar")
     public ResponseEntity<byte[]> exportarUsuariosAExcel() {
         try {

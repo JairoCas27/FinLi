@@ -119,7 +119,7 @@ public class ServicioAutenticacion {
     public UsuarioResponse toResponse(Usuario u) {
         return UsuarioResponse.builder()
                 .id(u.getId())
-                .email(u.getCorreo())
+                .correo(u.getCorreo())
                 .nombre(u.getNombre())
                 .apellidoPaterno(u.getApellidoPaterno())
                 .apellidoMaterno(u.getApellidoMaterno())
