@@ -1,0 +1,52 @@
+:root {
+    --verdeCla: #d7ffe3; /* verde claro */
+    --verdeOs: #0ea46f; /* verde oscuro */
+    --blanco: #ffffff; /* blanco */
+    --amarrillo: #ffee00; /* amarillo */
+    --plomo: #f7f7f7; /* gris claro */
+    --mint: #d7ffe3; /* tono mint */
+    --grisOscuro: #616263; /* gris oscuro  */
+    --letra: 'Footlight MT Light', sans-serif; /* fuente base del proyecto */
+}
+
+body {
+    font-family: var(--letra); /* fuente */
+    background: var(--blanco); /* fondo de la página */
+    color: #333; /* color base del texto */
+    line-height: 1.6; /* interlineado cómodo */
+}
+
+.hero-servicios {
+    background: linear-gradient(135deg, var(--verdeCla) 0%, var(--plomo) 100%); /* degradado del hero */
+    padding: 2rem 0; /* espacio vertical */
+    margin-bottom: 2rem; /* separación con la siguiente sección */
+}
+
+.hero-servicios h1 {
+    font-size: 2.8rem; /* Tamaño más pequeño que el display-4 */
+}
+
+
+.service-section {
+    padding: 4rem 0; /* padding general de la sección de servicios */
+}
+
+.service-card {
+    background: var(--plomo); /* fondo de cada tarjeta */
+    border-radius: 12px; /* esquinas suaves */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); /* sombra suave para profundidad */
+    padding: 1.75rem; /* espacio interno de la tarjeta */
+    margin-bottom: 1.5rem; /* separación entre tarjetas */
+    transition: transform 0.3s ease; /* transición */
+    height: 100%; /* ocupa todo el alto posible del contenedor */
+}
+
+.service-card:hover {
+    transform: translateY(-5px); /* elevación al pasar el cursor */
+}
+
+.service-icon {
+    font-size: 3rem; /* tamaño grande para el icono */
+    color: var(--verdeOs); /* color del icono */
+    margin-bottom: 1.5rem; /* espacio debajo del icono */
+}
