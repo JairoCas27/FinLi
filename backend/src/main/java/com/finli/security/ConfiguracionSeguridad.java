@@ -1,6 +1,4 @@
-//Configuración de seguridad
-
-package main.java.com.finli.security;
+package com.finli.security;
 
 public class ConfiguracionSeguridad {
     
