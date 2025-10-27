@@ -26,6 +26,7 @@ com\finli\model\Usuario$UsuarioBuilder.class
 com\finli\service\CategoriaService.class
 com\finli\model\Categoria.class
 com\finli\service\ServicioAutenticacion.class
+com\finli\controller\MedioPagoController.class
 com\finli\dto\TransaccionRequest.class
 com\finli\model\Subcategoria$SubcategoriaBuilder.class
 com\finli\model\FuenteCategoria.class

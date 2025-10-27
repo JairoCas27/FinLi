@@ -68,7 +68,7 @@
         </div>
     </nav>
 
-    <!-- Formulario de Registro -->
+    <!-- Formulario de Login -->
     <section class="form-section">
         <div class="container">
         <div class="row justify-content-center">
@@ -80,10 +80,10 @@
                 <p>INICIAR SESIÓN</p>
                 </div>
                 
-                <form>
+                <form id="loginForm">
                 <div class="mb-3">
                     <label for="email" class="form-label">Correo electrónico</label>
-                    <input type="email" class="form-control" id="email" placeholder="Ejm. utepino@gmail.com" required>
+                    <input type="email"  class="form-control" id="email" placeholder="Ejm. utepino@gmail.com" required>
                 </div>
                 
                 <div class="mb-3">
@@ -164,6 +164,6 @@ togglePassword.addEventListener('click', function() {
     this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
 });
 </script>
-<script src="/frontend/src/pages/Autenticación/login.js"></script>
+<script src="login.js"></script>
 </body>
 </html>

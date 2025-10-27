@@ -80,7 +80,7 @@
                 <p>REGISTRARSE</p>
                 </div>
                 
-                <form>
+                <form id="registroForm">
                 <div class="mb-3">
                     <label for="username" class="form-label">Nombres</label>
                     <input type="text" class="form-control" id="nombre" placeholder="Nombres completos" required>
@@ -228,6 +228,6 @@ toggleConfirmPassword.addEventListener('click', function() {
     this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
 });
 </script>
-<script src="/frontend/src/pages/Autenticación/registro.js"></script>
+<script src="registro.js"></script>
 </body>
 </html>
