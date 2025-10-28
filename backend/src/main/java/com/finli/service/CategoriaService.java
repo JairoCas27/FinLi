@@ -1,13 +1,9 @@
 package com.finli.service;
 
 import com.finli.model.Categoria;
-import com.finli.model.Subcategoria;
-import com.finli.model.Usuario;
+import com.finli.model.FuenteCategoria;
 import com.finli.repository.CategoriaRepository;
-import com.finli.repository.SubcategoriaRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
-import com.google.common.base.Preconditions;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,32 +13,21 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CategoriaService {
 
-    private final CategoriaRepository categoriaRepo;
-    private final SubcategoriaRepository subcategoriaRepo;
+    private final CategoriaRepository repository;
 
-    public List<Categoria> obtenerCategoriasPorUsuario(Usuario usuario) {
-        return categoriaRepo.findByUsuario(usuario);
-    }
-
-    public List<Subcategoria> obtenerSubcategoriasPorCategoriaYUsuario(Categoria categoria, Usuario usuario) {
-        return subcategoriaRepo.findByCategoriaAndUsuario(categoria, usuario);
+    public List<Categoria> listarTodos() {
+        return repository.findAll();
     }
 
     public Optional<Categoria> buscarPorId(Integer id) {
-        return categoriaRepo.findById(id);
+        return repository.findById(id);
     }
 
-    public Categoria guardarCategoria(Categoria categoria) {
-        if (StringUtils.isBlank(categoria.getNombreCategoria())) {
-            throw new IllegalArgumentException("El nombre de la categoría no puede estar vacío");
-        }
-        Preconditions.checkNotNull(categoria.getUsuario(), "Usuario requerido");
-        return categoriaRepo.save(categoria);
+    public List<Categoria> listarPorFuente(FuenteCategoria fuente) {
+        return repository.findByFuente(fuente);
     }
 
-    public Subcategoria guardarSubcategoria(Subcategoria subcategoria) {
-        Preconditions.checkNotNull(subcategoria.getCategoria(), "Categoría requerida");
-        Preconditions.checkNotNull(subcategoria.getUsuario(), "Usuario requerido");
-        return subcategoriaRepo.save(subcategoria);
+    public Categoria guardar(Categoria categoria) {
+        return repository.save(categoria);
     }
 }

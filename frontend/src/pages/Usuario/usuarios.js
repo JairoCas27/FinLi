@@ -12,7 +12,7 @@ function updateWelcomeMessage() {
         mainTitle.innerHTML = `Bienvenido, <span class="text-gradient">${userProfile.firstName}</span>`;
     }
 }
-                
+
 document.addEventListener("visibilitychange", () => {
     if (!document.hidden) updateWelcomeMessage();
 });
@@ -20,7 +20,7 @@ document.addEventListener("visibilitychange", () => {
 
 // --- INICIALIZAR PERFIL GLOBAL ---
 document.addEventListener("DOMContentLoaded", () => {
-
+    
     if (!userProfile) {
         console.warn("⚠️ No hay sesión activa. Redirigiendo al login...");
         window.location.href = "../autenticación/login.html";
@@ -40,7 +40,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Actualizamos la sesión ya adaptada
     sessionStorage.setItem("loggedUser", JSON.stringify(userProfile));
-    updateWelcomeMessage();
 
     // --- Actualizamos la interfaz ---
     const mainTitle = document.getElementById("main-title");
@@ -67,6 +66,18 @@ document.addEventListener("DOMContentLoaded", () => {
     if (fieldApellidos) fieldApellidos.textContent = userProfile.lastName;
     if (fieldEdad) fieldEdad.textContent = userProfile.age;
     if (fieldCorreo) fieldCorreo.textContent = userProfile.email;
+
+    // --- Cargar ingresos si la pestaña visible al arrancar es "ingresos" ---
+    const activeSection = document.querySelector('.content-section.active')?.id;
+    if (activeSection === 'inicio' || activeSection === 'ingresos') {
+        cargarIngresosDesdeBackend();
+    }
+    // Agregar listener de transacciones
+    document.getElementById('addTransactionBackendBtn')?.addEventListener('click', addTransactionBackend);
+
+    // --- Cargar transacciones al iniciar ---
+    cargarTransaccionesDesdeBackend();
+
 });
 
 
@@ -81,6 +92,45 @@ let selectedImage = null;
 let editingTransactionId = null;
 let currentPeriod = null; 
 let currentFilter = 'categorias';
+
+function renderTransactionTable() {
+    const tbody = document.getElementById('transactionsTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = ''; // Limpiar tabla
+
+    if (!transactionRecords || transactionRecords.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4">
+                    <div class="empty-state">
+                        <i class="bi bi-piggy-bank"></i>
+                        <div>No hay transacciones registradas</div>
+                        <small class="text-muted">Agrega tu primer transacción usando el formulario</small>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    transactionRecords.forEach(t => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${t.categoryName}</td>
+            <td>${t.methodName}</td>
+            <td>${t.amount.toFixed(2)}</td>
+            <td>${t.image || '-'}</td>
+            <td>${t.formattedDate}</td>
+            <td class="text-end text-center">
+                <button class="btn btn-sm btn-danger" onclick="deleteTransaction(${t.id})">Eliminar</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+
 
 // Variables para selects de métodos de pago
 let transferFromSelect = null;
@@ -138,9 +188,9 @@ const subcategoriesMap = {
     transporte: [
         { name: 'combustible', icon: 'bi-fuel-pump', label: 'Combustible' },
         { name: 'gasolina', icon: 'bi-fuel-pump-fill', label: 'Gasolina' },
-        { name: 'diésel', icon: 'bi-fuel-pump-diesel', label: 'Diésel' },
-        { name: 'transpPúblico', icon: 'bi-bus-front', label: 'Transporte Público' },
-        { name: 'busInterprovincial', icon: 'bi-bus-front-fill', label: 'Bus Interprovincial' },
+        { name: 'diesel', icon: 'bi-fuel-pump-diesel', label: 'Diésel' },
+        { name: 'transppublico', icon: 'bi-bus-front', label: 'Transporte Público' },
+        { name: 'businterprovincial', icon: 'bi-bus-front-fill', label: 'Bus Interprovincial' },
         { name: 'tren', icon: 'bi-train-front', label: 'Tren' },
         { name: 'taxis', icon: 'bi-car-front', label: 'Taxis' },
         { name: 'mantenimiento', icon: 'bi-tools', label: 'Mantenimiento' },
@@ -154,17 +204,17 @@ const subcategoriesMap = {
         { name: 'mercado', icon: 'bi-shop-window', label: 'Mercado' },
         { name: 'restaurantes', icon: 'bi-sina-weibo', label: 'Restaurantes' },
         { name: 'delivery', icon: 'bi-truck', label: 'Comida a Domicilio' },
-        { name: 'cafetería', icon: 'bi-cup-hot', label: 'Cafetería' }
+        { name: 'cafeteria', icon: 'bi-cup-hot', label: 'Cafetería' }
     ],
     salud: [
-        { name: 'médicos', icon: 'bi-heart-pulse', label: 'Médicos' },
+        { name: 'medicos', icon: 'bi-heart-pulse', label: 'Médicos' },
         { name: 'medicamentos', icon: 'bi-capsule', label: 'Medicamentos' },
         { name: 'gimnasio', icon: 'bi-activity', label: 'Gimnasio' },
         { name: 'deportes', icon: 'bi-trophy', label: 'Deportes' },
         { name: 'belleza', icon: 'bi-brush', label: 'Belleza' },
-        { name: 'peluquería', icon: 'bi-scissors', label: 'Peluquería' },
-        { name: 'cosméticos', icon: 'bi-brush', label: 'Cosméticos' },
-        { name: 'seguroMédico', icon: 'bi-file-medical-fill', label: 'Seguro Médico' }
+        { name: 'peluqueria', icon: 'bi-scissors', label: 'Peluquería' },
+        { name: 'cosmeticos', icon: 'bi-brush', label: 'Cosméticos' },
+        { name: 'seguromedico', icon: 'bi-file-medical-fill', label: 'Seguro Médico' }
     ],
     entretenimiento: [
         { name: 'suscripciones', icon: 'bi-collection-play', label: 'Suscripciones' },
@@ -176,8 +226,8 @@ const subcategoriesMap = {
         { name: 'vacaciones', icon: 'bi-suitcase', label: 'Vacaciones' },
         { name: 'hoteles', icon: 'bi-building', label: 'Hoteles' },
         { name: 'tours', icon: 'bi-globe-americas', label: 'Tours' },
-        { name: 'Cine', icon: 'bi-film', label: 'Cine' },
-        { name: 'Teatro', icon: 'bi-snapchat', label: 'Teatro' },
+        { name: 'cine', icon: 'bi-film', label: 'Cine' },
+        { name: 'teatro', icon: 'bi-snapchat', label: 'Teatro' },
         { name: 'conciertos', icon: 'bi-music-note-list', label: 'Conciertos' },
         { name: 'museos', icon: 'bi-shop-window', label: 'Museos' },
         { name: 'juegos', icon: 'bi-controller', label: 'Juegos' },
@@ -189,23 +239,23 @@ const subcategoriesMap = {
     ],
     electronica: [
         { name: 'gadgets', icon: 'bi-earbuds', label: 'Gadgets' },
-        { name: 'teléfonos', icon: 'bi-phone-vibrate', label: 'Teléfonos' },
+        { name: 'telefonos', icon: 'bi-phone-vibrate', label: 'Teléfonos' },
         { name: 'laptops', icon: 'bi-laptop', label: 'Laptops' },
         { name: 'consolas', icon: 'bi-controller', label: 'Consolas' }
     ],
     hogar: [
         { name: 'muebles', icon: 'bi-box-seam', label: 'Muebles' },
-        { name: 'decoración', icon: 'bi-palette', label: 'Decoración' },
-        { name: 'Utensilios', icon: 'bi-basket', label: 'Utensilios' },
-        { name: 'Regalos', icon: 'bi-gift', label: 'Regalos' }
+        { name: 'decoracion', icon: 'bi-palette', label: 'Decoración' },
+        { name: 'utensilios', icon: 'bi-basket', label: 'Utensilios' },
+        { name: 'regalos', icon: 'bi-gift', label: 'Regalos' }
     ],
     educacion: [
-        { name: 'matrícula', icon: 'bi-mortarboard', label: 'Matrícula' },
+        { name: 'matricula', icon: 'bi-mortarboard', label: 'Matrícula' },
         { name: 'colegiatura', icon: 'bi-cash-stack', label: 'Colegiatura' },
         { name: 'libros', icon: 'bi-book', label: 'Libros' },
         { name: 'materiales', icon: 'bi-pencil', label: 'Materiales' },
         { name: 'cursos', icon: 'bi-journal', label: 'Cursos' },
-        { name: 'Talleres', icon: 'bi-mortarboard-fill', label: 'Talleres' }
+        { name: 'talleres', icon: 'bi-mortarboard-fill', label: 'Talleres' }
     ]
 };
 
@@ -428,6 +478,7 @@ function initializeNavigation() {
             // ACTUALIZAR COMPONENTES ESPECÍFICOS DE CADA SECCIÓN
             if (targetSection === 'ingresos') {
                 initializeIncomeSection();
+                cargarIngresosDesdeBackend();
             }
 
             if (targetSection === 'notificaciones') {
@@ -437,6 +488,7 @@ function initializeNavigation() {
             if (targetSection === 'inicio') {
                 updateAllPaymentMethodSelects();
                 updateBalance();
+                cargarIngresosDesdeBackend();
             }
 
             if (targetSection === 'informes') {
@@ -1277,7 +1329,142 @@ function initializeDefaultPaymentMethods() {
     }
 }
 
-// ---- GESTIÓN DE CATEGORÍAS Y SUBCATEGORÍAS ----
+// ---- GESTIÓN TRANSACCIONES Y DE CATEGORÍAS Y SUBCATEGORÍAS ----
+// --- CONSTANTES API ---
+const API_TRANSACCIONES = 'http://localhost:8080/api/transacciones';
+const API_CATEGORIAS = 'http://localhost:8080/api/categorias';
+const API_SUBCATEGORIAS = 'http://localhost:8080/api/subcategorias';
+
+// --- VARIABLES GLOBALES ---
+let transactionRecords = [];
+
+// --- FUNCIONES ---
+// Formatear fecha/hora
+function formatDateTime(dateTimeStr) {
+    const dt = new Date(dateTimeStr);
+    return dt.toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+// Notificaciones simples
+function showNotification(msg, type = 'info') {
+    alert(`${type.toUpperCase()}: ${msg}`);
+}
+
+// --- CARGAR TRANSACCIONES ---
+async function cargarTransaccionesDesdeBackend() {
+    const user = JSON.parse(sessionStorage.getItem('loggedUser'));
+    if (!user) return;
+
+    try {
+        const res = await fetch(`${API_TRANSACCIONES}/usuario/${user.id}`);
+        if (!res.ok) throw new Error('Error al cargar transacciones');
+        const list = await res.json();
+
+        transactionRecords = list.map(t => ({
+            id: t.idTransaccion,
+            methodId: t.idMedioPago,
+            methodName: t.nombreMedioPago || 'Sin medio',
+            amount: t.monto,
+            description: t.nombre || t.descripcionTransaccion || '',
+            date: t.fecha,
+            formattedDate: formatDateTime(t.fecha),
+            categoryName: t.nombreCategoria || '',
+            subcategoryName: t.nombreSubcategoria || '',
+            type: 'gasto'
+        }));
+
+        renderTransactionTable();
+    } catch (e) {
+        console.error(e);
+        showNotification('No se pudieron cargar las transacciones', 'error');
+    }
+}
+
+// --- AGREGAR NUEVA TRANSACCIÓN ---
+async function addTransactionBackend() {
+    const user = JSON.parse(sessionStorage.getItem('loggedUser'));
+    if (!user) return;
+
+    const methodId = parseInt(document.getElementById('paymentMethod').value);
+    const amount = parseFloat(document.getElementById('transactionAmount').value);
+    const etiqueta = document.getElementById('transactionDescription').value.trim();
+    const fecha = document.getElementById('transactionDateTime').value;
+
+    if (!methodId) return showNotification('Selecciona un medio de pago', 'error');
+    if (isNaN(amount) || amount <= 0) return showNotification('Monto inválido', 'error');
+    if (!selectedCategory || !selectedSubCategory)
+        return showNotification('Selecciona categoría y subcategoría', 'error');
+
+    // Obtener IDs desde backend
+    const categoria = await buscarCategoriaPorNombre(selectedCategory);
+    const subcategoria = await buscarSubcategoriaPorNombre(selectedSubCategory, categoria.idCategoria);
+    if (!categoria || !subcategoria) return showNotification('Categoría/Subcategoría no encontrada', 'error');
+
+    const dto = {
+        etiqueta: etiqueta || 'Transacción sin descripción',
+        monto: amount,
+        fecha: fecha + ':00', // ajustando formato
+        idUsuario: user.id,
+        idMedioPago: methodId,
+        idCategoria: categoria.idCategoria,
+        idSubcategoria: subcategoria.idSubcategoria,
+        imagen: null // opcional, por defecto null
+    };
+
+    try {
+        const res = await fetch(API_TRANSACCIONES, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dto)
+        });
+
+        if (!res.ok) throw new Error('Error al guardar transacción');
+        const nueva = await res.json();
+
+        transactionRecords.push({
+            id: nueva.idTransaccion,
+            methodId: nueva.idMedioPago,
+            methodName: nueva.nombreMedioPago || 'Sin medio',
+            amount: nueva.monto,
+            description: nueva.etiqueta,
+            date: nueva.fecha,
+            formattedDate: formatDateTime(nueva.fecha),
+            categoryName: selectedCategory,
+            subcategoryName: selectedSubCategory,
+            type: 'gasto'
+        });
+
+        renderTransactionTable();
+        showNotification('Transacción registrada exitosamente', 'success');
+        limpiarFormulario();
+    } catch (e) {
+        console.error(e);
+        showNotification('No se pudo guardar la transacción', 'error');
+    }
+}
+
+// --- FUNCIONES AUXILIARES ---
+function limpiarFormulario() {
+    document.getElementById('paymentMethod').value = '';
+    document.getElementById('transactionAmount').value = '';
+    document.getElementById('transactionDescription').value = '';
+    document.getElementById('transactionDateTime').value = '';
+    document.querySelectorAll('.category-btn, .subcategory-btn').forEach(b => b.classList.remove('active'));
+}
+
+async function buscarCategoriaPorNombre(nombre) {
+    const res = await fetch(API_CATEGORIAS);
+    const list = await res.json();
+    return list.find(c => c.nombreCategoria.toLowerCase() === nombre.toLowerCase());
+}
+
+async function buscarSubcategoriaPorNombre(nombre, idCategoria) {
+    const res = await fetch(`${API_CATEGORIAS}/${idCategoria}/subcategorias`);
+    const list = await res.json();
+    return list.find(s => s.nombreSubcategoria.toLowerCase() === nombre.toLowerCase());
+}
+
+
 function initializeCategoryButtons() {
     // Cargar categorías personalizadas desde localStorage
     loadCustomCategoriesFromLocalStorage();
@@ -1720,6 +1907,12 @@ function initializeEventListeners() {
     
     if (addTransactionBtn) {
         addTransactionBtn.addEventListener('click', addTransaction);
+    }
+        // ---- NUEVO: Agregar transacción con BACKEND ----
+    const addTransactionBackendBtn = document.getElementById('addTransactionBackendBtn');
+
+    if (addTransactionBackendBtn) {
+        addTransactionBackendBtn.addEventListener('click', addTransactionBackend);
     }
     
     // Cambiar de addTransactionPagos a addScheduledPayment
@@ -4735,70 +4928,124 @@ function updateTotalIncome() {
     }
 }
 
+/* ---------- INGRESOS - LLAMADAS A LA API ---------- */
+const API_INGRESOS = 'http://localhost:8080/api/ingresos';
+
+/* 1. Cargar ingresos cuando se muestre la sección Inicio */
+async function cargarIngresosDesdeBackend() {
+    const user = JSON.parse(sessionStorage.getItem('loggedUser'));
+    if (!user) return;
+
+    try {
+        const res = await fetch(`${API_INGRESOS}/usuario/${user.id}`, {
+            headers: { 'Content-Type': 'application/json' }
+        });
+        if (!res.ok) throw new Error('Error al cargar ingresos');
+        const list = await res.json();          // List<Ingreso>
+        incomeRecords = list.map(i => ({       // adaptamos a tu objeto local
+            id: i.idIngreso,
+            methodId: i.idMedioPago,
+            methodName: i.medioPago?.nombreMedioPago || 'Sin medio',
+            amount: i.montoIngreso,
+            description: i.descripcion || '',
+            date: i.fechaIngreso,
+            formattedDate: formatDateTime(i.fechaIngreso),
+            type: 'ingreso'
+        }));
+        saveIncomeRecordsToLocalStorage();      // opcional (caché local)
+        renderIncomeRecords();                  // pintar tabla
+        updateTotalIncome();                    // sumar
+    } catch (e) {
+        console.error(e);
+        showNotification('No se pudieron cargar los ingresos', e);
+    }
+}
+
 // ---- AGREGAR INGRESO ----
-function addIncome() {
+async function addIncome() {
     const methodId = parseInt(document.getElementById('incomePaymentMethod').value);
     const amount = parseFloat(document.getElementById('incomeAmount').value);
     const description = document.getElementById('incomeDescription').value.trim();
-    
+
     if (!methodId) {
         showNotification('Por favor selecciona un medio de pago', 'error');
         return;
     }
-    
+
     if (isNaN(amount) || amount <= 0) {
         showNotification('Por favor ingresa un monto válido', 'error');
         return;
     }
-    
-    const method = paymentMethods.find(m => m.id === methodId);
-    if (!method) {
-        showNotification('Error: Medio de pago no encontrado', 'error');
+
+    const user = JSON.parse(sessionStorage.getItem('loggedUser'));
+    if (!user) {
+        showNotification('No hay sesión activa', 'error');
         return;
     }
-    
-    // Registrar el ingreso
-    method.balance += amount;
-    
-    const incomeRecord = {
-        id: Date.now(),
-        methodId: methodId,
-        methodName: method.name,
-        amount: amount,
-        description: description || 'Ingreso sin descripción',
-        date: new Date().toISOString(),
-        formattedDate: formatDateTime(new Date().toISOString()),
-        type: 'ingreso'
-    };
-    
-    incomeRecords.push(incomeRecord);
-    
-    // Guardar cambios
-    savePaymentMethodsToLocalStorage();
-    saveIncomeRecordsToLocalStorage();
-    
-    // ACTUALIZAR TODAS LAS INTERFACES
-    renderPaymentMethods();
-    syncIncomeTables();
-    updatePaymentMethodsChart();
-    updateTotalBalance();
-    updateBalance(); // ACTUALIZAR BALANCE GENERAL
-    updateTotalIncome(); // ACTUALIZAR TOTAL INGRESOS EN SECCIÓN INGRESOS
-    
-    // ACTUALIZAR LOS SELECTS DE MÉTODOS DE PAGO EN TIEMPO REAL
-    updateAllPaymentMethodSelects();
 
-    // Actualizar mensaje de tabla vacía
-    updateIncomeTableMessage();
-    
-    // Limpiar formulario
-    document.getElementById('incomePaymentMethod').value = '';
-    document.getElementById('incomeAmount').value = '';
-    document.getElementById('incomeDescription').value = '';
-    
-    // NOTIFICACIONES
-    addNotification(`Ingreso registrado: S/. ${amount.toFixed(2)} en ${method.name}`, 'success');
-    showNotification('Ingreso registrado exitosamente', 'success');
+    const dto = {
+        idUsuario: user.id,
+        idMedioPago: methodId,
+        nombreIngreso: description || 'Ingreso sin descripción',
+        montoIngreso: amount,
+        descripcion: description,
+        fechaIngreso: new Date().toISOString().slice(0, 10)
+    };
+
+    try {
+        const res = await fetch(API_INGRESOS, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dto)
+        });
+
+        if (!res.ok) throw new Error('Error al guardar ingreso');
+
+        const nuevo = await res.json();
+
+        // ✅ Actualizar balance local del medio de pago
+        const method = paymentMethods.find(m => m.id === methodId);
+        if (method) {
+            method.balance += amount;
+            savePaymentMethodsToLocalStorage();
+        }
+
+        // ✅ Guardar ingreso en caché local
+        incomeRecords.push({
+            id: nuevo.idIngreso,
+            methodId: nuevo.idMedioPago,
+            methodName: nuevo.medioPago?.nombreMedioPago || method?.name || 'Sin medio',
+            amount: nuevo.montoIngreso,
+            description: nuevo.descripcion || '',
+            date: nuevo.fechaIngreso,
+            formattedDate: formatDateTime(nuevo.fechaIngreso),
+            type: 'ingreso'
+        });
+        saveIncomeRecordsToLocalStorage();
+
+        // ✅ Refrescar toda la UI
+        renderPaymentMethods();
+        syncIncomeTables();
+        updatePaymentMethodsChart();
+        updateTotalBalance();
+        updateBalance();
+        updateTotalIncome();
+        updateAllPaymentMethodSelects();
+        updateIncomeTableMessage();
+
+        // ✅ Limpiar formulario
+        document.getElementById('incomePaymentMethod').value = '';
+        document.getElementById('incomeAmount').value = '';
+        document.getElementById('incomeDescription').value = '';
+
+        // ✅ Notificaciones
+        addNotification(`Ingreso registrado: S/. ${amount.toFixed(2)} en ${method?.name}`, 'success');
+        showNotification('Ingreso registrado exitosamente', 'success');
+
+    } catch (e) {
+        console.error(e);
+        showNotification('No se pudo guardar el ingreso', 'error');
+    }
 }
 
 // ---- RENDERIZAR REGISTROS DE INGRESOS ----

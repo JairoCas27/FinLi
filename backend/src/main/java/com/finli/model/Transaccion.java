@@ -2,13 +2,15 @@ package com.finli.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
 import com.google.common.base.Preconditions;
 
-import java.time.LocalDateTime;
-
 @Entity
-@Table(name = "Transacciones")
+@Table(name = "transacciones")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,51 +19,71 @@ public class Transaccion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_transaccion")
     private Integer idTransaccion;
 
     @Column(name = "nombre_transaccion", nullable = false, length = 100)
     private String nombreTransaccion;
 
-    @Column(nullable = false, length = 10)
-    private String tipo; // ingreso o gasto
+    @Column(name = "tipo", nullable = false, length = 50)
+    private String tipo;
 
-    @Column(nullable = false)
-    private Double monto;
+    @Column(name = "monto", nullable = false, precision = 10, scale = 2)
+    private BigDecimal monto;
 
-    @Column(nullable = false)
+    @Column(name = "fecha", nullable = false)
     private LocalDateTime fecha;
 
-    @Column(name = "descripcion_transaccion", length = 100)
+    @Column(name = "descripcion_transaccion", length = 255)
     private String descripcionTransaccion;
 
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(name = "imagen")
     private String imagen;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "id_usuario", nullable = false)
+    @Column(name = "id_usuario", nullable = false)
+    private Integer idUsuario;
+
+    @Column(name = "id_medio_pago", nullable = false)
+    private Integer idMedioPago;
+
+    @Column(name = "id_categoria", nullable = false)
+    private Integer idCategoria;
+
+    @Column(name = "id_subcategoria", nullable = false)
+    private Integer idSubcategoria;
+
+    /* ---------- Relaciones ---------- */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_usuario", insertable = false, updatable = false)
+    @JsonIgnore
     private Usuario usuario;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "id_medioPago", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_medio_pago", insertable = false, updatable = false)
+    @JsonIgnore
     private MedioPago medioPago;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "id_categoria", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_categoria", insertable = false, updatable = false)
+    @JsonIgnore
     private Categoria categoria;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "id_subcategoria", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_subcategoria", insertable = false, updatable = false)
+    @JsonIgnore
     private Subcategoria subcategoria;
 
-    // Validación interna con Guava
-    public void validar() {
-        Preconditions.checkArgument(StringUtils.isNotBlank(nombreTransaccion), "El nombre de la transacción es obligatorio");
-        Preconditions.checkArgument(tipo != null && (tipo.equals("ingreso") || tipo.equals("gasto")), "El tipo debe ser 'ingreso' o 'gasto'");
-        Preconditions.checkArgument(monto != null && monto > 0, "El monto debe ser mayor a 0");
-        Preconditions.checkArgument(fecha != null, "La fecha es obligatoria");
-        Preconditions.checkArgument(usuario != null, "El usuario es obligatorio");
-        Preconditions.checkArgument(medioPago != null, "El medio de pago es obligatorio");
-        Preconditions.checkArgument(categoria != null, "La categoría es obligatoria");
-        Preconditions.checkArgument(subcategoria != null, "La subcategoría es obligatoria");
+    /* ---------- Validaciones personalizadas ---------- */
+    @PrePersist
+    @PreUpdate
+    private void validar() {
+        Preconditions.checkArgument(idUsuario != null && idUsuario > 0, "idUsuario debe ser positivo");
+        Preconditions.checkArgument(idMedioPago != null && idMedioPago > 0, "idMedioPago debe ser positivo");
+        Preconditions.checkArgument(idCategoria != null && idCategoria > 0, "idCategoria debe ser positivo");
+        Preconditions.checkArgument(idSubcategoria != null && idSubcategoria > 0, "idSubcategoria debe ser positivo");
+        Preconditions.checkArgument(StringUtils.isNotBlank(nombreTransaccion), "nombreTransaccion no puede estar vacío");
+        Preconditions.checkArgument(StringUtils.isNotBlank(tipo), "tipo no puede estar vacío");
+        Preconditions.checkArgument(monto != null && monto.signum() >= 0, "monto debe ser mayor o igual a 0");
+        Preconditions.checkArgument(fecha != null, "fecha es obligatoria");
     }
 }

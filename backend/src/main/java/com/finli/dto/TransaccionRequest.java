@@ -1,35 +1,21 @@
 package com.finli.dto;
 
-import lombok.*;
-import org.apache.commons.lang3.StringUtils;
-import com.google.common.base.Preconditions;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class TransaccionRequest {
-
-    private String nombreTransaccion;
-    private String tipo;
-    private Double monto;
-    private String fecha; // ISO format
-    private String descripcionTransaccion;
-    private String imagen;
-    private String email;
+    private String etiqueta;          // se usa para nombre_transaccion y descripcion_transaccion
+    private BigDecimal monto;
+    private LocalDateTime fecha;
+    private Integer idUsuario;
     private Integer idMedioPago;
     private Integer idCategoria;
     private Integer idSubcategoria;
-
-    public void validar() {
-        Preconditions.checkArgument(StringUtils.isNotBlank(nombreTransaccion), "Nombre de transacción requerido");
-        Preconditions.checkArgument(StringUtils.isNotBlank(tipo), "Tipo requerido");
-        Preconditions.checkArgument(tipo.equals("ingreso") || tipo.equals("gasto"), "Tipo inválido");
-        Preconditions.checkArgument(monto != null && monto > 0, "Monto inválido");
-        Preconditions.checkArgument(StringUtils.isNotBlank(fecha), "Fecha requerida");
-        Preconditions.checkArgument(StringUtils.isNotBlank(email), "Email requerido");
-        Preconditions.checkArgument(idMedioPago != null, "Medio de pago requerido");
-        Preconditions.checkArgument(idCategoria != null, "Categoría requerida");
-        Preconditions.checkArgument(idSubcategoria != null, "Subcategoría requerida");
-    }
+    private String imagen;            // opcional
 }

@@ -1,12 +1,13 @@
 package com.finli.repository;
 
-import com.finli.model.Categoria;
 import com.finli.model.Subcategoria;
-import com.finli.model.Usuario;
+import com.finli.model.Categoria;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public interface SubcategoriaRepository extends JpaRepository<Subcategoria, Integer> {
-    List<Subcategoria> findByCategoriaAndUsuario(Categoria categoria, Usuario usuario);
+    List<Subcategoria> findByCategoria(Categoria categoria);
 }

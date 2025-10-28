@@ -1,66 +1,84 @@
 package com.finli.service;
 
 import com.finli.dto.TransaccionRequest;
-import com.finli.model.*;
-import com.finli.repository.*;
+import com.finli.dto.TransaccionResponse;
+import com.finli.model.Categoria;
+import com.finli.model.MedioPago;
+import com.finli.model.Subcategoria;
+import com.finli.model.Transaccion;
+import com.finli.repository.CategoriaRepository;
+import com.finli.repository.MedioPagoRepository;
+import com.finli.repository.SubcategoriaRepository;
+import com.finli.repository.TransaccionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import java.time.LocalDateTime;
+import org.apache.commons.lang3.StringUtils;
+import com.google.common.base.Preconditions;
+
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-
 public class TransaccionService {
 
     private final TransaccionRepository transaccionRepo;
-    private final ServicioAutenticacion authService;
-    private final MedioPagoRepository medioPagoRepo;
     private final CategoriaRepository categoriaRepo;
     private final SubcategoriaRepository subcategoriaRepo;
+    private final MedioPagoRepository medioPagoRepo;
 
-    @Transactional
-    public Transaccion guardar(TransaccionRequest dto) {
-        dto.validar();
-
-        Usuario usuario = authService.buscarPorCorreo(dto.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
-
-        MedioPago mp = medioPagoRepo.findById(dto.getIdMedioPago())
-                .orElseThrow(() -> new IllegalArgumentException("Medio de pago no encontrado"));
-
-        Categoria cat = categoriaRepo.findById(dto.getIdCategoria())
-                .orElseThrow(() -> new IllegalArgumentException("Categoría no encontrada"));
-
-        Subcategoria sub = subcategoriaRepo.findById(dto.getIdSubcategoria())
-                .orElseThrow(() -> new IllegalArgumentException("Subcategoría no encontrada"));
+    /* ---------- Crear transacción ---------- */
+    public Transaccion crearTransaccion(TransaccionRequest dto) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(dto.getEtiqueta()), "Etiqueta no puede estar vacía");
+        Preconditions.checkNotNull(dto.getMonto(), "Monto no puede ser null");
+        Preconditions.checkNotNull(dto.getFecha(), "Fecha no puede ser null");
+        Preconditions.checkNotNull(dto.getIdUsuario(), "idUsuario es obligatorio");
+        Preconditions.checkNotNull(dto.getIdMedioPago(), "idMedioPago es obligatorio");
+        Preconditions.checkNotNull(dto.getIdCategoria(), "idCategoria es obligatorio");
+        Preconditions.checkNotNull(dto.getIdSubcategoria(), "idSubcategoria es obligatorio");
 
         Transaccion t = Transaccion.builder()
-                .nombreTransaccion(dto.getNombreTransaccion())
-                .tipo(dto.getTipo())
+                .nombreTransaccion(dto.getEtiqueta())
+                .descripcionTransaccion(dto.getEtiqueta())
                 .monto(dto.getMonto())
-                .fecha(LocalDateTime.parse(dto.getFecha()))
-                .descripcionTransaccion(dto.getDescripcionTransaccion())
+                .fecha(dto.getFecha())
+                .idUsuario(dto.getIdUsuario())
+                .idMedioPago(dto.getIdMedioPago())
+                .idCategoria(dto.getIdCategoria())
+                .idSubcategoria(dto.getIdSubcategoria())
                 .imagen(dto.getImagen())
-                .usuario(usuario)
-                .medioPago(mp)
-                .categoria(cat)
-                .subcategoria(sub)
                 .build();
 
-        t.validar(); // validación interna
-
-        log.info("Guardando transacción: {} para usuario: {}", t.getNombreTransaccion(), usuario.getCorreo());
         return transaccionRepo.save(t);
     }
 
-    public List<Transaccion> listarPorUsuarioYPeriodo(String email, LocalDateTime inicio, LocalDateTime fin) {
-        Usuario usuario = authService.buscarPorCorreo(email)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
-        log.info("Listando transacciones para usuario: {} entre {} y {}", email, inicio, fin);
-        return transaccionRepo.findByUsuarioAndFechaBetween(usuario, inicio, fin);
+    /* ---------- Listar transacciones por usuario ---------- */
+public List<TransaccionResponse> listarPorUsuario(Integer idUsuario) {
+    List<Transaccion> transacciones = transaccionRepo.findByIdUsuario(idUsuario);
+
+    return transacciones.stream().map(t -> {
+        Categoria cat = categoriaRepo.findById(t.getIdCategoria()).orElse(null);
+        Subcategoria sub = subcategoriaRepo.findById(t.getIdSubcategoria()).orElse(null);
+        MedioPago medio = medioPagoRepo.findById(t.getIdMedioPago()).orElse(null);
+
+        return TransaccionResponse.builder()
+                .idTransaccion(t.getIdTransaccion())
+                .nombre(t.getNombreTransaccion())
+                .categoria(cat != null ? cat.getNombreCategoria() : "Desconocido")
+                .subcategoria(sub != null ? sub.getNombreSubcategoria() : "Desconocido")
+                .medioPago(medio != null ? medio.getNombreMedioPago() : "Desconocido")
+                .monto(t.getMonto())
+                .fecha(t.getFecha())
+                .descripcion(t.getDescripcionTransaccion())
+                .imagen(t.getImagen())
+                .build();
+    }).collect(Collectors.toList());
+}
+
+    /* ---------- Eliminar transacción ---------- */
+    public void eliminarTransaccion(Integer id) {
+        transaccionRepo.deleteById(id);
     }
 }
