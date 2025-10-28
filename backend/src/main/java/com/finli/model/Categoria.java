@@ -26,14 +26,15 @@ public class Categoria {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_fuente", nullable = false)
+    @JsonIgnore
     private FuenteCategoria fuente;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_usuario", nullable = true)
     @JsonIgnore
     private Usuario usuario;
 
-    @OneToMany(mappedBy = "categoria", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "categoria", fetch = FetchType.EAGER)
     @JsonIgnore
     private List<Subcategoria> subcategorias;
 

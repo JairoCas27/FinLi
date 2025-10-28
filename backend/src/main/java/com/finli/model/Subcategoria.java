@@ -22,12 +22,12 @@ public class Subcategoria {
     @Column(name = "nombre_subcategoria", nullable = false, length = 100)
     private String nombreSubcategoria;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_categoria", nullable = false)
     @JsonIgnore
     private Categoria categoria;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_usuario", nullable = true)
     @JsonIgnore
     private Usuario usuario;

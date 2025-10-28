@@ -26,7 +26,7 @@ public class Transaccion {
     private String nombreTransaccion;
 
     @Column(name = "tipo", nullable = false, length = 50)
-    private String tipo;
+    private String tipo ="GASTO";
 
     @Column(name = "monto", nullable = false, precision = 10, scale = 2)
     private BigDecimal monto;
@@ -67,7 +67,6 @@ public class Transaccion {
     @JoinColumn(name = "id_categoria", insertable = false, updatable = false)
     @JsonIgnore
     private Categoria categoria;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_subcategoria", insertable = false, updatable = false)
     @JsonIgnore

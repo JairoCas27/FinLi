@@ -1466,12 +1466,13 @@ async function buscarCategoriaPorNombre(nombre) {
 }
 
 async function buscarSubcategoriaPorNombre(nombre, idCategoria) {
-    const res = await fetch(`${API_CATEGORIAS}/fuente/${idCategoria}`);
+    const res = await fetch(`http://localhost:8080/api/subcategorias/categoria/${idCategoria}`);
     if (!res.ok) return null;
     const list = await res.json();
     if (!Array.isArray(list)) return null;
     return list.find(s => s.nombreSubcategoria.toLowerCase() === nombre.toLowerCase());
 }
+
 
 
 function initializeCategoryButtons() {
