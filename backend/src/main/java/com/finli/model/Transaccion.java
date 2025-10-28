@@ -43,7 +43,7 @@ public class Transaccion {
     @Column(name = "id_usuario", nullable = false)
     private Integer idUsuario;
 
-    @Column(name = "id_medioPago", nullable = false)
+    @Column(name = "id_medio_pago", nullable = false)
     private Integer idMedioPago;
 
     @Column(name = "id_categoria", nullable = false)
@@ -61,7 +61,7 @@ public class Transaccion {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_medio_pago", insertable = false, updatable = false)
     @JsonIgnore
-    private MedioPago medioPago;
+    private MedioPago mediopago;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_categoria", insertable = false, updatable = false)

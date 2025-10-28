@@ -69,7 +69,7 @@ public List<TransaccionResponse> listarPorUsuario(Integer idUsuario) {
                 .nombre(t.getNombreTransaccion())
                 .categoria(cat != null ? cat.getNombreCategoria() : "Desconocido")
                 .subcategoria(sub != null ? sub.getNombreSubcategoria() : "Desconocido")
-                .medioPago(medio != null ? medio.getNombreMedioPago() : "Desconocido")
+                .mediopago(medio != null ? medio.getNombreMedioPago() : "Desconocido")
                 .monto(t.getMonto())
                 .fecha(t.getFecha())
                 .descripcion(t.getDescripcionTransaccion())

@@ -20,7 +20,7 @@ public class TransaccionResponse {
     private LocalDateTime fecha;         
     private String categoria;            
     private String subcategoria;         
-    private String medioPago;            
+    private String mediopago;            
     private String descripcion;          
     private String imagen;               
 }
