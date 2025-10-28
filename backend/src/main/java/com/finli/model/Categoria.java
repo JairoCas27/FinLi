@@ -24,7 +24,7 @@ public class Categoria {
     @Column(name = "nombre_categoria", nullable = false, length = 100)
     private String nombreCategoria;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_fuente", nullable = false)
     private FuenteCategoria fuente;
 

@@ -77,7 +77,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Cargar transacciones al iniciar ---
     cargarTransaccionesDesdeBackend();
-
 });
 
 
@@ -86,8 +85,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // ---- VARIABLES GLOBALES ----
 let transactions = [];
-let selectedCategory = null;
-let selectedSubCategory = null;
+//let selectedCategory = null;
+//let selectedSubCategory = null;
 let selectedImage = null;
 let editingTransactionId = null;
 let currentPeriod = null; 
@@ -1330,6 +1329,7 @@ function initializeDefaultPaymentMethods() {
 }
 
 // ---- GESTIÓN TRANSACCIONES Y DE CATEGORÍAS Y SUBCATEGORÍAS ----
+// ---- GESTIÓN TRANSACCIONES Y DE CATEGORÍAS Y SUBCATEGORÍAS ----
 // --- CONSTANTES API ---
 const API_TRANSACCIONES = 'http://localhost:8080/api/transacciones';
 const API_CATEGORIAS = 'http://localhost:8080/api/categorias';
@@ -1337,6 +1337,9 @@ const API_SUBCATEGORIAS = 'http://localhost:8080/api/subcategorias';
 
 // --- VARIABLES GLOBALES ---
 let transactionRecords = [];
+let selectedCategory = null;
+let selectedSubCategory = null;
+
 
 // --- FUNCIONES ---
 // Formatear fecha/hora
@@ -1363,13 +1366,13 @@ async function cargarTransaccionesDesdeBackend() {
         transactionRecords = list.map(t => ({
             id: t.idTransaccion,
             methodId: t.idMedioPago,
-            methodName: t.nombreMedioPago || 'Sin medio',
+            methodName: t.medioPago || 'Sin medio',
             amount: t.monto,
-            description: t.nombre || t.descripcionTransaccion || '',
+            description: t.nombre || t.descripcion || '',
             date: t.fecha,
             formattedDate: formatDateTime(t.fecha),
-            categoryName: t.nombreCategoria || '',
-            subcategoryName: t.nombreSubcategoria || '',
+            categoryName: t.categoria || '',
+            subcategoryName: t.subcategoria || '',
             type: 'gasto'
         }));
 
@@ -1403,12 +1406,12 @@ async function addTransactionBackend() {
     const dto = {
         etiqueta: etiqueta || 'Transacción sin descripción',
         monto: amount,
-        fecha: fecha + ':00', // ajustando formato
+        fecha: fecha,// + ':00', // ajustando formato
         idUsuario: user.id,
         idMedioPago: methodId,
         idCategoria: categoria.idCategoria,
         idSubcategoria: subcategoria.idSubcategoria,
-        imagen: null // opcional, por defecto null
+        imagen: null // opcional
     };
 
     try {
@@ -1424,7 +1427,7 @@ async function addTransactionBackend() {
         transactionRecords.push({
             id: nueva.idTransaccion,
             methodId: nueva.idMedioPago,
-            methodName: nueva.nombreMedioPago || 'Sin medio',
+            methodName: nueva.medioPago || 'Sin medio',
             amount: nueva.monto,
             description: nueva.etiqueta,
             date: nueva.fecha,
@@ -1452,15 +1455,21 @@ function limpiarFormulario() {
     document.querySelectorAll('.category-btn, .subcategory-btn').forEach(b => b.classList.remove('active'));
 }
 
+// --- BUSCAR CATEGORÍA / SUBCATEGORÍA ---
 async function buscarCategoriaPorNombre(nombre) {
     const res = await fetch(API_CATEGORIAS);
+    if (!res.ok) return null;
     const list = await res.json();
+    // Asegurarse que sea un array
+    if (!Array.isArray(list)) return null;
     return list.find(c => c.nombreCategoria.toLowerCase() === nombre.toLowerCase());
 }
 
 async function buscarSubcategoriaPorNombre(nombre, idCategoria) {
-    const res = await fetch(`${API_CATEGORIAS}/${idCategoria}/subcategorias`);
+    const res = await fetch(`${API_CATEGORIAS}/fuente/${idCategoria}`);
+    if (!res.ok) return null;
     const list = await res.json();
+    if (!Array.isArray(list)) return null;
     return list.find(s => s.nombreSubcategoria.toLowerCase() === nombre.toLowerCase());
 }
 

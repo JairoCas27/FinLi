@@ -19,6 +19,7 @@ public class CategoriaController {
     private final CategoriaService categoriaService;
     private final FuenteCategoriaService fuenteService;
 
+
     @GetMapping
     public ResponseEntity<List<Categoria>> listarTodos() {
         return ResponseEntity.ok(categoriaService.listarTodos());
