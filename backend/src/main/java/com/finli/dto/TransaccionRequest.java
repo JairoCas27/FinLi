@@ -13,7 +13,7 @@ public class TransaccionRequest {
     private String nombreTransaccion;
     private String tipo;
     private Double monto;
-    private String fecha; // ISO format
+    private String fecha; 
     private String descripcionTransaccion;
     private String imagen;
     private String email;

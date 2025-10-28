@@ -51,7 +51,7 @@ public class TransaccionService {
                 .subcategoria(sub)
                 .build();
 
-        t.validar(); // validación interna
+        t.validar();
 
         log.info("Guardando transacción: {} para usuario: {}", t.getNombreTransaccion(), usuario.getCorreo());
         return transaccionRepo.save(t);

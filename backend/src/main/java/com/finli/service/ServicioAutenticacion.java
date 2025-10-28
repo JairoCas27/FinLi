@@ -23,14 +23,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ServicioAutenticacion {
 
-    // REPOSITORIOS INYECTADOS
-    // 'repo' es su UsuarioRepository
     private final UsuarioRepository repo; 
     private final EstadoUsuarioRepository estadoUsuarioRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailService emailService;
-
-    /* ========== MÉTODO PARA BUSCAR USUARIO POR CORREO ========== */
 
     public Optional<Usuario> buscarPorCorreo(String correo) {
         Preconditions.checkArgument(StringUtils.isNotBlank(correo), "El correo no puede estar vacío");
@@ -69,10 +65,6 @@ public class ServicioAutenticacion {
         return u;
     }
 
-    // =========================================================================
-    // LÓGICA DE RECUPERACIÓN DE CONTRASEÑA
-    // =========================================================================
-
     @Transactional
     public void iniciarRecuperacion(String email) {
 
@@ -81,7 +73,6 @@ public class ServicioAutenticacion {
 
         String token = String.valueOf((int) (Math.random() * 900000) + 100000);
 
-        // Borrar tokens previos para este usuario
         passwordResetTokenRepository.deleteByUsuarioId(usuario.getId());
 
         PasswordResetToken resetToken = new PasswordResetToken(token, usuario);
@@ -102,39 +93,33 @@ public class ServicioAutenticacion {
     @Transactional
     public void restablecerContrasena(PasswordResetRequest request) {
 
-        // 1. Buscar el Token (USANDO passwordResetTokenRepository)
         PasswordResetToken tokenEntity = passwordResetTokenRepository.findByToken(request.getToken())
             .orElseThrow(() -> new RuntimeException("Código de recuperación inválido o no encontrado."));
 
-        // 2. Validar que el token pertenezca al correo
         if (!tokenEntity.getUsuario().getCorreo().equalsIgnoreCase(request.getEmail())) {
              throw new RuntimeException("El código no corresponde al correo proporcionado.");
         }
-        
-        // 3. Verificar Expiración
+
         if (tokenEntity.getExpiryDate().isBefore(LocalDateTime.now())) {
-            // Limpiar token expirado
+
             passwordResetTokenRepository.delete(tokenEntity);
             throw new RuntimeException("El código de recuperación ha expirado. Por favor, solicite uno nuevo.");
         }
 
-        // 4. Actualizar la Contraseña del Usuario
         Usuario usuario = tokenEntity.getUsuario();
-        // Codificar la nueva contraseña (USANDO BCrypt.hashpw)
+ 
         String nuevaContrasenaCodificada = BCrypt.hashpw(request.getNuevaContrasena(), BCrypt.gensalt());
         usuario.setContrasena(nuevaContrasenaCodificada);
-        
-        // Guardar el usuario con la nueva contraseña (USANDO 'repo' para UsuarioRepository)
+
         repo.save(usuario); 
 
-        // 5. Eliminar el Token (para evitar que se reutilice)
         passwordResetTokenRepository.delete(tokenEntity);
     }
 
     public UsuarioResponse toResponse(Usuario u) {
         return UsuarioResponse.builder()
                 .id(u.getId())
-                .email(u.getCorreo())
+                .correo(u.getCorreo())
                 .nombre(u.getNombre())
                 .apellidoPaterno(u.getApellidoPaterno())
                 .apellidoMaterno(u.getApellidoMaterno())

@@ -23,7 +23,7 @@ public class Transaccion {
     private String nombreTransaccion;
 
     @Column(nullable = false, length = 10)
-    private String tipo; // ingreso o gasto
+    private String tipo; 
 
     @Column(nullable = false)
     private Double monto;
