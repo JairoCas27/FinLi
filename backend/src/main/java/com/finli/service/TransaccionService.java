@@ -49,6 +49,7 @@ public class TransaccionService {
                 .idCategoria(dto.getIdCategoria())
                 .idSubcategoria(dto.getIdSubcategoria())
                 .imagen(dto.getImagen())
+                .tipo("GASTO")
                 .build();
 
         return transaccionRepo.save(t);

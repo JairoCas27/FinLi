@@ -43,7 +43,7 @@ public class Transaccion {
     @Column(name = "id_usuario", nullable = false)
     private Integer idUsuario;
 
-    @Column(name = "id_medio_pago", nullable = false)
+    @Column(name = "id_medioPago", nullable = false)
     private Integer idMedioPago;
 
     @Column(name = "id_categoria", nullable = false)
