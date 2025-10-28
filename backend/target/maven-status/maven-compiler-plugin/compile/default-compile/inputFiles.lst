@@ -1,29 +1,33 @@
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\controller\AuthController.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\controller\CategoriaController.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\controller\TransaccionController.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\dto\LoginRequest.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\dto\PasswordResetRequest.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\dto\RegistroRequest.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\dto\TransaccionRequest.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\dto\UsuarioResponse.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\FinLiApplication.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\model\Categoria.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\model\EstadoUsuario.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\model\FuenteCategoria.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\model\MedioPago.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\model\PasswordResetToken.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\model\Subcategoria.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\model\Transaccion.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\model\Usuario.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\repository\CategoriaRepository.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\repository\EstadoUsuarioRepository.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\repository\MedioPagoRepository.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\repository\PasswordResetTokenRepository.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\repository\SubcategoriaRepository.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\repository\TransaccionRepository.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\repository\UsuarioRepository.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\security\ConfiguracionSeguridad.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\service\CategoriaService.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\service\EmailService.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\service\ServicioAutenticacion.java
-C:\Users\alexi\FinLi - Registro de Usuarios\backend\src\main\java\com\finli\service\TransaccionService.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\controller\AdminController.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\controller\AuthController.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\controller\CategoriaController.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\controller\TransaccionController.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\dto\LoginRequest.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\dto\PaginacionUsuarioResponse.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\dto\PasswordResetRequest.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\dto\RegistroRequest.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\dto\TransaccionRequest.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\dto\UsuarioResponse.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\FinLiApplication.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\model\Categoria.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\model\EstadoUsuario.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\model\FuenteCategoria.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\model\MedioPago.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\model\PasswordResetToken.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\model\Subcategoria.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\model\Transaccion.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\model\Usuario.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\repository\CategoriaRepository.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\repository\EstadoUsuarioRepository.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\repository\MedioPagoRepository.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\repository\PasswordResetTokenRepository.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\repository\SubcategoriaRepository.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\repository\TransaccionRepository.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\repository\UsuarioRepository.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\security\ConfiguracionSeguridad.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\service\AdministradorService.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\service\CategoriaService.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\service\EmailService.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\service\ExcelExportService.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\service\ServicioAutenticacion.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\main\java\com\finli\service\TransaccionService.java

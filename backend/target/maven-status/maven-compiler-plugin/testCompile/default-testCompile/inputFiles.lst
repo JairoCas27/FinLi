@@ -1,0 +1,15 @@
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\test\java\com\finli\controller\AdminControllerTest.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\test\java\com\finli\controller\AuthControllerTest.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\test\java\com\finli\controller\CategoriaControllerTest.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\test\java\com\finli\dto\RegistroRequestTest.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\test\java\com\finli\dto\TransaccionRequestTest.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\test\java\com\finli\model\PasswordResetTokenTest.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\test\java\com\finli\model\TransaccionTest.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\test\java\com\finli\repository\PasswordResetTokenRepositoryTest.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\test\java\com\finli\repository\TransaccionRepositoryTest.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\test\java\com\finli\repository\UsuarioRepositoryTest.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\test\java\com\finli\service\AdministradorServiceTest.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\test\java\com\finli\service\EmailServiceTest.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\test\java\com\finli\service\ExcelExportServiceTest.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\test\java\com\finli\service\ServicioAutenticacionTest.java
+C:\Users\Jairo\OneDrive\Desktop\FinLi\backend\src\test\java\com\finli\service\TransaccionServiceTest.java
