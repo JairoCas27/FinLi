@@ -1,5 +1,6 @@
 package com.finli.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore; 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,11 +20,11 @@ public class EstadoUsuario {
     @Column(name = "id_estado") 
     private Integer idEstado; 
 
-  
     @Column(name = "nombre_estado", nullable = false, unique = true, length = 50)
     private String nombreEstado;
 
     @OneToMany(mappedBy = "estadoUsuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore 
     private java.util.List<Usuario> usuarios;
     
 }

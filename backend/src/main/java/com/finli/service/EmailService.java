@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class EmailService {
 
-    // Inyecta las propiedades de mail.smtp.* desde application.properties
     @Value("${mail.smtp.host}")
     private String host;
     @Value("${mail.smtp.port}")
@@ -17,20 +16,12 @@ public class EmailService {
     private String username;
     @Value("${mail.smtp.password}")
     private String password;
-    
-    // Configuraciones de STARTTLS/AUTH
+  
     @Value("${mail.smtp.starttls.enable}")
     private boolean startTlsEnable; 
     @Value("${mail.smtp.auth}")
     private boolean auth;
 
-
-    /**
-     * Envía un correo simple con el token de recuperación.
-     * @param toEmail Correo del destinatario (el usuario que recupera la clave).
-     * @param subject Asunto del correo.
-     * @param msg 
-     */
     public void sendEmail(String toEmail, String subject, String msg) {
         try {
             Email email = new SimpleEmail();

@@ -171,67 +171,66 @@
         const buttonText = document.getElementById('buttonText');
         const notification = document.getElementById('successNotification');
         
-        // 1. Validación de email
+        // Validación de email
         if (!email) {
             alert('Por favor, ingrese su correo electrónico');
             return;
         }
         
-        // 2. Cambiar el estado del botón a "cargando"
+        // Cambiar el estado del botón a "cargando"
         updateButton.classList.add('btn-loading');
         buttonText.textContent = 'Enviando código de recuperacion...';
         updateButton.disabled = true;
         
-        // 3. LLAMADA REAL A LA API
+        // LLAMADA REAL A LA API
         fetch(API_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                // La llave DEBE ser "email" para coincidir con el backend
+
                 email: email
             })
         })
         .then(response => {
             // Manejar errores de servidor (4xx o 5xx)
             if (!response.ok) {
-                // Si la respuesta no es OK (ej. 400 Bad Request o 500 Internal Error)
+                
                 return response.text().then(errorText => {
-                    // Extraer el mensaje de error del backend (Spring Boot)
+                    
                     throw new Error(errorText || 'Error desconocido al solicitar recuperación.');
                 });
             }
-            // Si la respuesta es 200 OK, continuar
+
             return response.text();
         })
         .then(data => {
-            // 4. Éxito: Mostrar notificación y redirigir
             
-            // Mostrar la notificación de éxito (puede personalizar el mensaje si lo necesita)
-            document.querySelector('#successNotification p').textContent = data; // Usar el mensaje de éxito del backend
+            // Mostrar la notificación de éxito 
+            document.querySelector('#successNotification p').textContent = data; 
             notification.classList.add('show');
 
-            // Redirigir a la página NuevaContra.html después de 2.5 segundos
+            // Redirigir a la página 
             setTimeout(function() {
                 window.location.href = 'NuevaContra.html';
             }, 2500);
 
         })
         .catch(error => {
-            // 5. Fallo: Mostrar alerta de error
+            // Fallo: Mostrar alerta de error
             console.error('Error en la recuperación:', error.message);
             alert('Error: ' + error.message);
         })
         .finally(() => {
-            // 6. Restaurar el botón al finalizar (éxito o fallo)
+            // Restaurar el estado del botón
             updateButton.classList.remove('btn-loading');
             buttonText.textContent = 'Enviar';
             updateButton.disabled = false;
         });
     });
     
-    // Cerrar la notificación manualmente (código existente)
+    // Cerrar la notificación manualmente 
     document.getElementById('closeNotification').addEventListener('click', function() {
         document.getElementById('successNotification').classList.remove('show');
     });
