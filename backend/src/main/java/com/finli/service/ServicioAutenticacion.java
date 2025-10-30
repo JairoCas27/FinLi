@@ -23,8 +23,11 @@ import java.util.Optional;
 public class ServicioAutenticacion {
 
     private final UsuarioRepository repo;
+    private final EstadoUsuarioRepository estadoUsuarioRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailService emailService;
 
-    /* ========== NUEVO MÉTODO QUE TE FALTABA ========== */
+    /* ========== METODO BUSCAR POR CORREO ========== */
     public Optional<Usuario> buscarPorCorreo(String correo) {
         Preconditions.checkArgument(StringUtils.isNotBlank(correo), "El correo no puede estar vacío");
         return repo.findByCorreo(correo);

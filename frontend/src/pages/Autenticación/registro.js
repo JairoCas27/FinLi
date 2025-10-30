@@ -16,10 +16,23 @@ document.addEventListener("DOMContentLoaded", () => {
         const contrasena = document.getElementById("contrasena").value.trim();
         const fechaNacimiento = document.getElementById("fecha-nacimiento").value;
         const edad = document.getElementById("edad").value;
+        const confirmarContrasena = document.getElementById("confirmarContrasena").value.trim();
+        const terminos = document.getElementById("terms").checked;
 
-        if (!nombre || !apellidoPaterno || !apellidoMaterno || !email || !contrasena || !fechaNacimiento || !edad) {
+        if (!nombre || !apellidoPaterno || !apellidoMaterno || !email || !contrasena || !fechaNacimiento || !edad || !confirmarContrasena) {
             alert("Completa todos los campos obligatorios.");
             return;
+        }
+
+
+        if (contrasena !== confirmarContrasena) {
+        alert("Las contraseñas no coinciden.");
+        return;
+        }
+
+        if (!terminos) {
+        alert("Debes aceptar los términos y condiciones.");
+        return;
         }
 
         try {

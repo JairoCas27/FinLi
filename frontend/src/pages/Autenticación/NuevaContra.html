@@ -168,29 +168,30 @@
     </footer>
 </body>
 <script>
-// Toggle para mostrar/ocultar contraseñas
+// =================================================================
+// Manejo de Toggles de Contraseña
+// =================================================================
 const togglePassword = document.getElementById('togglePassword');
 const passwordInput = document.getElementById('contrasena');
 const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
 const confirmPasswordInput = document.getElementById('confirmarContrasena');
 
-togglePassword.addEventListener('click', function() {
-    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-    passwordInput.setAttribute('type', type);
-    
-    // Cambiar el icono
-    this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
-});
+function setupToggle(toggleBtn, input) {
+    toggleBtn.addEventListener('click', function() {
+        const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+        input.setAttribute('type', type);
+        
+        // Cambiar el icono
+        this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+    });
+}
 
-toggleConfirmPassword.addEventListener('click', function() {
-    const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-    confirmPasswordInput.setAttribute('type', type);
-    
-    // Cambiar el icono
-    this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
-});
+if(togglePassword && passwordInput) setupToggle(togglePassword, passwordInput);
+if(toggleConfirmPassword && confirmPasswordInput) setupToggle(toggleConfirmPassword, confirmPasswordInput);
 
-// Temporizador de 30 segundos 
+// =================================================================
+// Temporizador 
+// =================================================================
 let timeLeft = 60;
 let countdownInterval = null;
 
@@ -198,53 +199,131 @@ const timerElement = document.getElementById('time');
 const countdownElement = document.getElementById('countdown');
 const resendLink = document.getElementById('resendCode');
 
-if (!timerElement || !countdownElement || !resendLink) {
-  console.warn('Faltan elementos en el DOM: verifica #time, #countdown y #resendCode');
-} else {
-  // Actualiza la UI con el estado actual del temporizador
-  function render() {
-    timerElement.textContent = timeLeft;
-    countdownElement.textContent = timeLeft > 0
-      ? `El código expira en ${timeLeft} segundos`
-      : 'El código ha expirado';
-    // añadir o quitar clase de expirado según corresponda
-    countdownElement.classList.toggle('expired', timeLeft <= 0);
-    // mostrar/ocultar el link de reenvío
-    resendLink.style.display = timeLeft <= 0 ? 'inline' : 'none';
-  }
+if (timerElement && countdownElement && resendLink) {
+    function render() {
+        timerElement.textContent = timeLeft;
+        countdownElement.textContent = timeLeft > 0
+            ? `El código expira en ${timeLeft} segundos`
+            : 'El código ha expirado';
+        countdownElement.classList.toggle('expired', timeLeft <= 0);
+        resendLink.style.display = timeLeft <= 0 ? 'inline' : 'none';
+    }
 
-  // Inicia (o reinicia) el temporizador. Si ya hay un intervalo, lo limpia.
-  function startTimer(initialSeconds = 60) {
-    clearInterval(countdownInterval);
-    timeLeft = initialSeconds;
-    render(); // actualizar inmediatamente para evitar 1s de delay
-
-    countdownInterval = setInterval(() => {
-      timeLeft--;
-      render();
-
-      if (timeLeft <= 0) {
+    function startTimer(initialSeconds = 60) {
         clearInterval(countdownInterval);
-        countdownInterval = null;
-      }
-    }, 1000);
-  }
+        timeLeft = initialSeconds;
+        render(); 
 
-  // Función simulada para reenviar código (reemplaza con tu llamada real)
-  function resendCodeAction() {
-    console.log('Solicitud de reenvío de código enviada');
-  }
+        countdownInterval = setInterval(() => {
+            timeLeft--;
+            render();
 
-  // Listener único para reenviar
-  resendLink.addEventListener('click', function (evt) {
-    evt.preventDefault();
-    resendCodeAction();
-    // reiniciar temporizador a 30s y ocultar link
+            if (timeLeft <= 0) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+        }, 1000);
+    }
+
+    // Función simulada de reenvío
+    function resendCodeAction() {
+        alert('Funcionalidad de Reenvío no implementada en el Backend.');
+    }
+
+    resendLink.addEventListener('click', function (evt) {
+        evt.preventDefault();
+        resendCodeAction();
+        startTimer(60);
+    });
+
     startTimer(60);
-  });
+}
 
-  // Arrancar al cargar la página
-  startTimer(60);
+
+// LÓGICA DE LA API PARA RESTABLECER CONTRASEÑA
+
+
+const RESET_API_URL = 'http://localhost:8080/api/auth/reset-password';
+const resetForm = document.getElementById('resetPasswordForm'); 
+const statusNotification = document.getElementById('statusNotification'); 
+
+// Función para mostrar la notificación de estado (éxito o error)
+function showStatusNotification(isSuccess, message) {
+
+    alert(message); 
+}
+
+if(resetForm) {
+    resetForm.addEventListener('submit', function(e) {
+        //  EVITAR LA RECARGA DE LA PÁGINA
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value.trim();
+        const token = document.getElementById('recuperacion').value.trim(); 
+        const nuevaContrasena = document.getElementById('contrasena').value;
+        const confirmarContrasena = document.getElementById('confirmarContrasena').value;
+        
+        const updateButton = resetForm.querySelector('button[type="submit"]');
+
+        // Validación de campos
+        if (!email || !token || !nuevaContrasena || !confirmarContrasena) {
+            showStatusNotification(false, 'Todos los campos son obligatorios.');
+            return;
+        }
+
+        if (nuevaContrasena !== confirmarContrasena) {
+            showStatusNotification(false, 'Las contraseñas no coinciden.');
+            return;
+        }
+
+        // Preparar botón de carga
+        const originalText = updateButton.textContent;
+        updateButton.textContent = 'Actualizando...';
+        updateButton.disabled = true;
+
+        // LLAMADA AL ENDPOINT 
+        fetch(RESET_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: email,
+                token: token,
+                nuevaContrasena: nuevaContrasena 
+            })
+        })
+        .then(async response => {
+            const responseText = await response.text();
+            if (!response.ok) {
+                // El backend devuelve el mensaje de error aquí
+                throw new Error(responseText || 'Error desconocido al cambiar la contraseña.');
+            }
+            return responseText;
+        })
+        .then(data => {
+            // Éxito: Mostrar notificación y redirigir
+            showStatusNotification(true, data); 
+            
+            // Redirigir a la página de login después de 3 segundos
+            setTimeout(function() {
+                window.location.href = 'login.html';
+            }, 3000);
+
+        })
+        .catch(error => {
+            // Fallo: Mostrar error
+            console.error('Error al restablecer contraseña:', error.message);
+            
+            // El backend devuelve el mensaje de error exacto
+            showStatusNotification(false, error.message);
+        })
+        .finally(() => {
+            // Restaurar el botón al finalizar
+            updateButton.textContent = originalText;
+            updateButton.disabled = false;
+        });
+    });
 }
 
 </script>
