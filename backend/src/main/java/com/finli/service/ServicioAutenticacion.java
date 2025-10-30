@@ -65,30 +65,93 @@ public class ServicioAutenticacion {
         return u;
     }
 
-    @Transactional
-    public void iniciarRecuperacion(String email) {
+@Transactional
+public void iniciarRecuperacion(String email) {
+    Usuario usuario = repo.findByCorreo(email)
+            .orElseThrow(() -> new RuntimeException("Correo no registrado."));
 
-        Usuario usuario = repo.findByCorreo(email)
-                .orElseThrow(() -> new RuntimeException("Correo no registrado."));
+    String token = String.valueOf((int) (Math.random() * 900000) + 100000);
 
-        String token = String.valueOf((int) (Math.random() * 900000) + 100000);
+    passwordResetTokenRepository.deleteByUsuarioId(usuario.getId());
 
-        passwordResetTokenRepository.deleteByUsuarioId(usuario.getId());
+    PasswordResetToken resetToken = new PasswordResetToken(token, usuario);
+    passwordResetTokenRepository.save(resetToken);
 
-        PasswordResetToken resetToken = new PasswordResetToken(token, usuario);
-        passwordResetTokenRepository.save(resetToken);
+    String subject = "🔐 Recuperación de Contraseña - FinLi";
+    
+    String msg = String.format(
+        "<!DOCTYPE html>" +
+        "<html lang='es'>" +
+        "<head>" +
+        "    <meta charset='UTF-8'>" +
+        "    <meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
+        "    <title>Recuperación de Contraseña - FinLi</title>" +
+        "    <style>" +
+        "        * { margin: 0; padding: 0; box-sizing: border-box; }" +
+        "        body { font-family: 'Arial', sans-serif; background: #f5f7fb; margin: 0; padding: 20px; text-align: center; }" +
+        "        .email-container { max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: inline-block; text-align: left; }" +
+        "        .header { background: #0ea46f; padding: 30px; text-align: center; }" +
+        "        .header h1 { color: white; font-size: 28px; margin-bottom: 10px; }" +
+        "        .header p { color: white; opacity: 0.9; margin: 0; }" +
+        "        .content { padding: 40px 30px; }" +
+        "        .greeting { font-size: 20px; color: #333; margin-bottom: 20px; text-align: center; }" +
+        "        .message { color: #555; line-height: 1.6; margin-bottom: 30px; text-align: center; }" +
+        "        .token { font-size: 48px; font-weight: bold; color: #0ea46f; letter-spacing: 8px; margin: 25px 0; padding: 20px; background: #f8f9fa; border-radius: 8px; font-family: 'Courier New', monospace; text-align: center; }" +
+        "        .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; }" +
+        "        .footer { background: #f8f9fa; padding: 25px; border-top: 1px solid #dee2e6; text-align: center; }" +
+        "        .footer-text { color: #666; line-height: 1.6; }" +
+        "        .center { text-align: center; }" +
+        "        @media (max-width: 600px) {" +
+        "            .content { padding: 30px 20px; }" +
+        "            .token { font-size: 36px; letter-spacing: 6px; padding: 15px; }" +
+        "            .header { padding: 20px; }" +
+        "        }" +
+        "    </style>" +
+        "</head>" +
+        "<body>" +
+        "    <center>" +
+        "    <div class='email-container'>" +
+        "        <div class='header'>" +
+        "            <h1>FinLi</h1>" +
+        "            <p>Seguimiento financiero Personalizado</p>" +
+        "        </div>" +
+        "        " +
+        "        <div class='content'>" +
+        "            <div class='greeting'>Hola %s,</div>" +
+        "            " +
+        "            <div class='message'>" +
+        "                Has solicitado restablecer tu contraseña en FinLi. Para completar el proceso, utiliza el siguiente código de verificación:" +
+        "            </div>" +
+        "            " +
+        "            <div class='token'>%s</div>" +
+        "            " +
+        "            <div class='center' style='color: #666; margin-bottom: 20px;'>Este código es válido por 10 minutos</div>" +
+        "            " +
+        "            <div class='warning'>" +
+        "                <strong>IMPORTANTE:</strong> Por seguridad, no compartas este código con nadie. El equipo de FinLi nunca te pedirá tu código de verificación." +
+        "            </div>" +
+        "            " +
+        "            <div class='center' style='margin-top: 30px; color: #666;'>" +
+        "                Si no solicitaste este cambio, puedes ignorar este mensaje." +
+        "            </div>" +
+        "        </div>" +
+        "        " +
+        "        <div class='footer'>" +
+        "            <div class='footer-text'>" +
+        "                <strong>FinLi © 2024</strong><br>" +
+        "                Tu aplicación de gestión financiera personal<br>" +
+        "                Este es un mensaje automático, por favor no respondas a este correo" +
+        "            </div>" +
+        "        </div>" +
+        "    </div>" +
+        "    </center>" +
+        "</body>" +
+        "</html>",
+        usuario.getNombre(), token
+    );
 
-        String subject = "Código de Recuperación de Contraseña - FinLiApp";
-        String msg = String.format(
-                "Estimado(a) %s,\n\n" +
-                        "Su código de verificación para restablecer su contraseña es: **%s**\n\n" +
-                        "Este código es válido por 10 minutos.\n\n" +
-                        "Si usted no solicitó este cambio, ignore este correo.\n\n" +
-                        "Atentamente,\nEquipo FinLi",
-                usuario.getNombre(), token);
-
-        emailService.sendEmail(email, subject, msg);
-    }
+    emailService.sendEmail(email, subject, msg);
+}
 
     @Transactional
     public void restablecerContrasena(PasswordResetRequest request) {

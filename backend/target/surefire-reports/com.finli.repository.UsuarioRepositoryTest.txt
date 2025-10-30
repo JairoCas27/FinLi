@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
 Test set: com.finli.repository.UsuarioRepositoryTest
 -------------------------------------------------------------------------------
-Tests run: 2, Failures: 0, Errors: 2, Skipped: 0, Time elapsed: 0.627 s <<< FAILURE! -- in com.finli.repository.UsuarioRepositoryTest
-com.finli.repository.UsuarioRepositoryTest.existsByCorreo_CorreoExiste_RetornaTrue -- Time elapsed: 0.205 s <<< ERROR!
+Tests run: 2, Failures: 0, Errors: 2, Skipped: 0, Time elapsed: 13.45 s <<< FAILURE! -- in com.finli.repository.UsuarioRepositoryTest
+com.finli.repository.UsuarioRepositoryTest.existsByCorreo_CorreoExiste_RetornaTrue -- Time elapsed: 1.010 s <<< ERROR!
 org.springframework.jdbc.datasource.init.ScriptStatementFailedException: Failed to execute SQL script statement #9 of class path resource [schema.sql]: INSERT INTO EstadoUsuario (id_estado, nombre_estado) VALUES (1, 'Activo'), (2, 'Inactivo'), (3, 'Pendiente')
 	at org.springframework.jdbc.datasource.init.ScriptUtils.executeSqlScript(ScriptUtils.java:293)
 	at org.springframework.jdbc.datasource.init.ResourceDatabasePopulator.populate(ResourceDatabasePopulator.java:254)
@@ -42,7 +42,7 @@ INSERT INTO EstadoUsuario (id_estado, nombre_estado) VALUES (1, 'Activo'), (2, '
 	at org.springframework.jdbc.datasource.init.ScriptUtils.executeSqlScript(ScriptUtils.java:261)
 	... 17 more
 
-com.finli.repository.UsuarioRepositoryTest.findByCorreo_UsuarioExiste_RetornaUsuario -- Time elapsed: 0.149 s <<< ERROR!
+com.finli.repository.UsuarioRepositoryTest.findByCorreo_UsuarioExiste_RetornaUsuario -- Time elapsed: 0.080 s <<< ERROR!
 org.springframework.jdbc.datasource.init.ScriptStatementFailedException: Failed to execute SQL script statement #9 of class path resource [schema.sql]: INSERT INTO EstadoUsuario (id_estado, nombre_estado) VALUES (1, 'Activo'), (2, 'Inactivo'), (3, 'Pendiente')
 	at org.springframework.jdbc.datasource.init.ScriptUtils.executeSqlScript(ScriptUtils.java:293)
 	at org.springframework.jdbc.datasource.init.ResourceDatabasePopulator.populate(ResourceDatabasePopulator.java:254)

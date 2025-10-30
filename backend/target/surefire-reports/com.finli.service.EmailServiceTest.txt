@@ -1,4 +1,56 @@
 -------------------------------------------------------------------------------
 Test set: com.finli.service.EmailServiceTest
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.067 s -- in com.finli.service.EmailServiceTest
+Tests run: 5, Failures: 1, Errors: 3, Skipped: 0, Time elapsed: 2.311 s <<< FAILURE! -- in com.finli.service.EmailServiceTest
+com.finli.service.EmailServiceTest.sendHtmlEmail_EmailException_LanzaRuntimeException -- Time elapsed: 2.033 s <<< ERROR!
+org.mockito.exceptions.base.MockitoException: 
+
+The used MockMaker SubclassByteBuddyMockMaker does not support the creation of construction mocks
+
+Mockito's inline mock maker supports construction mocks based on the Instrumentation API.
+You can simply enable this mock mode, by placing the 'mockito-inline' artifact where you are currently using 'mockito-core'.
+Note that Mockito's inline mock maker is not supported on Android.
+	at com.finli.service.EmailServiceTest.sendHtmlEmail_EmailException_LanzaRuntimeException(EmailServiceTest.java:91)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.finli.service.EmailServiceTest.sendHtmlEmail_ConfiguracionValida_EnviaCorreo -- Time elapsed: 0.020 s <<< ERROR!
+org.mockito.exceptions.base.MockitoException: 
+
+The used MockMaker SubclassByteBuddyMockMaker does not support the creation of construction mocks
+
+Mockito's inline mock maker supports construction mocks based on the Instrumentation API.
+You can simply enable this mock mode, by placing the 'mockito-inline' artifact where you are currently using 'mockito-core'.
+Note that Mockito's inline mock maker is not supported on Android.
+	at com.finli.service.EmailServiceTest.sendHtmlEmail_ConfiguracionValida_EnviaCorreo(EmailServiceTest.java:49)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.finli.service.EmailServiceTest.stripHtmlToPlain_HtmlInput_ReturnsPlainText -- Time elapsed: 0.080 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <TitleParagraph with  spaces & ampersand> but was: <TitleParagraph with   spaces & ampersand>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:182)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:177)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1145)
+	at com.finli.service.EmailServiceTest.stripHtmlToPlain_HtmlInput_ReturnsPlainText(EmailServiceTest.java:138)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.finli.service.EmailServiceTest.sendEmail_MetodoSimplificado_EnviaCorreo -- Time elapsed: 0.014 s <<< ERROR!
+org.mockito.exceptions.base.MockitoException: 
+
+The used MockMaker SubclassByteBuddyMockMaker does not support the creation of construction mocks
+
+Mockito's inline mock maker supports construction mocks based on the Instrumentation API.
+You can simply enable this mock mode, by placing the 'mockito-inline' artifact where you are currently using 'mockito-core'.
+Note that Mockito's inline mock maker is not supported on Android.
+	at com.finli.service.EmailServiceTest.sendEmail_MetodoSimplificado_EnviaCorreo(EmailServiceTest.java:112)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+

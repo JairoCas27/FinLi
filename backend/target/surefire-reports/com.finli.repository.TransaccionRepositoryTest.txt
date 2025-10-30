@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
 Test set: com.finli.repository.TransaccionRepositoryTest
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.452 s <<< FAILURE! -- in com.finli.repository.TransaccionRepositoryTest
-com.finli.repository.TransaccionRepositoryTest.findByUsuarioAndFechaBetween_TransaccionesEnRango_RetornaLista -- Time elapsed: 0.282 s <<< ERROR!
+Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 12.74 s <<< FAILURE! -- in com.finli.repository.TransaccionRepositoryTest
+com.finli.repository.TransaccionRepositoryTest.findByUsuarioAndFechaBetween_TransaccionesEnRango_RetornaLista -- Time elapsed: 0.803 s <<< ERROR!
 org.hibernate.exception.ConstraintViolationException: 
 could not execute statement [Violación de indice de Unicidad ó Clave primaria: "PRIMARY KEY ON PUBLIC.ESTADOUSUARIO(ID_ESTADO) ( /* key:1 */ 1, 'Activo')"
 Unique index or primary key violation: "PRIMARY KEY ON PUBLIC.ESTADOUSUARIO(ID_ESTADO) ( /* key:1 */ 1, 'Activo')"; SQL statement:

@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.finli.service.CategoriaServiceTest
+-------------------------------------------------------------------------------
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.756 s -- in com.finli.service.CategoriaServiceTest
