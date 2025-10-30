@@ -40,11 +40,22 @@ public class Usuario {
     private Integer edad;
 
 
-    @OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "usuario", 
+    fetch = FetchType.LAZY, 
+    cascade = CascadeType.ALL, 
+    orphanRemoval = true)
     @JsonIgnore  // <-- importante para evitar el loop infinito al serializar
     private List<Ingreso> ingresos;
 
-    @OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "usuario", 
+    fetch = FetchType.LAZY, 
+    cascade = CascadeType.ALL, 
+    orphanRemoval = true)
     @JsonIgnore
     private List<Transaccion> transacciones;
+
+    @ManyToOne(fetch = FetchType.LAZY) 
+    @JoinColumn(name = "id_estadoUsuario", nullable = false)
+    @JsonIgnore 
+    private EstadoUsuario estadoUsuario;
 }

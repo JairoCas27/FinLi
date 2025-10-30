@@ -16,4 +16,18 @@ public class UsuarioResponse {
     private String apellidoPaterno;
     private String apellidoMaterno;
     private Integer edad;
+
+    // Campo CLAVE: Necesario para mostrar el estado en el frontend
+    private EstadoUsuarioResponse estadoUsuario; 
+
+    // --- CLASE INTERNA PARA EL ESTADO ---
+    // Esto es un DTO anidado para estructurar la respuesta del estado.
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class EstadoUsuarioResponse {
+        private Integer idEstado;
+        private String nombreEstado;
+    }
 }
