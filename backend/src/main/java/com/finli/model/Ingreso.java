@@ -23,7 +23,7 @@ public class Ingreso {
     @Column(name = "id_usuario", nullable = false)
     private Integer idUsuario;
 
-    @Column(name = "id_medioPago", nullable = false)
+    @Column(name = "id_medio_pago", nullable = false)
     private Integer idMedioPago;
 
     @Column(name = "nombre_ingreso", nullable = false, length = 100)
@@ -45,7 +45,7 @@ public class Ingreso {
     private Usuario usuario;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_medioPago", insertable = false, updatable = false)
+    @JoinColumn(name = "id_medio_pago", insertable = false, updatable = false)
     @JsonIgnore
     private MedioPago medioPago;
 }

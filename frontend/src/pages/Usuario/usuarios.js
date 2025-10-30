@@ -1,5 +1,82 @@
 // Obtenemos el usuario logueado desde sessionStorage
-let userProfile = JSON.parse(sessionStorage.getItem("loggedUser")) ||
+let userProfile = JSON.parse(sessionStorage.getItem("loggedUser")) || null;
+
+
+// ===============================
+// 🔧 FUNCIÓN PARA ACTUALIZAR PERFIL
+// ===============================
+
+// Capturamos el evento de envío del formulario de perfil
+const profileForm = document.getElementById("profileForm");
+if (profileForm) {
+    profileForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        // Obtenemos el ID del usuario logueado
+        const user = JSON.parse(sessionStorage.getItem("loggedUser"));
+        if (!user || !user.id) {
+            alert("❌ No se encontró el usuario en sesión.");
+            return;
+        }
+
+        const userId = user.id;
+
+        // Obtenemos los valores del formulario
+        const data = {
+            nombre: document.getElementById("firstName").value.trim(),
+            apellidoPaterno: document.getElementById("lastName1").value.trim(),
+            apellidoMaterno: document.getElementById("lastName2").value.trim(),
+            correo: document.getElementById("userEmail").value.trim(),
+            edad: parseInt(document.getElementById("userEdad").value.trim()),
+            contrasena: document.getElementById("newPassword")?.value || null
+        };
+
+        try {
+            // Llamada PUT al backend
+            const res = await fetch(`http://localhost:8080/api/usuarios/${userId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+
+            if (!res.ok) {
+                const msg = await res.text();
+                throw new Error(msg || "Error al actualizar usuario");
+            }
+
+            // Recibimos usuario actualizado desde backend
+            const userUpdated = await res.json();
+
+            // Actualizamos datos en sesión
+            const updatedProfile = {
+                ...user,
+                nombre: userUpdated.nombre,
+                apellidoPaterno: userUpdated.apellidoPaterno,
+                apellidoMaterno: userUpdated.apellidoMaterno,
+                email: userUpdated.correo,
+                edad: userUpdated.edad
+            };
+
+            sessionStorage.setItem("loggedUser", JSON.stringify(updatedProfile));
+
+            // Actualizamos interfaz sin recargar
+            if (document.querySelector(".profile-name"))
+                document.querySelector(".profile-name").textContent =
+                    `${userUpdated.nombre} ${userUpdated.apellidoPaterno}`;
+            if (document.querySelector(".profile-email"))
+                document.querySelector(".profile-email").textContent = userUpdated.correo;
+            if (document.getElementById("user-name"))
+                document.getElementById("user-name").textContent =
+                    `${userUpdated.nombre} ${userUpdated.apellidoPaterno}`;
+
+            alert("✅ Perfil actualizado con éxito");
+
+        } catch (err) {
+            console.error("Error actualizando perfil:", err);
+            alert("❌ Error al actualizar el perfil");
+        }
+    });
+}
 
 
 // ---- FUNCIÓN PARA ACTUALIZAR BIENVENIDA ----
@@ -31,8 +108,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Adaptamos los nombres del backend a los que usa el frontend
     userProfile.firstName = userProfile.nombre || '';
-    userProfile.lastName = `${userProfile.apellidoPaterno || userProfile.apellido_Paterno || ''} ${userProfile.apellidoMaterno || userProfile.apellido_Materno || ''}`.trim();
-    userProfile.name = `${userProfile.firstName} ${userProfile.lastName}`.trim();
+    userProfile.lastName1 = `${userProfile.apellidoPaterno || userProfile.apellido_Paterno || ''}`.trim();
+    userProfile.lastName2 = `${userProfile.apellidoMaterno || userProfile.apellido_Materno || ''}`.trim();
+    userProfile.name = `${userProfile.firstName} ${userProfile.lastName1}`.trim();
     userProfile.email = userProfile.email || userProfile.correo || '';
     userProfile.age = userProfile.edad || '';
     userProfile.avatar = userProfile.avatar || null;
@@ -54,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (userEmail)
         userEmail.textContent = userProfile.email;
     if (userInitials)
-        userInitials.textContent = (userProfile.firstName.charAt(0) + userProfile.lastName.charAt(0)).toUpperCase();
+        userInitials.textContent = (userProfile.firstName.charAt(0) + userProfile.lastName1.charAt(0)).toUpperCase();
 
     // --- Perfil ---
     const fieldNombre = document.getElementById("profile-nombre");
@@ -63,7 +141,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const fieldCorreo = document.getElementById("profile-correo");
 
     if (fieldNombre) fieldNombre.textContent = userProfile.firstName;
-    if (fieldApellidos) fieldApellidos.textContent = userProfile.lastName;
+    if (fieldApellidos) fieldApellidos.textContent = userProfile.lastName1;
+    if (fieldApellidos) fieldApellidos.textContent = userProfile.lastName2;
     if (fieldEdad) fieldEdad.textContent = userProfile.age;
     if (fieldCorreo) fieldCorreo.textContent = userProfile.email;
 
@@ -3945,13 +4024,21 @@ function initializeProfileEvents() {
             
             // Obtener valores del formulario
             const firstName = document.getElementById('firstName').value.trim();
-            const lastName = document.getElementById('lastName').value.trim();
+            const lastName1 = document.getElementById('lastName1').value.trim();
+            const lastName2 = document.getElementById('lastName2').value.trim();
             const email = document.getElementById('userEmail').value.trim();
             const age = document.getElementById('userEdad').value;
             
             // Actualizar perfil
-            const fullName = `${firstName} ${lastName}`;
-            updateUserProfile(fullName, email, age);
+            const fullName = `${firstName} ${lastName1}`;
+            updateUserProfile(
+            document.getElementById("firstName").value,
+            document.getElementById("lastName1").value,
+            document.getElementById("lastName2").value,
+            document.getElementById("userEmail").value,
+            document.getElementById("userEdad").value
+);
+
             
             // Actualizar avatar si hay uno temporal
             if (userProfile.tempAvatar) {
@@ -3975,12 +4062,14 @@ function initializeProfileEvents() {
 
 function loadProfileFormData() {
     const firstName = document.getElementById('firstName');
-    const lastName = document.getElementById('lastName');
+    const lastName1 = document.getElementById('lastName1');
+    const lastName2 = document.getElementById('lastName2');
     const userEmail = document.getElementById('userEmail');
     const userEdad = document.getElementById('userEdad');
     
     if (firstName) firstName.value = userProfile.firstName || 'Jairo';
-    if (lastName) lastName.value = userProfile.lastName || 'Castillo';
+    if (lastName1) lastName1.value = userProfile.lastName1 || 'Castillo';
+    if (lastName2) lastName2.value = userProfile.lastName2 || 'Castillo';
     if (userEmail) userEmail.value = userProfile.email || 'jairo@utp.edu.pe';
     if (userEdad) userEdad.value = userProfile.age || '20';
     
@@ -4000,12 +4089,14 @@ function loadProfileFormData() {
 
 function resetProfileForm() {
     const firstName = document.getElementById('firstName');
-    const lastName = document.getElementById('lastName');
+    const lastName1 = document.getElementById('lastName1');
+    const lastName2 = document.getElementById('lastName2');
     const userEmail = document.getElementById('userEmail');
     const userEdad = document.getElementById('userEdad');
     
     if (firstName) firstName.value = userProfile.firstName || 'Jairo';
-    if (lastName) lastName.value = userProfile.lastName || 'Castillo';
+    if (lastName1) lastName1.value = userProfile.lastName1 || 'Castillo';
+    if (lastName2) lastName2.value = userProfile.lastName2 || 'Castillo';
     if (userEmail) userEmail.value = userProfile.email || 'jairo@utp.edu.pe';
     if (userEdad) userEdad.value = userProfile.age || '20';
     
@@ -4046,12 +4137,19 @@ function validateProfileForm() {
     }
     
     // Validar apellido
-    const lastName = document.getElementById('lastName');
-    if (lastName && !lastName.value.trim()) {
-        markFieldInvalid('lastName', 'El apellido es obligatorio');
+    const lastName1 = document.getElementById('lastName1');
+    if (lastName1 && !lastName1.value.trim()) {
+        markFieldInvalid('lastName1', 'El apellido Paterno es obligatorio');
         isValid = false;
-    } else if (lastName) {
-        markFieldValid('lastName');
+    } else if (lastName1) {
+        markFieldValid('lastName1');
+    }
+    const lastName2 = document.getElementById('lastName2');
+    if (lastName2 && !lastName2.value.trim()) {
+        markFieldInvalid('lastName2', 'El apellido Materno es obligatorio');
+        isValid = false;
+    } else if (lastName2) {
+        markFieldValid('lastName2');
     }
     
     // Validar email
@@ -4117,19 +4215,18 @@ function markFieldValid(fieldId) {
     }
 }
 
-function updateUserProfile(name, email, age) {
-    userProfile.name = name;
+function updateUserProfile(firstName, lastName1, lastName2, email, age) {
+    userProfile.firstName = firstName;
+    userProfile.lastName1 = lastName1;
+    userProfile.lastName2 = lastName2;
+    userProfile.name = `${firstName} ${lastName1} ${lastName2}`.trim();
     userProfile.email = email;
     userProfile.age = age;
-    userProfile.firstName = name.split(' ')[0];
-    userProfile.lastName = name.split(' ').slice(1).join(' ');
-    
-    // Guardar en localStorage
+
     saveProfileToLocalStorage();
-    
-    // Agregar notificación
     addNotification('Perfil actualizado correctamente', 'info');
 }
+
 
 function updateProfileInApp() {
     // Actualizar barra superior
