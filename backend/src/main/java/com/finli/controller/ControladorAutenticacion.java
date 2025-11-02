@@ -1,7 +1,9 @@
-//Controladores REST (manejan las peticiones HTTP)
+package com.finli.controller;
 
-//Endpoints para autenticación
+// Controlador para autenticación (placeholder)
+import org.springframework.web.bind.annotation.RestController;
 
+@RestController
 public class ControladorAutenticacion {
-    
+	// Aquí pueden ir endpoints de login/registro más adelante.
 }

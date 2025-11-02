@@ -1,8 +1,9 @@
-//logica de la web
-//Servicio de autenticación
+package com.finli.service;
 
-package main.java.com.finli.service;
+// Servicio de autenticación (placeholder)
+import org.springframework.stereotype.Service;
 
+@Service
 public class ServicioAutenticacion {
-    
+	// Lógica de autenticación se implementa aquí más adelante.
 }
