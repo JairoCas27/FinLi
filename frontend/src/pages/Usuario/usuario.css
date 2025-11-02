@@ -2104,3 +2104,78 @@ a {
 .card-report {
     transition: all 0.3s ease;
 }
+
+/* Estilos para el modal de contacto */
+.contact-modal .modal-content {
+    border-radius: 15px;
+    overflow: hidden;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.contact-header {
+    background: linear-gradient(135deg, #0ea46f, #838e98);
+    color: white;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.contact-header h5 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.contact-body {
+    padding: 2rem;
+}
+
+.contact-form .form-label {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.contact-form .form-control {
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.contact-form .form-control:focus {
+    border-color: #0ea46f;
+    box-shadow: 0 0 0 0.2rem rgba(14, 164, 111, 0.25);
+}
+
+.contact-form textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.btn-send {
+    background: linear-gradient(135deg, #0ea46f, #838e98);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.btn-send:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(14, 164, 111, 0.3);
+}
+
+/* Estilos para el botón de contacto en la sección de perfil */
+.contact-option {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.contact-option:hover {
+    background-color: rgba(14, 164, 111, 0.05);
+    transform: translateX(5px);
+}

@@ -179,6 +179,50 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('informes').classList.contains('active')) {
         initializeCharts();
     }
+
+    // Modal de contacto
+    const contactModal = new bootstrap.Modal(document.getElementById('contactModal'));
+    
+    // Abrir modal de contacto al hacer clic en "Centro de Contacto"
+    document.getElementById('contactCenterBtn').addEventListener('click', function() {
+        contactModal.show();
+    });
+    
+    // Manejar el envío del formulario de contacto
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Obtener los valores del formulario
+        const name = document.getElementById('contactName').value;
+        const email = document.getElementById('contactEmail').value;
+        const message = document.getElementById('contactMessage').value;
+        
+        // Validación básica
+        if (!name || !email || !message) {
+            alert('Por favor, complete todos los campos del formulario.');
+            return;
+        }
+        
+        // Simular envío del formulario
+        console.log('Enviando formulario de contacto:', { name, email, message });
+        
+        // Mostrar mensaje de éxito
+        alert('¡Mensaje enviado con éxito! Nos pondremos en contacto contigo pronto.');
+        
+        // Cerrar el modal
+        contactModal.hide();
+        
+        // Limpiar el formulario
+        document.getElementById('contactForm').reset();
+        
+    });
+    
+    // Código existente para el modal premium
+    const premiumModal = new bootstrap.Modal(document.getElementById('premiumModal'));
+    
+    document.getElementById('openPremiumModalBtn').addEventListener('click', function() {
+        premiumModal.show();
+    });
 });
 
 // ---- CARGAR DATOS DESDE LOCALSTORAGE ----
@@ -1230,14 +1274,16 @@ function initializeCategoryButtons() {
             showSubcategories('pagos', selectedCategory);
         }
         
-        // Botón personalizar en Inicio
+        // Botón personalizar en Inicio (sin funcionalidad)
         if (e.target.closest('#inicio #personalize-categories-btn')) {
-            showCustomizeCategoriesModal();
+            // Funcionalidad eliminada - no hacer nada
+            showNotification('La funcionalidad de personalizar categorías disponible para premium', 'info');
         }
         
-        // Botón personalizar en Pagos
+        // Botón personalizar en Pagos (sin funcionalidad)
         if (e.target.closest('#pagos #personalize-categories-btn-pagos')) {
-            showCustomizeCategoriesModal();
+            // Funcionalidad eliminada - no hacer nada
+            showNotification('La funcionalidad de personalizar categorías disponible para premium', 'info');
         }
     });
 }
@@ -1271,7 +1317,7 @@ function showSubcategories(section, category) {
             `;
         });
         
-        // Agregar botón "+" para nueva subcategoría
+        // Agregar botón "+" para nueva subcategoría (sin funcionalidad)
         html += `
             <button class="subcategory-btn subcategory-add-btn" data-category="${category}">
                 <i class="bi bi-plus"></i> Nueva Subcategoría
@@ -1285,8 +1331,8 @@ function showSubcategories(section, category) {
         document.querySelectorAll(`#${containerId} .subcategory-btn`).forEach(btn => {
             btn.addEventListener('click', function() {
                 if (this.classList.contains('subcategory-add-btn')) {
-                    // Si es el botón de añadir, abrir modal de personalización
-                    showCustomizeCategoriesModal(category);
+                    // Si es el botón de añadir, mostrar mensaje (sin funcionalidad)
+                    showNotification('La funcionalidad de agregar subcategorías disponible para premium', 'info');
                 } else {
                     document.querySelectorAll(`#${containerId} .subcategory-btn`).forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
@@ -1295,7 +1341,7 @@ function showSubcategories(section, category) {
             });
         });
     } else {
-        // Si no hay subcategorías, mostrar solo el botón para añadir
+        // Si no hay subcategorías, mostrar solo el botón para añadir (sin funcionalidad)
         let html = `
             <div class="section-divider"></div>
             <h6 class="d-flex align-items-center gap-2 mb-3 text-warning">
@@ -1309,11 +1355,11 @@ function showSubcategories(section, category) {
         `;
         container.innerHTML = html;
         
-        // Añadir event listener al botón de añadir
+        // Añadir event listener al botón de añadir (sin funcionalidad)
         const addButton = container.querySelector('.subcategory-add-btn');
         if (addButton) {
             addButton.addEventListener('click', function() {
-                showCustomizeCategoriesModal(category);
+                showNotification('La funcionalidad de agregar subcategorías no está disponible', 'info');
             });
         }
     }
@@ -1712,26 +1758,6 @@ function initializeEventListeners() {
         notificationStatusFilter.addEventListener('change', renderNotificationsSection);
     }
 
-    // Configurar botones del modal de personalización
-    const addNewCategoryBtn = document.getElementById('addNewCategoryBtn');
-    const addNewSubcategoryBtn = document.getElementById('addNewSubcategoryBtn');
-    
-    if (addNewCategoryBtn) {
-        addNewCategoryBtn.addEventListener('click', addNewCategory);
-    }
-    
-    if (addNewSubcategoryBtn) {
-        addNewSubcategoryBtn.addEventListener('click', addNewSubcategory);
-    }
-    
-    // Reinicializar el modal cuando se muestre
-    const customizeModal = document.getElementById('customizeCategoriesModal');
-    if (customizeModal) {
-        customizeModal.addEventListener('show.bs.modal', function() {
-            updateCustomizeCategoriesModal();
-        });
-    }
-    
     // Configurar filtro de informes
     const informesFilterBtn = document.getElementById('FiltroProfileBtn');
     const informesFiltersContainer = document.querySelector('#informes .filters-container');
@@ -3907,495 +3933,60 @@ function getInitials(name) {
 
 // ---- PERSONALIZACIÓN DE CATEGORÍAS ----
 
-// Función para mostrar el modal de personalización de categorías
+// Función para mostrar el modal de personalización de categorías (SIN FUNCIONALIDAD)
 function showCustomizeCategoriesModal(preselectedCategory = null) {
-    // Guardar la sección actual antes de abrir el modal
-    const previousSection = currentSection;
-    
-    // Actualizar el contenido del modal
-    updateCustomizeCategoriesModal();
-    
-    // Mostrar el modal
-    const modalElement = document.getElementById('customizeCategoriesModal');
-    if (modalElement) {
-        const modal = new bootstrap.Modal(modalElement);
-        
-        // Agregar evento para restaurar la sección al cerrar el modal
-        modalElement.addEventListener('hidden.bs.modal', function() {
-            showSection(previousSection);
-        });
-        
-        modal.show();
-
-        // Si se proporciona una categoría pre-seleccionada, establecerla en el select de categoría padre
-        if (preselectedCategory) {
-            // Esperar a que el modal se muestre para que los elementos estén visibles
-            modalElement.addEventListener('shown.bs.modal', function() {
-                // Activar la pestaña de nueva subcategoría
-                const newSubcategoryTab = document.getElementById('new-subcategory-tab');
-                if (newSubcategoryTab) {
-                    newSubcategoryTab.click();
-                }
-
-                // Establecer la categoría padre
-                const parentCategorySelect = document.getElementById('parentCategory');
-                if (parentCategorySelect) {
-                    parentCategorySelect.value = preselectedCategory;
-                }
-            }, { once: true });
-        }
-    }
+    // Funcionalidad eliminada - solo mostrar mensaje
+    showNotification('La funcionalidad de personalizar categorías no está disponible', 'info');
 }
 
-// Función para actualizar el contenido del modal
+// Función para actualizar el contenido del modal (SIN FUNCIONALIDAD)
 function updateCustomizeCategoriesModal() {
-    updateParentCategoryOptions();
-    updateManageCategoriesTab();
+    // Funcionalidad eliminada - no hacer nada
 }
 
-// Función para actualizar las opciones de categorías padre
+// Función para actualizar las opciones de categorías padre (SIN FUNCIONALIDAD)
 function updateParentCategoryOptions() {
-    const parentCategorySelect = document.getElementById('parentCategory');
-    if (!parentCategorySelect) return;
-    
-    parentCategorySelect.innerHTML = '';
-    
-    // Agregar categorías predefinidas
-    Object.keys(subcategoriesMap).forEach(category => {
-        const option = document.createElement('option');
-        option.value = category;
-        option.textContent = getCategoryLabel(category);
-        parentCategorySelect.appendChild(option);
-    });
-    
-    // Agregar categorías personalizadas
-    if (customCategories && customCategories.length > 0) {
-        customCategories.forEach(category => {
-            const option = document.createElement('option');
-            option.value = category.name;
-            option.textContent = category.label;
-            parentCategorySelect.appendChild(option);
-        });
-    }
+    // Funcionalidad eliminada - no hacer nada
 }
 
-// Función para actualizar la lista de categorías personalizadas
+// Función para actualizar la lista de categorías personalizadas (SIN FUNCIONALIDAD)
 function updateCustomCategoriesList() {
-    const categoriesList = document.getElementById('customCategoriesList');
-    if (!categoriesList) return;
-    
-    if (!customCategories || customCategories.length === 0) {
-        categoriesList.innerHTML = '<p class="text-muted">No hay categorías personalizadas.</p>';
-        return;
-    }
-    
-    let html = '<h6>Categorías Personalizadas</h6><div class="list-group">';
-    
-    customCategories.forEach((category, index) => {
-        html += `
-            <div class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                    <i class="${category.icon} me-2"></i>
-                    <span>${category.label}</span>
-                </div>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteCustomCategory(${index})">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>
-        `;
-    });
-    
-    html += '</div>';
-    
-    categoriesList.innerHTML = html;
+    // Funcionalidad eliminada - no hacer nada
 }
 
-// Función para agregar nueva categoría
+// Función para agregar nueva categoría (SIN FUNCIONALIDAD)
 function addNewCategory() {
-    const nameInput = document.getElementById('newCategoryName');
-    const iconSelect = document.getElementById('newCategoryIcon');
-    
-    if (!nameInput || !iconSelect) return;
-    
-    const name = nameInput.value.trim();
-    const icon = iconSelect.value;
-    
-    if (!name) {
-        showNotification('Por favor ingresa un nombre para la categoría', 'error');
-        return;
-    }
-    
-    // Verificar si la categoría ya existe
-    const categoryExists = customCategories.some(cat => cat.name === name.toLowerCase()) || 
-                        Object.keys(subcategoriesMap).includes(name.toLowerCase());
-    
-    if (categoryExists) {
-        showNotification('Ya existe una categoría con ese nombre', 'error');
-        return;
-    }
-    
-    // Agregar la nueva categoría
-    const newCategory = {
-        name: name.toLowerCase(),
-        label: name,
-        icon: icon
-    };
-    
-    customCategories.push(newCategory);
-    
-    // Inicializar array de subcategorías para esta categoría
-    customSubcategories[name.toLowerCase()] = [];
-    
-    // Guardar en localStorage
-    saveCustomCategoriesToLocalStorage();
-    
-    // Limpiar formulario
-    nameInput.value = '';
-    
-    // Actualizar la lista de categorías
-    updateCustomCategoriesList();
-    
-    // Actualizar botones de categorías en la interfaz
-    updateCategoryButtons();
-    
-    // Cerrar el modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('customizeCategoriesModal'));
-    if (modal) {
-        modal.hide();
-    }
-    
-    showNotification('Categoría agregada exitosamente', 'success');
+    showNotification('La funcionalidad de agregar categorías disponible para premium', 'info');
 }
 
-// Función para agregar nueva subcategoría
+// Función para agregar nueva subcategoría (SIN FUNCIONALIDAD)
 function addNewSubcategory() {
-    const parentCategorySelect = document.getElementById('parentCategory');
-    const nameInput = document.getElementById('newSubcategoryName');
-    const iconSelect = document.getElementById('newSubcategoryIcon');
-    
-    if (!parentCategorySelect || !nameInput || !iconSelect) {
-        showNotification('Error: Elementos del formulario no encontrados', 'error');
-        return;
-    }
-    
-    const parentCategory = parentCategorySelect.value;
-    const name = nameInput.value.trim();
-    const icon = iconSelect.value;
-    
-    if (!name) {
-        showNotification('Por favor ingresa un nombre para la subcategoría', 'error');
-        return;
-    }
-    
-    if (!parentCategory) {
-        showNotification('Por favor selecciona una categoría padre', 'error');
-        return;
-    }
-    
-    // Verificar si la subcategoría ya existe
-    const existingSubcategories = subcategoriesMap[parentCategory] || customSubcategories[parentCategory] || [];
-    const subcategoryExists = existingSubcategories.some(sub => sub.name === name.toLowerCase());
-    
-    if (subcategoryExists) {
-        showNotification('Ya existe una subcategoría con ese nombre', 'error');
-        return;
-    }
-    
-    // Crear la nueva subcategoría
-    const newSubcategory = {
-        name: name.toLowerCase(),
-        label: name,
-        icon: icon
-    };
-    
-    // Determinar dónde guardar la subcategoría
-    if (subcategoriesMap[parentCategory]) {
-        // Es una categoría predefinida - guardar en customSubcategories
-        if (!customSubcategories[parentCategory]) {
-            customSubcategories[parentCategory] = [];
-        }
-        customSubcategories[parentCategory].push(newSubcategory);
-    } else {
-        // Es una categoría personalizada
-        if (!customSubcategories[parentCategory]) {
-            customSubcategories[parentCategory] = [];
-        }
-        customSubcategories[parentCategory].push(newSubcategory);
-    }
-    
-    // Guardar en localStorage
-    saveCustomCategoriesToLocalStorage();
-    
-    // Limpiar formulario
-    nameInput.value = '';
-    
-    // Actualizar la interfaz
-    updateParentCategoryOptions();
-    
-    showNotification('Subcategoría agregada exitosamente', 'success');
-    
-    // Cerrar el modal después de un breve delay
-    setTimeout(() => {
-        const modal = bootstrap.Modal.getInstance(document.getElementById('customizeCategoriesModal'));
-        if (modal) {
-            modal.hide();
-        }
-    }, 1500);
+    showNotification('La funcionalidad de agregar subcategorías disponible para premium', 'info');
 }
 
-// Función para eliminar categoría personalizada
+// Función para eliminar categoría personalizada (SIN FUNCIONALIDAD)
 function deleteCustomCategory(index) {
-    if (confirm('¿Estás seguro de que deseas eliminar esta categoría? También se eliminarán todas sus subcategorías.')) {
-        const category = customCategories[index];
-        
-        // Eliminar la categoría
-        customCategories.splice(index, 1);
-        
-        // Eliminar sus subcategorías
-        delete customSubcategories[category.name];
-        
-        // Guardar en localStorage
-        saveCustomCategoriesToLocalStorage();
-        
-        // Actualizar la lista de categorías
-        updateCustomCategoriesList();
-        
-        // Actualizar botones de categorías en la interfaz
-        updateCategoryButtons();
-        
-        showNotification('Categoría eliminada exitosamente', 'success');
-    }
+    showNotification('La funcionalidad de eliminar categorías disponible para premium', 'info');
 }
 
-// Función para editar una categoría personalizada
+// Función para editar una categoría personalizada (SIN FUNCIONALIDAD)
 function editCustomCategory(index) {
-    const category = customCategories[index];
-    if (!category) return;
-    
-    const newName = prompt('Nuevo nombre para la categoría:', category.label);
-    if (newName && newName.trim()) {
-        const oldName = category.name;
-        category.label = newName.trim();
-        category.name = newName.trim().toLowerCase();
-        
-        // Actualizar también en customSubcategories si existe
-        if (customSubcategories[oldName]) {
-            customSubcategories[category.name] = customSubcategories[oldName];
-            delete customSubcategories[oldName];
-        }
-        
-        saveCustomCategoriesToLocalStorage();
-        updateCategoryButtons();
-        updateManageCategoriesTab();
-        showNotification('Categoría actualizada exitosamente', 'success');
-    }
+    showNotification('La funcionalidad de editar categorías disponible para premium', 'info');
 }
 
-// Función para editar una subcategoría
+// Función para editar una subcategoría (SIN FUNCIONALIDAD)
 function editSubcategory(categoryName, subcategoryIndex, isCustomCategory = false) {
-    let subcategories;
-    if (isCustomCategory) {
-        subcategories = customSubcategories[categoryName] || [];
-    } else {
-        subcategories = subcategoriesMap[categoryName] || [];
-    }
-    
-    const subcategory = subcategories[subcategoryIndex];
-    if (!subcategory) return;
-    
-    const newName = prompt('Nuevo nombre para la subcategoría:', subcategory.label);
-    if (newName && newName.trim()) {
-        subcategory.label = newName.trim();
-        subcategory.name = newName.trim().toLowerCase();
-        
-        // Actualizar icono
-        const newIcon = prompt('Nuevo icono (clase Bootstrap Icons):', subcategory.icon);
-        if (newIcon) {
-            subcategory.icon = newIcon;
-        }
-        
-        saveCustomCategoriesToLocalStorage();
-        updateManageCategoriesTab();
-        showNotification('Subcategoría actualizada exitosamente', 'success');
-    }
+    showNotification('La funcionalidad de editar subcategorías disponible para premium', 'info');
 }
 
-// Función mejorada para eliminar subcategorías
+// Función mejorada para eliminar subcategorías (SIN FUNCIONALIDAD)
 function deleteSubcategory(categoryName, subcategoryName, isCustomCategory = false) {
-    if (!confirm('¿Estás seguro de que deseas eliminar esta subcategoría?')) {
-        return;
-    }
-    
-    if (isCustomCategory) {
-        // Eliminar de categorías personalizadas
-        if (customSubcategories[categoryName]) {
-            customSubcategories[categoryName] = customSubcategories[categoryName].filter(
-                sub => sub.name !== subcategoryName
-            );
-            // Si no quedan subcategorías, eliminar el array vacío
-            if (customSubcategories[categoryName].length === 0) {
-                delete customSubcategories[categoryName];
-            }
-        }
-    } else {
-        // Eliminar de categorías predefinidas (solo de customSubcategories)
-        if (customSubcategories[categoryName]) {
-            customSubcategories[categoryName] = customSubcategories[categoryName].filter(
-                sub => sub.name !== subcategoryName
-            );
-            if (customSubcategories[categoryName].length === 0) {
-                delete customSubcategories[categoryName];
-            }
-        }
-    }
-    
-    saveCustomCategoriesToLocalStorage();
-    updateManageCategoriesTab();
-    showNotification('Subcategoría eliminada exitosamente', 'success');
+    showNotification('La funcionalidad de eliminar subcategorías disponible para premium', 'info');
 }
 
-// Función mejorada para la pestaña de gestión
+// Función mejorada para la pestaña de gestión (SIN FUNCIONALIDAD)
 function updateManageCategoriesTab() {
-    const categoriesList = document.getElementById('customCategoriesList');
-    if (!categoriesList) return;
-    
-    let html = '<div class="manage-categories-container">';
-    
-    // Categorías Predefinidas
-    html += `
-        <h6 class="text-success mb-3">
-            <i class="bi bi-star-fill me-2"></i>Categorías Predefinidas
-        </h6>
-        <div class="list-group mb-4">
-    `;
-    
-    Object.keys(subcategoriesMap).forEach(category => {
-        const subcategories = subcategoriesMap[category] || [];
-        const customSubs = customSubcategories[category] || [];
-        const allSubcategories = [...subcategories, ...customSubs];
-        
-        html += `
-            <div class="list-group-item">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-${getCategoryIcon(category)} me-2 text-success"></i>
-                        <strong>${getCategoryLabel(category)}</strong>
-                    </div>
-                    <span class="badge bg-secondary">Predefinida</span>
-                </div>
-                <div class="subcategories-list">
-                    <h6 class="small text-muted mb-2">Subcategorías:</h6>
-                    <div class="d-flex flex-wrap gap-2">
-        `;
-        
-        if (allSubcategories.length === 0) {
-            html += `<span class="text-muted small">No hay subcategorías</span>`;
-        } else {
-            allSubcategories.forEach((sub, index) => {
-                const isCustom = index >= subcategories.length;
-                html += `
-                    <div class="subcategory-item badge bg-light text-dark d-flex align-items-center">
-                        <i class="${sub.icon} me-1"></i>
-                        <span>${sub.label}</span>
-                        <div class="btn-group ms-2">
-                            <button class="btn btn-sm btn-outline-warning" 
-                                onclick="editSubcategory('${category}', ${index}, ${isCustom})"
-                                title="Editar">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" 
-                                onclick="deleteSubcategory('${category}', '${sub.name}', ${isCustom})"
-                                title="Eliminar">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-        
-        html += `</div></div></div>`;
-    });
-    
-    html += `</div>`;
-    
-    // Categorías Personalizadas
-    if (customCategories.length > 0) {
-        html += `
-            <h6 class="text-success mb-3">
-                <i class="bi bi-sliders me-2"></i>Categorías Personalizadas
-            </h6>
-            <div class="list-group">
-        `;
-        
-        customCategories.forEach((category, index) => {
-            const subcategories = customSubcategories[category.name] || [];
-            
-            html += `
-                <div class="list-group-item">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div class="d-flex align-items-center">
-                            <i class="${category.icon} me-2 text-warning"></i>
-                            <strong>${category.label}</strong>
-                        </div>
-                        <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-primary" 
-                                onclick="editCustomCategory(${index})"
-                                title="Editar categoría">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" 
-                                onclick="deleteCustomCategory(${index})"
-                                title="Eliminar categoría">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="subcategories-list">
-                        <h6 class="small text-muted mb-2">Subcategorías:</h6>
-                        <div class="d-flex flex-wrap gap-2">
-            `;
-            
-            if (subcategories.length === 0) {
-                html += `<span class="text-muted small">No hay subcategorías</span>`;
-            } else {
-                subcategories.forEach((sub, subIndex) => {
-                    html += `
-                        <div class="subcategory-item badge bg-light text-dark d-flex align-items-center">
-                            <i class="${sub.icon} me-1"></i>
-                            <span>${sub.label}</span>
-                            <div class="btn-group ms-2">
-                                <button class="btn btn-sm btn-outline-warning" 
-                                    onclick="editSubcategory('${category.name}', ${subIndex}, true)"
-                                    title="Editar">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" 
-                                    onclick="deleteSubcategory('${category.name}', '${sub.name}', true)"
-                                    title="Eliminar">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-            
-            html += `</div></div></div>`;
-        });
-        
-        html += `</div>`;
-    } else {
-        html += `
-            <div class="text-center py-4">
-                <i class="bi bi-inbox display-4 text-muted"></i>
-                <p class="text-muted mt-3">No hay categorías personalizadas</p>
-            </div>
-        `;
-    }
-    
-    html += '</div>';
-    categoriesList.innerHTML = html;
+    // Funcionalidad eliminada - no hacer nada
 }
 
 // Función para actualizar botones de categorías en la interfaz
@@ -4436,7 +4027,7 @@ function updateCategoryButtonsInSection(sectionId) {
         });
     }
     
-    // Agregar botón de personalizar
+    // Agregar botón de personalizar (SIN FUNCIONALIDAD)
     const personalizeId = sectionId === 'inicio' ? 'personalize-categories-btn' : 'personalize-categories-btn-pagos';
     html += `
         <button class="category-btn" id="${personalizeId}">
@@ -5202,3 +4793,64 @@ function deleteScheduledPayment(id) {
     
     showNotification('Pago programado eliminado exitosamente', 'success');
 }
+
+// Mostrar modal premium al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    const premiumModal = new bootstrap.Modal(document.getElementById('premiumModal'));
+    premiumModal.show();
+    
+    // Funcionalidad para seleccionar plan
+    document.querySelectorAll('.plan-option').forEach(option => {
+        option.addEventListener('click', function() {
+            // Quitar selección anterior
+            document.querySelectorAll('.plan-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Agregar selección actual
+            this.classList.add('selected');
+        });
+    });
+    
+    // Funcionalidad del botón de suscripción
+    document.getElementById('subscribeNowBtn').addEventListener('click', function() {
+        const selectedPlan = document.querySelector('.plan-option.selected');
+        const planName = selectedPlan.querySelector('.plan-name').textContent;
+        const planPrice = selectedPlan.querySelector('.plan-price').textContent;
+        
+        // Mostrar mensaje de confirmación
+        alert(`¡Excelente elección! Has seleccionado el plan ${planName} por ${planPrice}. Serás redirigido al proceso de pago.`);
+        
+        // Cerrar modal después de suscribirse
+        const premiumModal = bootstrap.Modal.getInstance(document.getElementById('premiumModal'));
+        premiumModal.hide();
+        window.location.replace('pago.html');
+    });
+
+    // Funcionalidad del botón de cierre
+    document.getElementById('closePremiumBtn').addEventListener('click', function() {
+        const premiumModal = bootstrap.Modal.getInstance(document.getElementById('premiumModal'));
+        premiumModal.hide();
+        
+        // Opcional: Mostrar un mensaje o guardar en localStorage que el usuario cerró el modal
+        localStorage.setItem('premiumModalClosed', 'true');
+    });
+
+    document.getElementById('personalize-categories-btn').addEventListener('click', function() {
+        premiumModal.show();
+    });
+
+    document.getElementById('personalize-categories-btn-pagos').addEventListener('click', function() {
+        premiumModal.show();
+    });
+
+    document.getElementById('ajustesBtn').addEventListener('click', function() {
+        premiumModal.show();
+    });
+
+    // Funcionalidad del botón "Suscribirse" en el perfil
+    document.getElementById('openPremiumModalBtn').addEventListener('click', function() {
+        premiumModal.show();
+    });
+
+});
