@@ -353,8 +353,17 @@ navLinks.forEach(link => {
             searchInput.placeholder = sectionData[targetSection].placeholder;
         }
 
+        // Inicializar gráficas cuando se muestren las secciones correspondientes
+        if (targetSection === 'inicio' || targetSection === 'reportes') {
+            setTimeout(() => {
+                initializeCharts();
+            }, 300);
+        }
+
         if (targetSection === 'reportes') {
-            initializeReports();
+            setTimeout(() => {
+                initializeReports();
+            }, 350);
         }
         
         if (targetSection === 'actividades') {
@@ -904,6 +913,11 @@ function initializeActivities() {
     renderActivities();
     updateRecentActivities();
 }
+
+// Inicializar gráficas después de un pequeño delay
+setTimeout(() => {
+    initializeCharts();
+}, 500);
 
 function addActivity(message, type = 'system', userId = null, details = {}) {
     const activity = {
@@ -2445,11 +2459,15 @@ function deactivateUserPaymentMethod(userId, methodId) {
 
 // Sistema de Reportes
 function initializeReports() {
-    if (chartsInitialized) return;
-    
     loadSubscriptionStats();
-    initializeReportCharts();
-    chartsInitialized = true;
+    
+    // Inicializar gráficas si no están inicializadas
+    if (!chartsInitialized) {
+        initializeCharts();
+    } else {
+        // Si ya están inicializadas, actualizar los datos
+        updateReportCharts();
+    }
 }
 
 function loadSubscriptionStats() {
@@ -2560,122 +2578,159 @@ function generateUserGrowthData() {
     return data;
 }
 
-function initializeReportCharts() {
-    // Gráfica de crecimiento de usuarios
-    const userGrowthCtx = document.getElementById('userGrowthChartReportes').getContext('2d');
-    window.userGrowthChartReportes = new Chart(userGrowthCtx, {
-        type: 'line',
-        data: {
-            labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-            datasets: [{
-                label: 'Usuarios Registrados',
-                data: generateUserGrowthData(),
-                borderColor: '#0ea46f',
-                backgroundColor: 'rgba(14, 164, 111, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(0,0,0,0.05)'
-                    }
+// Sistema de Gráficas
+function initializeCharts() {
+    // Solo inicializar si los elementos existen
+    setTimeout(() => {
+        // Gráfica para Inicio
+        const userGrowthCtxInicio = document.getElementById('userGrowthChartInicio');
+        if (userGrowthCtxInicio) {
+            new Chart(userGrowthCtxInicio.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                    datasets: [{
+                        label: 'Usuarios Registrados',
+                        data: generateUserGrowthData(),
+                        borderColor: '#0ea46f',
+                        backgroundColor: 'rgba(14, 164, 111, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
                 },
-                x: {
-                    grid: {
-                        display: false
-                    }
-                }
-            }
+                options: getChartOptions()
+            });
         }
-    });
-    
-    // Gráfica de distribución de suscriptores
-    const subscriptionCtx = document.getElementById('subscriptionDistributionChart').getContext('2d');
-    window.subscriptionDistributionChart = new Chart(subscriptionCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Sin suscripción', 'Mensual', 'Anual', 'De por vida'],
-            datasets: [{
-                data: [
-                    users.filter(u => u.subscriptionType === 'Sin suscripción').length,
-                    users.filter(u => u.subscriptionType === 'Mensual').length,
-                    users.filter(u => u.subscriptionType === 'Anual').length,
-                    users.filter(u => u.subscriptionType === 'De por vida').length
-                ],
-                backgroundColor: ['#6c757d', '#0ea46f', '#ffc107', '#06a3ff'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
+
+        // Gráfica para Reportes
+        const userGrowthCtxReportes = document.getElementById('userGrowthChartReportes');
+        if (userGrowthCtxReportes) {
+            window.userGrowthChartReportes = new Chart(userGrowthCtxReportes.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                    datasets: [{
+                        label: 'Usuarios Registrados',
+                        data: generateUserGrowthData(),
+                        borderColor: '#0ea46f',
+                        backgroundColor: 'rgba(14, 164, 111, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: getChartOptions()
+            });
         }
-    });
-    
-    // Gráfica de ingresos por suscripción
-    const incomeCtx = document.getElementById('subscriptionIncomeChart').getContext('2d');
-    new Chart(incomeCtx, {
-        type: 'bar',
-        data: {
-            labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-            datasets: [
-                {
-                    label: 'Mensual',
-                    data: [1200, 1900, 1500, 1800, 2200, 2500],
-                    backgroundColor: '#0ea46f'
+
+        // Gráfica de distribución de suscriptores
+        const subscriptionCtx = document.getElementById('subscriptionDistributionChart');
+        if (subscriptionCtx) {
+            window.subscriptionDistributionChart = new Chart(subscriptionCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Sin suscripción', 'Mensual', 'Anual', 'De por vida'],
+                    datasets: [{
+                        data: [
+                            users.filter(u => u.subscriptionType === 'Sin suscripción').length,
+                            users.filter(u => u.subscriptionType === 'Mensual').length,
+                            users.filter(u => u.subscriptionType === 'Anual').length,
+                            users.filter(u => u.subscriptionType === 'De por vida').length
+                        ],
+                        backgroundColor: ['#6c757d', '#0ea46f', '#ffc107', '#06a3ff'],
+                        borderWidth: 0
+                    }]
                 },
-                {
-                    label: 'Anual',
-                    data: [1800, 2200, 1900, 2100, 2400, 2800],
-                    backgroundColor: '#ffc107'
-                },
-                {
-                    label: 'De por vida',
-                    data: [200, 300, 250, 400, 350, 500],
-                    backgroundColor: '#06a3ff'
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(0,0,0,0.05)'
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return 'S/.' + value;
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
                         }
                     }
+                }
+            });
+        }
+
+        // Gráfica de ingresos por suscripción
+        const incomeCtx = document.getElementById('subscriptionIncomeChart');
+        if (incomeCtx) {
+            window.subscriptionIncomeChart = new Chart(incomeCtx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Junio', 'Julio', 'Agosto', 'Setiembre', 'Octubre', 'Noviembre'],
+                    datasets: [
+                        {
+                            label: 'Mensual',
+                            data: [1200, 1900, 1500, 1800, 2200, 2500],
+                            backgroundColor: '#0ea46f'
+                        },
+                        {
+                            label: 'Anual',
+                            data: [1800, 2200, 1900, 2100, 2400, 2800],
+                            backgroundColor: '#ffc107'
+                        },
+                        {
+                            label: 'De por vida',
+                            data: [200, 300, 250, 400, 350, 500],
+                            backgroundColor: '#06a3ff'
+                        }
+                    ]
                 },
-                x: {
-                    grid: {
-                        display: false
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return 'S/.' + value;
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
                     }
+                }
+            });
+        }
+        
+        chartsInitialized = true;
+    }, 100);
+}
+
+function getChartOptions() {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0,0,0,0.05)'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
                 }
             }
         }
-    });
+    };
 }
 
 // Sistema de Notificaciones
@@ -2727,46 +2782,6 @@ function showNotification(message, type = 'success') {
         toastElement.remove();
     });
 }
-
-// Inicializar chart para Inicio
-const userGrowthCtxInicio = document.getElementById('userGrowthChartInicio').getContext('2d');
-new Chart(userGrowthCtxInicio, {
-    type: 'line',
-    data: {
-        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-        datasets: [{
-            label: 'Usuarios Registrados',
-            data: generateUserGrowthData(),
-            borderColor: '#0ea46f',
-            backgroundColor: 'rgba(14, 164, 111, 0.1)',
-            borderWidth: 3,
-            fill: true,
-            tension: 0.4
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                grid: {
-                    color: 'rgba(0,0,0,0.05)'
-                }
-            },
-            x: {
-                grid: {
-                    display: false
-                }
-            }
-        }
-    }
-});
 
 // Efectos hover mejorados
 document.querySelectorAll('.card-stat, .chart-card, .table-card, .card-report, .payment-method-card').forEach(card => {
