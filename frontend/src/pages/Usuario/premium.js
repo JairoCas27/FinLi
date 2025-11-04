@@ -1930,6 +1930,7 @@ function renderTransactions() {
             <td>
                 <div class="payment-method-with-logo-center">
                     ${paymentMethodLogo}
+                    <span class="payment-method-badge ${paymentMethodClass}">${transaction.paymentMethod}</span>
                 </div>
             </td>
             <td class="${transaction.type === 'ingreso' ? 'transaction-amount-income text-success' : 'transaction-amount-expense text-danger'}">
@@ -3817,7 +3818,7 @@ function resetProfilePhoto() {
         // AHORA INCLUIMOS AMBAS COSAS: EL PLACEHOLDER Y EL ICONO PREMIUM
         profilePicturePreview.innerHTML =
             `<div id="profilePicturePlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:3rem;">${initials}</div>
-            <i class="bi bi-patch-check-fill text-warning" style="position:absolute;bottom:10px;right:10px;font-size:2.2rem;border-radius:50%;padding:4px;z-index:10;"></i>`;
+            <i class="bi bi-piggy-bank-fill text-warning" style="position:absolute;bottom:10px;right:10px;font-size:2.2rem;border-radius:50%;padding:4px;z-index:10;"></i>`;
     }
     const removeProfilePhotoBtn = document.getElementById('removeProfilePhotoBtn');
     if (removeProfilePhotoBtn) {    
@@ -3939,12 +3940,12 @@ function updateProfileInApp() {
         if (userProfile.avatar) {
             userAvatar.innerHTML = `
                 <img src="${userProfile.avatar}" alt="Avatar">
-                <i class="bi bi-patch-check-fill text-warning premium-icon-sm"></i>
+                <i class="bi bi-piggy-bank-fill text-warning premium-icon-sm"></i>
             `;
         } else {
             userAvatar.innerHTML = `
                 <span>${getInitials(userProfile.name)}</span>
-                <i class="bi bi-patch-check-fill text-warning premium-icon-sm"></i>
+                <i class="bi bi-piggy-bank-fill text-warning premium-icon-sm"></i>
             `;
         }
     }
@@ -3962,12 +3963,12 @@ function updateProfileInApp() {
         if (userProfile.avatar) {
             profileAvatar.innerHTML = `
                 <img src="${userProfile.avatar}" alt="Avatar">
-                <i class="bi bi-patch-check-fill text-warning premium-icon-profile"></i>
+                <i class="bi bi-piggy-bank-fill text-warning premium-icon-profile"></i>
             `;
         } else {
             profileAvatar.innerHTML = `
                 <div id="avatarPlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:2rem;">${getInitials(userProfile.name)}</div>
-                <i class="bi bi-patch-check-fill text-warning premium-icon-profile"></i>
+                <i class="bi bi-piggy-bank-fill text-warning premium-icon-profile"></i>
             `;
         }
     }
@@ -4822,6 +4823,7 @@ function renderIncomeRecords() {
             <td>
                 <div class="payment-method-with-logo-center">
                     ${getPaymentMethodLogo(income.methodName)}
+                    <span class="payment-method-badge ${paymentMethodClass}">${income.methodName}</span>
                 </div>
             </td>
             <td class="transaction-amount-income text-success">+S/. ${income.amount.toFixed(2)}</td>

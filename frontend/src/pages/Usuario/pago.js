@@ -288,6 +288,6 @@ function showSuccessMessage() {
     // Configurar botón de ir al dashboard
     document.getElementById('go-to-dashboard').addEventListener('click', function() {
         alert('¡Redirigiendo al dashboard de FinLi Premium!');
-        window.location.replace('usuario.html');
+        window.location.replace('premium.html');
     });
 }

@@ -1889,6 +1889,7 @@ function renderTransactions() {
             <td>
                 <div class="payment-method-with-logo-center">
                     ${paymentMethodLogo}
+                    <span class="payment-method-badge ${paymentMethodClass}">${transaction.paymentMethod}</span>
                 </div>
             </td>
             <td class="${transaction.type === 'ingreso' ? 'transaction-amount-income text-success' : 'transaction-amount-expense text-danger'}">
@@ -4334,6 +4335,7 @@ function renderIncomeRecords() {
             <td>
                 <div class="payment-method-with-logo-center">
                     ${getPaymentMethodLogo(income.methodName)}
+                    <span class="payment-method-badge ${paymentMethodClass}">${income.methodName}</span>
                 </div>
             </td>
             <td class="transaction-amount-income text-success">+S/. ${income.amount.toFixed(2)}</td>
