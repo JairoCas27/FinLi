@@ -1,0 +1,690 @@
+/* ===== VARIABLES CSS PARA TEMAS ===== */
+:root {
+    /* Colores base para tema claro (default) */
+    --primary-bg: #f8f9fa;
+    --secondary-bg: #ffffff;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --border-color: #dee2e6;
+    --card-bg: #ffffff;
+    --sidebar-bg: rgba(255, 255, 255, 0.95);
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    
+    /* Colores de marca */
+    --verdeOs: #0ea46f;
+    --grisOs: #6c757d;
+    --grisCla: #838e98;
+    --verdeCla: #d7ffe3;
+    --rojo: #ff6b6b;
+    
+    /* Sombras */
+    --SombrasCards: 0 8px 32px rgba(12, 37, 24, 0.08);
+    --SombrasFlotantes: 0 12px 40px rgba(12, 37, 24, 0.12);
+}
+
+/* ===== TEMA OSCURO ===== */
+body.theme-dark {
+    --primary-bg: #121212;
+    --secondary-bg: #1e1e1e;
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0a0;
+    --border-color: #333333;
+    --card-bg: #2d2d2d;
+    --sidebar-bg: rgba(45, 45, 45, 0.95);
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    
+    /* Ajustar colores de marca para modo oscuro */
+    --verdeOs: #2ecc71;
+    --grisOs: #95a5a6;
+    --verdeCla: rgba(46, 204, 113, 0.1);
+}
+
+/* ===== APLICACIÓN DE VARIABLES ===== */
+body {
+    background: var(--primary-bg);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+/* Sidebar */
+.sidebar {
+    background: linear-gradient(180deg, var(--sidebar-bg) 0%, var(--sidebar-bg) 100%);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.sidebar .brand h3 {
+    color: var(--text-primary);
+}
+
+.sidebar .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+.sidebar .nav-link {
+    color: var(--text-primary);
+}
+
+.sidebar .nav-link:hover:not(.active) {
+    background: rgba(14, 164, 111, 0.1);
+    color: var(--verdeOs);
+}
+
+/* Main content */
+.main {
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+}
+
+/* Cards */
+.card-stat, .card-report, .chart-card, .table-card {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--SombrasCards);
+}
+
+/* Tables */
+.table {
+    color: var(--text-primary);
+}
+
+.table thead th {
+    color: var(--text-secondary);
+    border-bottom-color: var(--border-color);
+}
+
+.table tbody td {
+    border-bottom-color: var(--border-color);
+}
+
+.table tbody tr:hover td {
+    background: rgba(14, 164, 111, 0.05);
+}
+
+/* Form controls */
+.form-control, .form-select {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.form-control:focus, .form-select:focus {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border-color: var(--verdeOs);
+    box-shadow: 0 0 0 0.2rem rgba(14, 164, 111, 0.25);
+}
+
+.form-control::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+/* Buttons */
+.btn-outline-secondary {
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.btn-outline-secondary:hover {
+    background: var(--text-secondary);
+    border-color: var(--text-secondary);
+    color: white;
+}
+
+.btn-light {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.btn-light:hover {
+    background: var(--border-color);
+    border-color: var(--text-secondary);
+}
+
+/* Dropdowns */
+.dropdown-menu {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.dropdown-item {
+    color: var(--text-primary);
+}
+
+.dropdown-item:hover {
+    background: rgba(14, 164, 111, 0.1);
+    color: var(--verdeOs);
+}
+
+/* Modals */
+.modal-content {
+    background: var(--card-bg);
+    color: var(--text-primary);
+}
+
+.modal-header, .modal-footer {
+    border-color: var(--border-color);
+}
+
+/* Balance card - mantener gradiente en modo oscuro */
+.balance-card {
+    background: linear-gradient(135deg, var(--verdeOs), var(--grisOs));
+    color: white;
+}
+
+/* Category buttons */
+.category-btn {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.category-btn:hover {
+    background: rgba(14, 164, 111, 0.1);
+    color: var(--verdeOs);
+    border-color: var(--verdeOs);
+}
+
+.category-btn.active {
+    background: var(--verdeOs);
+    color: white;
+    border-color: var(--verdeOs);
+}
+
+/* Subcategory buttons */
+.subcategory-btn {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.subcategory-btn:hover {
+    background: rgba(14, 164, 111, 0.1);
+    color: var(--verdeOs);
+    border-color: var(--verdeOs);
+}
+
+.subcategory-btn.active {
+    background: var(--verdeOs);
+    color: white;
+    border-color: var(--verdeOs);
+}
+
+/* Action buttons */
+.view-btn {
+    background-color: rgba(14, 164, 111, 0.1);
+    color: var(--verdeOs);
+}
+
+.edit-btn {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.delete-btn {
+    background-color: rgba(255, 107, 107, 0.1);
+    color: var(--rojo);
+}
+
+/* Progress bars */
+.progress {
+    background: var(--border-color);
+}
+
+/* Dividers */
+.section-divider {
+    background: var(--border-color);
+}
+
+/* Image preview */
+.image-preview {
+    border-color: var(--border-color);
+}
+
+.image-preview-placeholder {
+    color: var(--text-secondary);
+}
+
+/* Badges */
+.badge.bg-light {
+    background: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color);
+}
+
+/* Text utilities */
+.text-muted {
+    color: var(--text-secondary) !important;
+}
+
+/* Nav tabs */
+.nav-tabs .nav-link {
+    color: var(--text-primary);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--verdeOs);
+    border-bottom-color: var(--verdeOs);
+}
+
+/* Form labels */
+.form-label {
+    color: var(--text-primary);
+}
+
+/* ===== ESQUEMAS DE COLOR ADICIONALES ===== */
+
+/* Esquema Azul */
+.color-scheme-blue {
+    --verdeOs: #007bff;
+    --grisOs: #0056b3;
+    --verdeCla: rgba(0, 123, 255, 0.1);
+}
+
+/* Esquema Púrpura */
+.color-scheme-purple {
+    --verdeOs: #6f42c1;
+    --grisOs: #563d7c;
+    --verdeCla: rgba(111, 66, 193, 0.1);
+}
+
+/* Esquema Naranja */
+.color-scheme-orange {
+    --verdeOs: #fd7e14;
+    --grisOs: #e65c00;
+    --verdeCla: rgba(253, 126, 20, 0.1);
+}
+
+/* ===== OVERRIDES ESPECÍFICOS PARA BOOTSTRAP EN MODO OSCURO ===== */
+body.theme-dark .bg-light {
+    background-color: var(--card-bg) !important;
+}
+
+body.theme-dark .text-dark {
+    color: var(--text-primary) !important;
+}
+
+body.theme-dark .border {
+    border-color: var(--border-color) !important;
+}
+
+body.theme-dark .border-bottom {
+    border-bottom-color: var(--border-color) !important;
+}
+
+body.theme-dark .border-top {
+    border-top-color: var(--border-color) !important;
+}
+
+/* Ajustar el botón de cerrar en modales */
+body.theme-dark .btn-close {
+    filter: invert(1);
+}
+
+/* Ajustar placeholders en inputs */
+body.theme-dark input::placeholder {
+    color: var(--text-secondary) !important;
+}
+
+/* Asegurar que los textos en cards mantengan contraste */
+body.theme-dark .card-stat h5,
+body.theme-dark .card-stat h6,
+body.theme-dark .card-stat .fw-bold,
+body.theme-dark .card-stat .fw-semibold {
+    color: var(--text-primary) !important;
+}
+
+/* Ajustar estados vacíos */
+body.theme-dark .empty-state {
+    color: var(--text-secondary);
+}
+
+/* Ajustar iconos en modo oscuro */
+body.theme-dark .bi::before {
+    color: inherit;
+}
+
+/* ===== MEJORAS PARA TEMA OSCURO ===== */
+body.theme-dark .toast {
+    background-color: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color);
+}
+
+body.theme-dark .toast-header {
+    background-color: var(--verdeOs) !important;
+    color: white !important;
+    border-bottom: 1px solid var(--border-color);
+}
+
+body.theme-dark .toast-body {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+}
+
+/* Mejoras para notificaciones en tema oscuro */
+body.theme-dark .notifications-list {
+    background: var(--card-bg);
+}
+
+body.theme-dark .notification-item {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+body.theme-dark .notification-item:hover {
+    background: rgba(14, 164, 111, 0.05);
+}
+
+body.theme-dark .notification-item.unread {
+    background: rgba(14, 164, 111, 0.08);
+    border-left: 4px solid var(--verdeOs);
+}
+
+/* Mejoras para tablas en tema oscuro */
+body.theme-dark .table {
+    --bs-table-bg: var(--card-bg);
+    --bs-table-color: var(--text-primary);
+    --bs-table-border-color: var(--border-color);
+}
+
+body.theme-dark .table th {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: var(--text-primary);
+}
+
+body.theme-dark .table td {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.theme-dark .table tbody tr:hover td {
+    background-color: rgba(14, 164, 111, 0.05);
+}
+
+/* Mejoras para dropdowns en tema oscuro */
+body.theme-dark .dropdown-menu {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+}
+
+body.theme-dark .dropdown-item {
+    color: var(--text-primary);
+}
+
+body.theme-dark .dropdown-item:hover {
+    background-color: rgba(14, 164, 111, 0.1);
+    color: var(--verdeOs);
+}
+
+/* Mejoras para modales en tema oscuro */
+body.theme-dark .modal-content {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+}
+
+body.theme-dark .modal-header {
+    border-bottom-color: var(--border-color);
+}
+
+body.theme-dark .modal-footer {
+    border-top-color: var(--border-color);
+}
+
+/* Mejoras para cards en tema oscuro */
+body.theme-dark .card-stat,
+body.theme-dark .card-report,
+body.theme-dark .table-card {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+/* Mejoras para botones en tema oscuro */
+body.theme-dark .btn-light {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.theme-dark .btn-light:hover {
+    background-color: var(--border-color);
+    border-color: var(--text-secondary);
+}
+
+/* Mejoras para form controls en tema oscuro */
+body.theme-dark .form-control,
+body.theme-dark .form-select {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.theme-dark .form-control:focus,
+body.theme-dark .form-select:focus {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border-color: var(--verdeOs);
+}
+
+/* Mejoras para la barra de navegación en tema oscuro */
+body.theme-dark .sidebar {
+    background: linear-gradient(180deg, var(--sidebar-bg) 0%, var(--sidebar-bg) 100%);
+    border: 1px solid var(--border-color);
+}
+
+body.theme-dark .nav-link {
+    color: var(--text-primary);
+}
+
+body.theme-dark .nav-link:hover:not(.active) {
+    background: rgba(14, 164, 111, 0.1);
+    color: var(--verdeOs);
+}
+
+/* Mejoras para categorías y subcategorías en tema oscuro */
+body.theme-dark .category-btn {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+body.theme-dark .category-btn:hover {
+    background: rgba(14, 164, 111, 0.1);
+    color: var(--verdeOs);
+    border-color: var(--verdeOs);
+}
+
+body.theme-dark .category-btn.active {
+    background: var(--verdeOs);
+    color: white;
+    border-color: var(--verdeOs);
+}
+
+body.theme-dark .subcategory-btn {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+body.theme-dark .subcategory-btn:hover {
+    background: rgba(14, 164, 111, 0.1);
+    color: var(--verdeOs);
+    border-color: var(--verdeOs);
+}
+
+body.theme-dark .subcategory-btn.active {
+    background: var(--verdeOs);
+    color: white;
+    border-color: var(--verdeOs);
+}
+
+/* Eliminar sombras verdes residuales */
+body.theme-dark .sidebar,
+body.theme-dark .card-stat,
+body.theme-dark .card-report,
+body.theme-dark .table-card,
+body.theme-dark .nav-link.active {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+body.theme-dark .nav-link.active {
+    box-shadow: 0 4px 12px rgba(14, 164, 111, 0.3) !important;
+}
+
+/* Mejoras específicas para filtros */
+body.theme-dark .btn-outline-success {
+    color: var(--verdeOs);
+    border-color: var(--verdeOs);
+}
+
+body.theme-dark .btn-outline-success:hover {
+    background-color: var(--verdeOs);
+    color: white;
+}
+
+body.theme-dark .btn-outline-success.active {
+    background-color: var(--verdeOs);
+    color: white;
+}
+
+/* Eliminar sombras verdes residuales en todos los modos */
+.color-scheme-blue .nav-link.active,
+.color-scheme-blue .category-btn.active,
+.color-scheme-blue .subcategory-btn.active,
+.color-scheme-blue .btn-outline-success.active {
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3) !important;
+}
+
+.color-scheme-purple .nav-link.active,
+.color-scheme-purple .category-btn.active,
+.color-scheme-purple .subcategory-btn.active,
+.color-scheme-purple .btn-outline-success.active {
+    box-shadow: 0 4px 12px rgba(111, 66, 193, 0.3) !important;
+}
+
+.color-scheme-orange .nav-link.active,
+.color-scheme-orange .category-btn.active,
+.color-scheme-orange .subcategory-btn.active,
+.color-scheme-orange .btn-outline-success.active {
+    box-shadow: 0 4px 12px rgba(253, 126, 20, 0.3) !important;
+}
+
+/* Asegurar que las sombras se actualicen en todos los elementos */
+.color-scheme-blue .sidebar,
+.color-scheme-blue .card-stat,
+.color-scheme-blue .card-report {
+    box-shadow: 0 8px 32px rgba(0, 123, 255, 0.08) !important;
+}
+
+.color-scheme-purple .sidebar,
+.color-scheme-purple .card-stat,
+.color-scheme-purple .card-report {
+    box-shadow: 0 8px 32px rgba(111, 66, 193, 0.08) !important;
+}
+
+.color-scheme-orange .sidebar,
+.color-scheme-orange .card-stat,
+.color-scheme-orange .card-report {
+    box-shadow: 0 8px 32px rgba(253, 126, 20, 0.08) !important;
+}
+
+/* Eliminar sombras verdes residuales */
+.nav-link.active,
+.category-btn.active,
+.subcategory-btn.active,
+.btn-outline-success.active {
+    box-shadow: 0 4px 12px var(--shadow-color) !important;
+}
+
+/* Mejorar botones de categorías con colores del esquema */
+.category-btn {
+    background: rgba(var(--primary-rgb), 0.1) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid rgba(var(--primary-rgb), 0.2) !important;
+    transition: all 0.3s ease;
+}
+
+.category-btn:hover {
+    background: rgba(var(--primary-rgb), 0.2) !important;
+    color: var(--verdeOs) !important;
+    border-color: var(--verdeOs) !important;
+    transform: translateY(-2px);
+}
+
+.category-btn.active {
+    background: var(--verdeOs) !important;
+    color: white !important;
+    border-color: var(--verdeOs) !important;
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3) !important;
+}
+
+/* Subcategorías */
+.subcategory-btn {
+    background: rgba(var(--primary-rgb), 0.05) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid rgba(var(--primary-rgb), 0.1) !important;
+}
+
+.subcategory-btn:hover {
+    background: rgba(var(--primary-rgb), 0.15) !important;
+    color: var(--verdeOs) !important;
+    border-color: var(--verdeOs) !important;
+}
+
+.subcategory-btn.active {
+    background: var(--verdeOs) !important;
+    color: white !important;
+    border-color: var(--verdeOs) !important;
+}
+
+/* Variables RGB para opacidades */
+:root {
+    --primary-rgb: 14, 164, 111; /* RGB de verdeOs por defecto */
+}
+
+.color-scheme-blue {
+    --primary-rgb: 0, 123, 255; /* RGB para azul */
+}
+
+.color-scheme-purple {
+    --primary-rgb: 111, 66, 193; /* RGB para púrpura */
+}
+
+.color-scheme-orange {
+    --primary-rgb: 253, 126, 20; /* RGB para naranja */
+}
+
+/* ---- ICONO PREMIUM ---- */
+
+.premium-icon-sm {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 1.1rem;
+    z-index: 10;
+}
+
+.premium-icon-profile {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 2rem;
+    padding: 1px;
+    z-index: 10;
+}
+
+.premium-icon-preview {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 2rem;
+    padding: 4px;
+    z-index: 10;
+}

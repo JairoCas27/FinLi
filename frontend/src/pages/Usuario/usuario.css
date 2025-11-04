@@ -2179,3 +2179,155 @@ a {
     background-color: rgba(14, 164, 111, 0.05);
     transform: translateX(5px);
 }
+
+/* ---- ESTILOS PARA EL MENSAJE DE AHORRO ---- */
+.savings-message-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+    border-left: 4px solid var(--verdeOs);
+}
+
+.savings-image {
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* ---- ESTILOS PARA EL INDICADOR PREMIUM ---- */
+.position-relative {
+    position: relative;
+}
+
+.position-absolute {
+    position: absolute;
+}
+
+.bottom-0 {
+    bottom: 0;
+}
+
+.end-0 {
+    right: 0;
+}
+
+/* ---- ESTILOS PARA EL MODAL DE CONFIGURACIONES PREMIUM ---- */
+.premium-settings-modal .modal-content {
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: var(--SombrasFlotantes);
+}
+
+.premium-settings-header {
+    background: linear-gradient(135deg, var(--verdeOs), var(--grisOs));
+    color: white;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.premium-settings-body {
+    padding: 2rem;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.premium-settings-footer {
+    padding: 1.5rem;
+    border-top: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+}
+
+.theme-options, .color-schemes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.theme-option, .color-scheme {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0.5rem;
+    border-radius: 10px;
+    border: 2px solid transparent;
+}
+
+.theme-option:hover, .color-scheme:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.theme-option.active, .color-scheme.active {
+    border-color: var(--verdeOs);
+    background-color: rgba(14, 164, 111, 0.05);
+}
+
+.theme-preview {
+    width: 80px;
+    height: 60px;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.light-theme {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+}
+
+.dark-theme {
+    background: linear-gradient(135deg, #343a40, #495057);
+}
+
+.auto-theme {
+    background: linear-gradient(135deg, #f8f9fa 50%, #343a40 50%);
+}
+
+.color-preview {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-bottom: 0.5rem;
+    border: 2px solid rgba(0,0,0,0.1);
+}
+
+.default-scheme {
+    background: linear-gradient(135deg, var(--verdeOs), var(--grisOs));
+}
+
+.blue-scheme {
+    background: linear-gradient(135deg, #007bff, #6610f2);
+}
+
+.purple-scheme {
+    background: linear-gradient(135deg, #6f42c1, #e83e8c);
+}
+
+.orange-scheme {
+    background: linear-gradient(135deg, #fd7e14, #e74a3b);
+}
+
+.theme-label, .color-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.premium-settings-group {
+    background: rgba(0,0,0,0.02);
+    padding: 1rem;
+    border-radius: 10px;
+}
+
+.premium-features-list {
+    background: rgba(14, 164, 111, 0.05);
+    padding: 1rem;
+    border-radius: 10px;
+}
+
+.premium-feature {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0;
+    font-weight: 500;
+}

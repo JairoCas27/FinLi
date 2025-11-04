@@ -169,6 +169,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Inicializar filtros dinámicos
     initializeDynamicFilters();
+
+    // Inicializar configuraciones premium
+    initializePremiumSettings();
     
     // Asegurar que el select de métodos de pago esté actualizado
     updateIncomeTableMessage();
@@ -223,6 +226,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('openPremiumModalBtn').addEventListener('click', function() {
         premiumModal.show();
     });
+
+    setTimeout(updateSavingsMessage, 500);
 });
 
 // ---- CARGAR DATOS DESDE LOCALSTORAGE ----
@@ -935,6 +940,7 @@ function addTransaction() {
     // NOTIFICACIONES SINCRONIZADAS
     addNotification(`Gasto registrado: ${description} - S/. ${amount.toFixed(2)}`, 'success');
     showNotification('Gasto registrado exitosamente', 'success');
+    updateSavingsMessage();
 }
 
 // ---- ACTUALIZAR BALANCE TOTAL ----
@@ -1734,6 +1740,15 @@ function initializeEventListeners() {
         });
     }
 
+    // Configurar evento para abrir modal de ajustes premium
+    const settingsOptionBtn = document.getElementById('settingsOptionBtn');
+    if (settingsOptionBtn) {
+        settingsOptionBtn.addEventListener('click', function() {
+            const premiumSettingsModal = new bootstrap.Modal(document.getElementById('premiumSettingsModal'));
+            premiumSettingsModal.show();
+        });
+    }
+
     // Event listeners para la sección de notificaciones
     const markAllReadBtn = document.getElementById('markAllReadBtn');
     const clearAllNotificationsBtn = document.getElementById('clearAllNotificationsBtn');
@@ -1795,6 +1810,14 @@ function initializeEventListeners() {
             }
         });
     }
+
+    // Inicializar configuraciones premium
+    initializePremiumSettings();
+    
+    // Actualizar mensaje de ahorro cada vez que se carga la sección inicio
+    document.querySelector('[data-section="inicio"]').addEventListener('click', function() {
+        setTimeout(updateSavingsMessage, 100);
+    });
 }
 
 function handleImageUpload(e, previewId) {
@@ -3363,6 +3386,7 @@ function deleteTransaction(id) {
         addNotification(`Transacción eliminada: ${transaction.description} - S/. ${transaction.amount.toFixed(2)}`, 'warning');
     }
     showNotification('Transacción eliminada exitosamente', 'success');
+    updateSavingsMessage();
 }
 
 function viewImage(imageSrc) {
@@ -3790,12 +3814,14 @@ function resetProfilePhoto() {
     const initials = getInitials(userProfile.name);
     const profilePicturePreview = document.getElementById('profilePicturePreview');
     if (profilePicturePreview) {
-        profilePicturePreview.innerHTML = 
-            `<div id="profilePicturePlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:3rem;">${initials}</div>`;
+        // AHORA INCLUIMOS AMBAS COSAS: EL PLACEHOLDER Y EL ICONO PREMIUM
+        profilePicturePreview.innerHTML =
+            `<div id="profilePicturePlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:3rem;">${initials}</div>
+            <i class="bi bi-patch-check-fill text-warning" style="position:absolute;bottom:10px;right:10px;font-size:2.2rem;border-radius:50%;padding:4px;z-index:10;"></i>`;
     }
     const removeProfilePhotoBtn = document.getElementById('removeProfilePhotoBtn');
-    if (removeProfilePhotoBtn) {
-        removeProfilePhotoBtn.style.display = 'none';
+    if (removeProfilePhotoBtn) {    
+    removeProfilePhotoBtn.style.display = 'none';
     }
 }
 
@@ -3911,9 +3937,15 @@ function updateProfileInApp() {
     const userAvatar = document.querySelector('.avatar-sm');
     if (userAvatar) {
         if (userProfile.avatar) {
-            userAvatar.innerHTML = `<img src="${userProfile.avatar}" alt="Avatar">`;
+            userAvatar.innerHTML = `
+                <img src="${userProfile.avatar}" alt="Avatar">
+                <i class="bi bi-patch-check-fill text-warning premium-icon-sm"></i>
+            `;
         } else {
-            userAvatar.innerHTML = `<span>${getInitials(userProfile.name)}</span>`;
+            userAvatar.innerHTML = `
+                <span>${getInitials(userProfile.name)}</span>
+                <i class="bi bi-patch-check-fill text-warning premium-icon-sm"></i>
+            `;
         }
     }
     
@@ -3928,13 +3960,15 @@ function updateProfileInApp() {
     const profileAvatar = document.getElementById('profileAvatar');
     if (profileAvatar) {
         if (userProfile.avatar) {
-            profileAvatar.innerHTML = `<img src="${userProfile.avatar}" alt="Avatar">`;
-            const avatarPlaceholder = document.getElementById('avatarPlaceholder');
-            if (avatarPlaceholder) {
-                avatarPlaceholder.style.display = 'none';
-            }
+            profileAvatar.innerHTML = `
+                <img src="${userProfile.avatar}" alt="Avatar">
+                <i class="bi bi-patch-check-fill text-warning premium-icon-profile"></i>
+            `;
         } else {
-            profileAvatar.innerHTML = `<div id="avatarPlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:2rem;">${getInitials(userProfile.name)}</div>`;
+            profileAvatar.innerHTML = `
+                <div id="avatarPlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:2rem;">${getInitials(userProfile.name)}</div>
+                <i class="bi bi-patch-check-fill text-warning premium-icon-profile"></i>
+            `;
         }
     }
     
@@ -4758,6 +4792,7 @@ function addIncome() {
     // NOTIFICACIONES
     addNotification(`Ingreso registrado: S/. ${amount.toFixed(2)} en ${method.name}`, 'success');
     showNotification('Ingreso registrado exitosamente', 'success');
+    updateSavingsMessage();
 }
 
 // ---- RENDERIZAR REGISTROS DE INGRESOS ----
@@ -4847,6 +4882,7 @@ function deleteIncomeRecord(id) {
     
     addNotification(`Ingreso eliminado: ${income.description} - S/. ${income.amount.toFixed(2)}`, 'warning');
     showNotification('Ingreso eliminado exitosamente', 'success');
+    updateSavingsMessage();
 }
 
 // ---- EDITAR REGISTRO DE INGRESO ----
@@ -5245,4 +5281,410 @@ function deleteScheduledPayment(id) {
     renderScheduledPayments();
     
     showNotification('Pago programado eliminado exitosamente', 'success');
+}
+
+// ---- FUNCIONALIDADES PREMIUM ----
+
+// Función para actualizar el mensaje de ahorro
+function updateSavingsMessage() {
+    const savingsMessageElement = document.getElementById('savingsMessage');
+    const savingsProgressElement = document.getElementById('savingsProgress');
+    const savingsDetailElement = document.getElementById('savingsDetail');
+    
+    if (!savingsMessageElement || !savingsProgressElement || !savingsDetailElement) return;
+    
+    // Obtener datos del día actual
+    const today = new Date();
+    const todayString = today.toISOString().slice(0, 10);
+    
+    // Calcular ingresos del día
+    const dailyIncome = incomeRecords
+        .filter(income => {
+            const incomeDate = new Date(income.date).toISOString().slice(0, 10);
+            return incomeDate === todayString;
+        })
+        .reduce((sum, income) => sum + income.amount, 0);
+    
+    // Calcular gastos del día
+    const dailyExpenses = transactions
+        .filter(transaction => {
+            const transDate = new Date(transaction.dateTime).toISOString().slice(0, 10);
+            return transDate === todayString && 
+                   transaction.type === 'gasto' && 
+                   transaction.status !== 'cancelado';
+        })
+        .reduce((sum, transaction) => sum + transaction.amount, 0);
+    
+    // Calcular balance del día
+    const dailyBalance = dailyIncome - dailyExpenses;
+    
+    // Generar mensaje personalizado
+    let message = '';
+    let progress = 0;
+    let detail = '';
+    
+    if (dailyBalance > 0) {
+        if (dailyBalance > dailyIncome * 0.5) {
+            message = '¡Excelente! Estás ahorrando más del 50% de tus ingresos hoy.';
+            progress = 100;
+        } else if (dailyBalance > dailyIncome * 0.3) {
+            message = '¡Buen trabajo! Estás ahorrando una parte importante de tus ingresos.';
+            progress = 75;
+        } else {
+            message = 'Vas por buen camino. Sigue controlando tus gastos.';
+            progress = 50;
+        }
+        detail = `Hoy has ahorrado S/. ${dailyBalance.toFixed(2)} de S/. ${dailyIncome.toFixed(2)} ingresados.`;
+    } else if (dailyBalance === 0) {
+        message = 'Has equilibrado tus finanzas hoy.';
+        progress = 25;
+        detail = `Tus ingresos y gastos están equilibrados: S/. ${dailyIncome.toFixed(2)}.`;
+    } else {
+        message = 'Cuidado, hoy estás gastando más de lo que ingresas.';
+        progress = 10;
+        detail = `Hoy has gastado S/. ${Math.abs(dailyBalance).toFixed(2)} más de lo que has ingresado.`;
+    }
+    
+    // Si no hay movimientos hoy
+    if (dailyIncome === 0 && dailyExpenses === 0) {
+        message = 'No hay movimientos registrados hoy.';
+        detail = 'Comienza registrando tus ingresos y gastos.';
+        progress = 0;
+    }
+    
+    // Actualizar elementos
+    savingsMessageElement.textContent = message;
+    savingsProgressElement.style.width = `${progress}%`;
+    savingsDetailElement.textContent = detail;
+}
+
+// Función para inicializar configuraciones premium
+function initializePremiumSettings() {
+    // Cargar configuraciones guardadas
+    loadPremiumSettings();
+    
+    // Configurar evento para abrir modal de ajustes
+    const settingsOptionBtn = document.getElementById('settingsOptionBtn');
+    if (settingsOptionBtn) {
+        settingsOptionBtn.addEventListener('click', function() {
+            const premiumSettingsModal = new bootstrap.Modal(document.getElementById('premiumSettingsModal'));
+            premiumSettingsModal.show();
+        });
+    }
+    
+    // Configurar eventos para temas
+    document.querySelectorAll('.theme-option').forEach(option => {
+        option.addEventListener('click', function() {
+            document.querySelectorAll('.theme-option').forEach(opt => opt.classList.remove('active'));
+            this.classList.add('active');
+            const theme = this.getAttribute('data-theme');
+            
+            // Aplicar tema inmediatamente para previsualización
+            applyTheme(theme);
+        });
+    });
+    
+    // Configurar eventos para esquemas de color
+    document.querySelectorAll('.color-scheme').forEach(scheme => {
+        scheme.addEventListener('click', function() {
+            document.querySelectorAll('.color-scheme').forEach(sch => sch.classList.remove('active'));
+            this.classList.add('active');
+            const colorScheme = this.getAttribute('data-scheme');
+            
+            // Aplicar esquema de color inmediatamente para previsualización
+            applyColorScheme(colorScheme);
+        });
+    });
+    
+    // Configurar evento para guardar configuraciones
+    const savePremiumSettingsBtn = document.getElementById('savePremiumSettingsBtn');
+    if (savePremiumSettingsBtn) {
+        savePremiumSettingsBtn.addEventListener('click', savePremiumSettings);
+    }
+}
+
+// Función mejorada para cargar configuraciones premium
+function loadPremiumSettings() {
+    const savedSettings = localStorage.getItem('finli-premium-settings');
+    if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        
+        // Aplicar tema
+        if (settings.theme) {
+            // Activar el botón correspondiente en la UI
+            document.querySelectorAll('.theme-option').forEach(option => {
+                if (option.getAttribute('data-theme') === settings.theme) {
+                    option.classList.add('active');
+                } else {
+                    option.classList.remove('active');
+                }
+            });
+            
+            // Aplicar el tema después de un breve delay para asegurar que el DOM esté listo
+            setTimeout(() => {
+                applyTheme(settings.theme);
+            }, 100);
+        }
+        
+        // Aplicar esquema de color
+        if (settings.colorScheme) {
+            // Activar el botón correspondiente en la UI
+            document.querySelectorAll('.color-scheme').forEach(scheme => {
+                if (scheme.getAttribute('data-scheme') === settings.colorScheme) {
+                    scheme.classList.add('active');
+                } else {
+                    scheme.classList.remove('active');
+                }
+            });
+            
+            // Aplicar el esquema de color después de un breve delay
+            setTimeout(() => {
+                applyColorScheme(settings.colorScheme);
+            }, 150);
+        }
+        
+        // Aplicar configuraciones de notificaciones
+        if (settings.pushNotifications !== undefined) {
+            document.getElementById('pushNotifications').checked = settings.pushNotifications;
+        }
+        
+        if (settings.emailNotifications !== undefined) {
+            document.getElementById('emailNotifications').checked = settings.emailNotifications;
+        }
+        
+        if (settings.soundNotifications !== undefined) {
+            document.getElementById('soundNotifications').checked = settings.soundNotifications;
+        }
+        
+        // Aplicar configuraciones de seguridad
+        if (settings.biometricAuth !== undefined) {
+            document.getElementById('biometricAuth').checked = settings.biometricAuth;
+        }
+        
+        if (settings.autoLogout !== undefined) {
+            document.getElementById('autoLogout').checked = settings.autoLogout;
+        }
+        
+        if (settings.dataEncryption !== undefined) {
+            document.getElementById('dataEncryption').checked = settings.dataEncryption;
+        }
+        
+        // Refrescar la interfaz después de cargar todo
+        setTimeout(() => {
+            refreshInterface();
+        }, 200);
+        
+    } else {
+        // Configuración por defecto
+        setTimeout(() => {
+            applyTheme('light');
+            applyColorScheme('default');
+        }, 100);
+    }
+}
+
+// Función para aplicar tema
+function applyTheme(theme) {
+    const body = document.body;
+    const root = document.documentElement;
+    
+    // Remover todas las clases de tema existentes
+    body.classList.remove('theme-light', 'theme-dark', 'theme-auto');
+    root.classList.remove('theme-light', 'theme-dark', 'theme-auto');
+    
+    // Aplicar nuevo tema
+    let actualTheme = theme;
+    
+    if (theme === 'auto') {
+        // Detectar preferencia del sistema
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            actualTheme = 'dark';
+        } else {
+            actualTheme = 'light';
+        }
+    }
+    
+    // Aplicar clases al body y root
+    body.classList.add(`theme-${actualTheme}`);
+    root.classList.add(`theme-${actualTheme}`);
+    
+    // También aplicar la clase del tema seleccionado para referencia
+    body.classList.add(`theme-${theme}`);
+    root.classList.add(`theme-${theme}`);
+    
+    console.log(`Tema aplicado: ${theme} (renderizado: ${actualTheme})`);
+}
+
+// Función para aplicar esquema de color
+function applyColorScheme(scheme) {
+    const root = document.documentElement;
+    
+    // Remover clases de esquema existentes
+    root.classList.remove('color-scheme-default', 'color-scheme-blue', 'color-scheme-purple', 'color-scheme-orange');
+    
+    // Aplicar nuevo esquema
+    root.classList.add(`color-scheme-${scheme}`);
+    
+    // Actualizar variables CSS según el esquema
+    updateCSSColorVariables(scheme);
+}
+
+// Función mejorada para actualizar variables CSS según el esquema de color
+function updateCSSColorVariables(scheme) {
+    const root = document.documentElement;
+    const isDarkMode = document.body.classList.contains('theme-dark');
+    
+    let primaryColor, secondaryColor, accentColor, shadowColor;
+    
+    switch(scheme) {
+        case 'blue':
+            primaryColor = isDarkMode ? '#3399ff' : '#007bff';
+            secondaryColor = isDarkMode ? '#66b3ff' : '#0056b3';
+            accentColor = isDarkMode ? 'rgba(51, 153, 255, 0.1)' : '#cce5ff';
+            shadowColor = isDarkMode ? 'rgba(51, 153, 255, 0.3)' : 'rgba(0, 123, 255, 0.3)';
+            break;
+        case 'purple':
+            primaryColor = isDarkMode ? '#9d6bff' : '#6f42c1';
+            secondaryColor = isDarkMode ? '#b699ff' : '#563d7c';
+            accentColor = isDarkMode ? 'rgba(157, 107, 255, 0.1)' : '#e8d6ff';
+            shadowColor = isDarkMode ? 'rgba(157, 107, 255, 0.3)' : 'rgba(111, 66, 193, 0.3)';
+            break;
+        case 'orange':
+            primaryColor = isDarkMode ? '#ff9933' : '#fd7e14';
+            secondaryColor = isDarkMode ? '#ffb366' : '#e65c00';
+            accentColor = isDarkMode ? 'rgba(255, 153, 51, 0.1)' : '#ffe8d6';
+            shadowColor = isDarkMode ? 'rgba(255, 153, 51, 0.3)' : 'rgba(253, 126, 20, 0.3)';
+            break;
+        default: // default (verde FinLi)
+            primaryColor = isDarkMode ? '#2ecc71' : '#0ea46f';
+            secondaryColor = isDarkMode ? '#27ae60' : '#0a8358';
+            accentColor = isDarkMode ? 'rgba(46, 204, 113, 0.1)' : '#d7ffe3';
+            shadowColor = isDarkMode ? 'rgba(46, 204, 113, 0.3)' : 'rgba(14, 164, 111, 0.3)';
+    }
+    
+    // Actualizar variables CSS
+    root.style.setProperty('--verdeOs', primaryColor);
+    root.style.setProperty('--grisOs', secondaryColor);
+    root.style.setProperty('--verdeCla', accentColor);
+    
+    // Actualizar sombras
+    root.style.setProperty('--SombrasCards', `0 8px 32px ${isDarkMode ? 'rgba(0, 0, 0, 0.2)' : shadowColor}`);
+    root.style.setProperty('--SombrasFlotantes', `0 12px 40px ${isDarkMode ? 'rgba(0, 0, 0, 0.25)' : shadowColor}`);
+    
+    console.log(`Esquema de color aplicado: ${scheme} (modo oscuro: ${isDarkMode})`);
+}
+
+// Función para recargar la página después de guardar configuraciones
+function savePremiumSettings() {
+    const theme = document.querySelector('.theme-option.active')?.getAttribute('data-theme') || 'light';
+    const colorScheme = document.querySelector('.color-scheme.active')?.getAttribute('data-scheme') || 'default';
+    
+    const settings = {
+        theme: theme,
+        colorScheme: colorScheme,
+        pushNotifications: document.getElementById('pushNotifications')?.checked || false,
+        emailNotifications: document.getElementById('emailNotifications')?.checked || false,
+        soundNotifications: document.getElementById('soundNotifications')?.checked || false,
+        biometricAuth: document.getElementById('biometricAuth')?.checked || false,
+        autoLogout: document.getElementById('autoLogout')?.checked || false,
+        dataEncryption: document.getElementById('dataEncryption')?.checked || false
+    };
+    
+    // Guardar en localStorage
+    localStorage.setItem('finli-premium-settings', JSON.stringify(settings));
+    
+    // Recargar la página después de guardar
+    setTimeout(() => {
+        location.reload();
+    }, 500);
+    
+    // Cerrar modal
+    const premiumSettingsModal = bootstrap.Modal.getInstance(document.getElementById('premiumSettingsModal'));
+    if (premiumSettingsModal) {
+        premiumSettingsModal.hide();
+    }
+    
+    showNotification('Configuraciones premium guardadas correctamente', 'success');
+}
+
+
+// Función mejorada para aplicar esquemas de color
+function applyColorScheme(scheme) {
+    const root = document.documentElement;
+    
+    // Remover clases de esquema existentes
+    root.classList.remove('color-scheme-default', 'color-scheme-blue', 'color-scheme-purple', 'color-scheme-orange');
+    
+    // Aplicar nuevo esquema
+    root.classList.add(`color-scheme-${scheme}`);
+    
+    // Actualizar variables CSS según el esquema
+    updateCSSColorVariables(scheme);
+    
+    // Actualizar variables RGB para opacidades
+    updateRGBVariables(scheme);
+}
+
+// Función para actualizar variables RGB
+function updateRGBVariables(scheme) {
+    const root = document.documentElement;
+    let primaryRGB = '14, 164, 111'; // Default verde
+    
+    switch(scheme) {
+        case 'blue':
+            primaryRGB = '0, 123, 255';
+            break;
+        case 'purple':
+            primaryRGB = '111, 66, 193';
+            break;
+        case 'orange':
+            primaryRGB = '253, 126, 20';
+            break;
+    }
+    
+    root.style.setProperty('--primary-rgb', primaryRGB);
+}
+
+// Actualizar la función loadPremiumSettings para incluir RGB
+function loadPremiumSettings() {
+    const savedSettings = localStorage.getItem('finli-premium-settings');
+    if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        
+        // Aplicar tema
+        if (settings.theme) {
+            document.querySelectorAll('.theme-option').forEach(option => {
+                if (option.getAttribute('data-theme') === settings.theme) {
+                    option.classList.add('active');
+                } else {
+                    option.classList.remove('active');
+                }
+            });
+            
+            setTimeout(() => {
+                applyTheme(settings.theme);
+            }, 100);
+        }
+        
+        // Aplicar esquema de color
+        if (settings.colorScheme) {
+            document.querySelectorAll('.color-scheme').forEach(scheme => {
+                if (scheme.getAttribute('data-scheme') === settings.colorScheme) {
+                    scheme.classList.add('active');
+                } else {
+                    scheme.classList.remove('active');
+                }
+            });
+            
+            setTimeout(() => {
+                applyColorScheme(settings.colorScheme);
+            }, 150);
+        }
+    } else {
+        // Configuración por defecto
+        setTimeout(() => {
+            applyTheme('light');
+            applyColorScheme('default');
+        }, 100);
+    }
 }

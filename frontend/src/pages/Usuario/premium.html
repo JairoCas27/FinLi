@@ -6,9 +6,10 @@
     <title>FinLi - Premium</title>
     <link rel="icon" href="/frontend/public/img/Logo/LogoFinLi.png" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="usuario.css">
+    <link rel="stylesheet" href="premium.css">
 </head>
 <body>
     <div class="container-fluid">
@@ -67,8 +68,11 @@
                         
                         <!-- Avatar y datos rápidos del usuario -->
                         <div class="d-flex align-items-center gap-2">
-                            <div class="avatar-sm" style="background:linear-gradient(135deg,var(--verdeOs),var(--grisOs))">
+                            <div class="avatar-sm position-relative" style="background:linear-gradient(135deg,var(--verdeOs),var(--grisOs))">
+                                <!-- Contenido del avatar -->
                                 <span id="userInitials">JC</span>
+                                <!-- Icono premium CORREGIDO -->
+                                <i class="bi bi-patch-check-fill text-warning premium-icon-sm"></i>
                             </div>
                             <div class="text-end d-none d-sm-block">
                                 <div id="user-name" style="font-weight:600">Jairo Castillo</div>
@@ -80,6 +84,25 @@
 
                 <!-- SECCIÓN INICIO -->
                 <section id="inicio" class="content-section active">
+                    <!-- Mensaje de Ahorro Personalizado -->
+                    <div class="card-stat fade-in mb-4 savings-message-card">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h5 class="d-flex align-items-center gap-2 text-primary">
+                                    <i class="bi bi-graph-up-arrow"></i> Tu Progreso Financiero
+                                </h5>
+                                <p class="mb-2" id="savingsMessage">Calculando tu progreso...</p>
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div id="savingsProgress" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <small class="text-muted" id="savingsDetail">Analizando tus ingresos y gastos...</small>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <img src="/frontend/public/img/Contenido/principal_02.png" alt="Ahorro" class="img-fluid savings-image" style="max-height: 120px;">
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Balance Card -->
                     <div class="balance-card fade-in">
                         <div class="d-flex justify-content-between align-items-start">
@@ -733,11 +756,13 @@
                 <section id="perfil" class="content-section">
                     <div class="card-stat fade-in mb-4">
                         <div class="profile-header">
-                            <div class="profile-avatar" id="profileAvatar">
+                            <div class="profile-avatar position-relative" id="profileAvatar">
                                 <div id="avatarPlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:2rem;">JC</div>
+                                <!-- Icono premium -->
+                                <i class="bi bi-patch-check-fill text-warning premium-icon-profile"></i>
                             </div>
                             <div class="profile-info">
-                                <div class="profile-name">Jairo Castillo</div>
+                                <div class="profile-name">Jairo Castillo <i class="bi bi-patch-check-fill text-warning ms-1"></i></div>
                                 <div class="profile-email">jairo@utp.edu.pe</div>
                             </div>
                             <button class="btn btn-outline-success" id="editProfileBtn">
@@ -752,8 +777,10 @@
                             <h5 class="mb-3">Información Personal</h5>
                             <form>
                                 <div class="profile-picture-edit">
-                                    <div class="profile-picture-preview" id="profilePicturePreview">
+                                    <div class="profile-picture-preview position-relative" id="profilePicturePreview">
                                         <div id="profilePicturePlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:3rem;">JC</div>
+                                        <!-- Icono premium -->
+                                        <i class="bi bi-patch-check-fill text-warning premium-icon-preview"></i>
                                     </div>
                                     <button type="button" class="profile-picture-change-btn" id="changeProfilePictureBtn">
                                         <i class="bi bi-camera me-1"></i> Cambiar foto de perfil
@@ -817,11 +844,11 @@
                             </div>
                         </div>
 
-                        <div class="settings-option">
+                        <div class="settings-option" id="settingsOptionBtn">
                             <div class="settings-option-label">
                                 <i class="bi bi-gear"></i>
                                 <div>
-                                    <div class="fw-semibold">Ajustes</div>
+                                    <div class="fw-semibold">Ajustes Premium</div>
                                     <div class="small muted">Configuración general de la aplicación</div>
                                 </div>
                             </div>
@@ -1029,6 +1056,87 @@
                             <i class="bi bi-send me-2"></i>Enviar
                         </button>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Configuraciones Premium -->
+    <div class="modal fade premium-settings-modal" id="premiumSettingsModal" tabindex="-1" aria-labelledby="premiumSettingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="premium-settings-header">
+                    <h5 class="modal-title" id="premiumSettingsModalLabel">
+                        <i class="bi bi-stars me-2 text-warning"></i>Configuraciones Premium
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="premium-settings-body">
+                    <div class="row">
+                        <div class="col-12 mb-4">
+                            <h6 class="text-primary mb-3"><i class="bi bi-palette me-2"></i>Apariencia</h6>
+                            
+                            <div class="theme-options mb-4">
+                                <div class="theme-option active" data-theme="light">
+                                    <div class="theme-preview light-theme"></div>
+                                    <div class="theme-label">Tema Claro</div>
+                                </div>
+                                <div class="theme-option" data-theme="dark">
+                                    <div class="theme-preview dark-theme"></div>
+                                    <div class="theme-label">Tema Oscuro</div>
+                                </div>
+                                <div class="theme-option" data-theme="auto">
+                                    <div class="theme-preview auto-theme"></div>
+                                    <div class="theme-label">Automático</div>
+                                </div>
+                            </div>
+
+                            <div class="color-schemes">
+                                <div class="color-scheme active" data-scheme="default">
+                                    <div class="color-preview default-scheme"></div>
+                                    <div class="color-label">Verde FinLi</div>
+                                </div>
+                                <div class="color-scheme" data-scheme="blue">
+                                    <div class="color-preview blue-scheme"></div>
+                                    <div class="color-label">Azul Profesional</div>
+                                </div>
+                                <div class="color-scheme" data-scheme="purple">
+                                    <div class="color-preview purple-scheme"></div>
+                                    <div class="color-label">Púrpura Creativo</div>
+                                </div>
+                                <div class="color-scheme" data-scheme="orange">
+                                    <div class="color-preview orange-scheme"></div>
+                                    <div class="color-label">Naranja Energía</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-divider mt-4 mb-4"></div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3"><i class="bi bi-graph-up me-2"></i>Funcionalidades Avanzadas</h6>
+                            <div class="premium-features-list">
+                                <div class="premium-feature">
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    <span>Análisis financiero avanzado</span>
+                                </div>
+                                <div class="premium-feature">
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    <span>Exportación de reportes en múltiples formatos</span>
+                                </div>
+                                <div class="premium-feature">
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    <span>Soporte prioritario 24/7</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="premium-settings-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" id="savePremiumSettingsBtn">Guardar Configuración</button>
                 </div>
             </div>
         </div>
