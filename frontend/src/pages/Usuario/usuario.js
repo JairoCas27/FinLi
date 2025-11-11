@@ -1,214 +1,11 @@
-// Obtenemos el usuario logueado desde sessionStorage
-let userProfile = JSON.parse(sessionStorage.getItem("loggedUser")) || null;
-
-
-// ===============================
-// 🔧 FUNCIÓN PARA ACTUALIZAR PERFIL
-// ===============================
-
-// Capturamos el evento de envío del formulario de perfil
-const profileForm = document.getElementById("profileForm");
-if (profileForm) {
-    profileForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        // Obtenemos el ID del usuario logueado
-        const user = JSON.parse(sessionStorage.getItem("loggedUser"));
-        if (!user || !user.id) {
-            alert("❌ No se encontró el usuario en sesión.");
-            return;
-        }
-
-        const userId = user.id;
-
-        // Obtenemos los valores del formulario
-        const data = {
-            nombre: document.getElementById("firstName").value.trim(),
-            apellidoPaterno: document.getElementById("lastName1").value.trim(),
-            apellidoMaterno: document.getElementById("lastName2").value.trim(),
-            correo: document.getElementById("userEmail").value.trim(),
-            edad: parseInt(document.getElementById("userEdad").value.trim()),
-            contrasena: document.getElementById("newPassword")?.value || null
-        };
-
-        try {
-            // Llamada PUT al backend
-            const res = await fetch(`http://localhost:8080/api/usuarios/${userId}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            });
-
-            if (!res.ok) {
-                const msg = await res.text();
-                throw new Error(msg || "Error al actualizar usuario");
-            }
-
-            // Recibimos usuario actualizado desde backend
-            const userUpdated = await res.json();
-
-            // Actualizamos datos en sesión
-            const updatedProfile = {
-                ...user,
-                nombre: userUpdated.nombre,
-                apellidoPaterno: userUpdated.apellidoPaterno,
-                apellidoMaterno: userUpdated.apellidoMaterno,
-                email: userUpdated.correo,
-                edad: userUpdated.edad
-            };
-
-            sessionStorage.setItem("loggedUser", JSON.stringify(updatedProfile));
-
-            // Actualizamos interfaz sin recargar
-            if (document.querySelector(".profile-name"))
-                document.querySelector(".profile-name").textContent =
-                    `${userUpdated.nombre} ${userUpdated.apellidoPaterno}`;
-            if (document.querySelector(".profile-email"))
-                document.querySelector(".profile-email").textContent = userUpdated.correo;
-            if (document.getElementById("user-name"))
-                document.getElementById("user-name").textContent =
-                    `${userUpdated.nombre} ${userUpdated.apellidoPaterno}`;
-
-            alert("✅ Perfil actualizado con éxito");
-
-        } catch (err) {
-            console.error("Error actualizando perfil:", err);
-            alert("❌ Error al actualizar el perfil");
-        }
-    });
-}
-
-
-// ---- FUNCIÓN PARA ACTUALIZAR BIENVENIDA ----
-function updateWelcomeMessage() {
-    const userProfile = JSON.parse(sessionStorage.getItem("loggedUser"));
-    if (!userProfile) return;
-
-    const mainTitle = document.getElementById("main-title");
-    if (mainTitle) {
-        mainTitle.innerHTML = `Bienvenido, <span class="text-gradient">${userProfile.firstName}</span>`;
-    }
-}
-
-document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) updateWelcomeMessage();
-});
-
-
-// --- INICIALIZAR PERFIL GLOBAL ---
-document.addEventListener("DOMContentLoaded", () => {
-    
-    if (!userProfile) {
-        console.warn("⚠️ No hay sesión activa. Redirigiendo al login...");
-        window.location.href = "../autenticación/login.html";
-        return;
-    }
-
-    console.log("✅ Sesión activa detectada:", userProfile);
-
-    // Adaptamos los nombres del backend a los que usa el frontend
-    userProfile.firstName = userProfile.nombre || '';
-    userProfile.lastName1 = `${userProfile.apellidoPaterno || userProfile.apellido_Paterno || ''}`.trim();
-    userProfile.lastName2 = `${userProfile.apellidoMaterno || userProfile.apellido_Materno || ''}`.trim();
-    userProfile.name = `${userProfile.firstName} ${userProfile.lastName1}`.trim();
-    userProfile.email = userProfile.email || userProfile.correo || '';
-    userProfile.age = userProfile.edad || '';
-    userProfile.avatar = userProfile.avatar || null;
-    userProfile.tempAvatar = null;
-
-    // Actualizamos la sesión ya adaptada
-    sessionStorage.setItem("loggedUser", JSON.stringify(userProfile));
-
-    // --- Actualizamos la interfaz ---
-    const mainTitle = document.getElementById("main-title");
-    const userName = document.getElementById("user-name");
-    const userEmail = document.getElementById("user-email");
-    const userInitials = document.getElementById("userInitials");
-
-    if (mainTitle)
-        mainTitle.innerHTML = `Bienvenido, <span class="text-gradient">${userProfile.firstName}</span>`;
-    if (userName)
-        userName.textContent = userProfile.name;
-    if (userEmail)
-        userEmail.textContent = userProfile.email;
-    if (userInitials)
-        userInitials.textContent = (userProfile.firstName.charAt(0) + userProfile.lastName1.charAt(0)).toUpperCase();
-
-    // --- Perfil ---
-    const fieldNombre = document.getElementById("profile-nombre");
-    const fieldApellidos = document.getElementById("profile-apellidos");
-    const fieldEdad = document.getElementById("profile-edad");
-    const fieldCorreo = document.getElementById("profile-correo");
-
-    if (fieldNombre) fieldNombre.textContent = userProfile.firstName;
-    if (fieldApellidos) fieldApellidos.textContent = userProfile.lastName1;
-    if (fieldApellidos) fieldApellidos.textContent = userProfile.lastName2;
-    if (fieldEdad) fieldEdad.textContent = userProfile.age;
-    if (fieldCorreo) fieldCorreo.textContent = userProfile.email;
-
-    // --- Cargar ingresos si la pestaña visible al arrancar es "ingresos" ---
-    const activeSection = document.querySelector('.content-section.active')?.id;
-    if (activeSection === 'inicio' || activeSection === 'ingresos') {
-        cargarIngresosDesdeBackend();
-    }
-    // Agregar listener de transacciones
-    document.getElementById('addTransactionBackendBtn')?.addEventListener('click', addTransactionBackend);
-
-    // --- Cargar transacciones al iniciar ---
-    cargarTransaccionesDesdeBackend();
-});
-
-
-
-
-
 // ---- VARIABLES GLOBALES ----
 let transactions = [];
-//let selectedCategory = null;
-//let selectedSubCategory = null;
+let selectedCategory = null;
+let selectedSubCategory = null;
 let selectedImage = null;
 let editingTransactionId = null;
 let currentPeriod = null; 
 let currentFilter = 'categorias';
-
-function renderTransactionTable() {
-    const tbody = document.getElementById('transactionsTableBody');
-    if (!tbody) return;
-
-    tbody.innerHTML = ''; // Limpiar tabla
-
-    if (!transactionRecords || transactionRecords.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" class="text-center py-4">
-                    <div class="empty-state">
-                        <i class="bi bi-piggy-bank"></i>
-                        <div>No hay transacciones registradas</div>
-                        <small class="text-muted">Agrega tu primer transacción usando el formulario</small>
-                    </div>
-                </td>
-            </tr>
-        `;
-        return;
-    }
-
-    transactionRecords.forEach(t => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${t.categoryName}</td>
-            <td>${t.methodName}</td>
-            <td>${t.amount.toFixed(2)}</td>
-            <td>${t.image || '-'}</td>
-            <td>${t.formattedDate}</td>
-            <td class="text-end text-center">
-                <button class="btn btn-sm btn-danger" onclick="deleteTransaction(${t.id})">Eliminar</button>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-
 
 // Variables para selects de métodos de pago
 let transferFromSelect = null;
@@ -219,15 +16,15 @@ let incomePaymentMethodSelect = null;
 let selectedCategories = [];
 let selectedSubCategories = [];
 
-// Antiguo Perfil de usuario
-//let userProfile = {
-//    name: 'Jairo Castillo',
-//    firstName: 'Jairo',
-//    lastName: 'Castillo',
-//    email: 'jairo@utp.edu.pe',
-//    age: '20',
-//    avatar: null
-//};
+// Perfil de usuario
+let userProfile = {
+    name: 'Jairo Castillo',
+    firstName: 'Jairo',
+    lastName: 'Castillo',
+    email: 'jairo@utp.edu.pe',
+    age: '20',
+    avatar: null
+};
 
 // Array para notificaciones
 let notifications = [];
@@ -266,9 +63,9 @@ const subcategoriesMap = {
     transporte: [
         { name: 'combustible', icon: 'bi-fuel-pump', label: 'Combustible' },
         { name: 'gasolina', icon: 'bi-fuel-pump-fill', label: 'Gasolina' },
-        { name: 'diesel', icon: 'bi-fuel-pump-diesel', label: 'Diésel' },
-        { name: 'transppublico', icon: 'bi-bus-front', label: 'Transporte Público' },
-        { name: 'businterprovincial', icon: 'bi-bus-front-fill', label: 'Bus Interprovincial' },
+        { name: 'diésel', icon: 'bi-fuel-pump-diesel', label: 'Diésel' },
+        { name: 'transpPúblico', icon: 'bi-bus-front', label: 'Transporte Público' },
+        { name: 'busInterprovincial', icon: 'bi-bus-front-fill', label: 'Bus Interprovincial' },
         { name: 'tren', icon: 'bi-train-front', label: 'Tren' },
         { name: 'taxis', icon: 'bi-car-front', label: 'Taxis' },
         { name: 'mantenimiento', icon: 'bi-tools', label: 'Mantenimiento' },
@@ -282,17 +79,17 @@ const subcategoriesMap = {
         { name: 'mercado', icon: 'bi-shop-window', label: 'Mercado' },
         { name: 'restaurantes', icon: 'bi-sina-weibo', label: 'Restaurantes' },
         { name: 'delivery', icon: 'bi-truck', label: 'Comida a Domicilio' },
-        { name: 'cafeteria', icon: 'bi-cup-hot', label: 'Cafetería' }
+        { name: 'cafetería', icon: 'bi-cup-hot', label: 'Cafetería' }
     ],
     salud: [
-        { name: 'medicos', icon: 'bi-heart-pulse', label: 'Médicos' },
+        { name: 'médicos', icon: 'bi-heart-pulse', label: 'Médicos' },
         { name: 'medicamentos', icon: 'bi-capsule', label: 'Medicamentos' },
         { name: 'gimnasio', icon: 'bi-activity', label: 'Gimnasio' },
         { name: 'deportes', icon: 'bi-trophy', label: 'Deportes' },
         { name: 'belleza', icon: 'bi-brush', label: 'Belleza' },
-        { name: 'peluqueria', icon: 'bi-scissors', label: 'Peluquería' },
-        { name: 'cosmeticos', icon: 'bi-brush', label: 'Cosméticos' },
-        { name: 'seguromedico', icon: 'bi-file-medical-fill', label: 'Seguro Médico' }
+        { name: 'peluquería', icon: 'bi-scissors', label: 'Peluquería' },
+        { name: 'cosméticos', icon: 'bi-brush', label: 'Cosméticos' },
+        { name: 'seguroMédico', icon: 'bi-file-medical-fill', label: 'Seguro Médico' }
     ],
     entretenimiento: [
         { name: 'suscripciones', icon: 'bi-collection-play', label: 'Suscripciones' },
@@ -304,8 +101,8 @@ const subcategoriesMap = {
         { name: 'vacaciones', icon: 'bi-suitcase', label: 'Vacaciones' },
         { name: 'hoteles', icon: 'bi-building', label: 'Hoteles' },
         { name: 'tours', icon: 'bi-globe-americas', label: 'Tours' },
-        { name: 'cine', icon: 'bi-film', label: 'Cine' },
-        { name: 'teatro', icon: 'bi-snapchat', label: 'Teatro' },
+        { name: 'Cine', icon: 'bi-film', label: 'Cine' },
+        { name: 'Teatro', icon: 'bi-snapchat', label: 'Teatro' },
         { name: 'conciertos', icon: 'bi-music-note-list', label: 'Conciertos' },
         { name: 'museos', icon: 'bi-shop-window', label: 'Museos' },
         { name: 'juegos', icon: 'bi-controller', label: 'Juegos' },
@@ -317,23 +114,23 @@ const subcategoriesMap = {
     ],
     electronica: [
         { name: 'gadgets', icon: 'bi-earbuds', label: 'Gadgets' },
-        { name: 'telefonos', icon: 'bi-phone-vibrate', label: 'Teléfonos' },
+        { name: 'teléfonos', icon: 'bi-phone-vibrate', label: 'Teléfonos' },
         { name: 'laptops', icon: 'bi-laptop', label: 'Laptops' },
         { name: 'consolas', icon: 'bi-controller', label: 'Consolas' }
     ],
     hogar: [
         { name: 'muebles', icon: 'bi-box-seam', label: 'Muebles' },
-        { name: 'decoracion', icon: 'bi-palette', label: 'Decoración' },
-        { name: 'utensilios', icon: 'bi-basket', label: 'Utensilios' },
-        { name: 'regalos', icon: 'bi-gift', label: 'Regalos' }
+        { name: 'decoración', icon: 'bi-palette', label: 'Decoración' },
+        { name: 'Utensilios', icon: 'bi-basket', label: 'Utensilios' },
+        { name: 'Regalos', icon: 'bi-gift', label: 'Regalos' }
     ],
     educacion: [
-        { name: 'matricula', icon: 'bi-mortarboard', label: 'Matrícula' },
+        { name: 'matrícula', icon: 'bi-mortarboard', label: 'Matrícula' },
         { name: 'colegiatura', icon: 'bi-cash-stack', label: 'Colegiatura' },
         { name: 'libros', icon: 'bi-book', label: 'Libros' },
         { name: 'materiales', icon: 'bi-pencil', label: 'Materiales' },
         { name: 'cursos', icon: 'bi-journal', label: 'Cursos' },
-        { name: 'talleres', icon: 'bi-mortarboard-fill', label: 'Talleres' }
+        { name: 'Talleres', icon: 'bi-mortarboard-fill', label: 'Talleres' }
     ]
 };
 
@@ -382,6 +179,50 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('informes').classList.contains('active')) {
         initializeCharts();
     }
+
+    // Modal de contacto
+    const contactModal = new bootstrap.Modal(document.getElementById('contactModal'));
+    
+    // Abrir modal de contacto al hacer clic en "Centro de Contacto"
+    document.getElementById('contactCenterBtn').addEventListener('click', function() {
+        contactModal.show();
+    });
+    
+    // Manejar el envío del formulario de contacto
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Obtener los valores del formulario
+        const name = document.getElementById('contactName').value;
+        const email = document.getElementById('contactEmail').value;
+        const message = document.getElementById('contactMessage').value;
+        
+        // Validación básica
+        if (!name || !email || !message) {
+            alert('Por favor, complete todos los campos del formulario.');
+            return;
+        }
+        
+        // Simular envío del formulario
+        console.log('Enviando formulario de contacto:', { name, email, message });
+        
+        // Mostrar mensaje de éxito
+        alert('¡Mensaje enviado con éxito! Nos pondremos en contacto contigo pronto.');
+        
+        // Cerrar el modal
+        contactModal.hide();
+        
+        // Limpiar el formulario
+        document.getElementById('contactForm').reset();
+        
+    });
+    
+    // Código existente para el modal premium
+    const premiumModal = new bootstrap.Modal(document.getElementById('premiumModal'));
+    
+    document.getElementById('openPremiumModalBtn').addEventListener('click', function() {
+        premiumModal.show();
+    });
 });
 
 // ---- CARGAR DATOS DESDE LOCALSTORAGE ----
@@ -507,7 +348,7 @@ function initializeNavigation() {
 
     const sectionData = {
         inicio: {
-            title: `Bienvenido, <span class="text-gradient">${userProfile.firstName}</span>`,
+            title: 'Bienvenido, <span class="text-gradient">Jairo</span>',
             subtitle: 'Panel de control personal'
         },
         ingresos: {
@@ -556,7 +397,6 @@ function initializeNavigation() {
             // ACTUALIZAR COMPONENTES ESPECÍFICOS DE CADA SECCIÓN
             if (targetSection === 'ingresos') {
                 initializeIncomeSection();
-                cargarIngresosDesdeBackend();
             }
 
             if (targetSection === 'notificaciones') {
@@ -566,7 +406,6 @@ function initializeNavigation() {
             if (targetSection === 'inicio') {
                 updateAllPaymentMethodSelects();
                 updateBalance();
-                cargarIngresosDesdeBackend();
             }
 
             if (targetSection === 'informes') {
@@ -1407,153 +1246,7 @@ function initializeDefaultPaymentMethods() {
     }
 }
 
-// ---- GESTIÓN TRANSACCIONES Y DE CATEGORÍAS Y SUBCATEGORÍAS ----
-// ---- GESTIÓN TRANSACCIONES Y DE CATEGORÍAS Y SUBCATEGORÍAS ----
-// --- CONSTANTES API ---
-const API_TRANSACCIONES = 'http://localhost:8080/api/transacciones';
-const API_CATEGORIAS = 'http://localhost:8080/api/categorias';
-const API_SUBCATEGORIAS = 'http://localhost:8080/api/subcategorias';
-
-// --- VARIABLES GLOBALES ---
-let transactionRecords = [];
-let selectedCategory = null;
-let selectedSubCategory = null;
-
-
-// --- FUNCIONES ---
-// Formatear fecha/hora
-function formatDateTime(dateTimeStr) {
-    const dt = new Date(dateTimeStr);
-    return dt.toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
-}
-
-// Notificaciones simples
-function showNotification(msg, type = 'info') {
-    alert(`${type.toUpperCase()}: ${msg}`);
-}
-
-// --- CARGAR TRANSACCIONES ---
-async function cargarTransaccionesDesdeBackend() {
-    const user = JSON.parse(sessionStorage.getItem('loggedUser'));
-    if (!user) return;
-
-    try {
-        const res = await fetch(`${API_TRANSACCIONES}/usuario/${user.id}`);
-        if (!res.ok) throw new Error('Error al cargar transacciones');
-        const list = await res.json();
-
-        transactionRecords = list.map(t => ({
-            id: t.idTransaccion,
-            methodId: t.idMedioPago,
-            methodName: t.medioPago || 'Sin medio',
-            amount: t.monto,
-            description: t.nombre || t.descripcion || '',
-            date: t.fecha,
-            formattedDate: formatDateTime(t.fecha),
-            categoryName: t.categoria || '',
-            subcategoryName: t.subcategoria || '',
-            type: 'gasto'
-        }));
-
-        renderTransactionTable();
-    } catch (e) {
-        console.error(e);
-        showNotification('No se pudieron cargar las transacciones', 'error');
-    }
-}
-
-// --- AGREGAR NUEVA TRANSACCIÓN ---
-async function addTransactionBackend() {
-    const user = JSON.parse(sessionStorage.getItem('loggedUser'));
-    if (!user) return;
-
-    const methodId = parseInt(document.getElementById('paymentMethod').value);
-    const amount = parseFloat(document.getElementById('transactionAmount').value);
-    const etiqueta = document.getElementById('transactionDescription').value.trim();
-    const fecha = document.getElementById('transactionDateTime').value;
-
-    if (!methodId) return showNotification('Selecciona un medio de pago', 'error');
-    if (isNaN(amount) || amount <= 0) return showNotification('Monto inválido', 'error');
-    if (!selectedCategory || !selectedSubCategory)
-        return showNotification('Selecciona categoría y subcategoría', 'error');
-
-    // Obtener IDs desde backend
-    const categoria = await buscarCategoriaPorNombre(selectedCategory);
-    const subcategoria = await buscarSubcategoriaPorNombre(selectedSubCategory, categoria.idCategoria);
-    if (!categoria || !subcategoria) return showNotification('Categoría/Subcategoría no encontrada', 'error');
-
-    const dto = {
-        etiqueta: etiqueta || 'Transacción sin descripción',
-        monto: amount,
-        fecha: fecha,// + ':00', // ajustando formato
-        idUsuario: user.id,
-        idMedioPago: methodId,
-        idCategoria: categoria.idCategoria,
-        idSubcategoria: subcategoria.idSubcategoria,
-        imagen: null // opcional
-    };
-
-    try {
-        const res = await fetch(API_TRANSACCIONES, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dto)
-        });
-
-        if (!res.ok) throw new Error('Error al guardar transacción');
-        const nueva = await res.json();
-
-        transactionRecords.push({
-            id: nueva.idTransaccion,
-            methodId: nueva.idMedioPago,
-            methodName: nueva.medioPago || 'Sin medio',
-            amount: nueva.monto,
-            description: nueva.etiqueta,
-            date: nueva.fecha,
-            formattedDate: formatDateTime(nueva.fecha),
-            categoryName: selectedCategory,
-            subcategoryName: selectedSubCategory,
-            type: 'gasto'
-        });
-
-        renderTransactionTable();
-        showNotification('Transacción registrada exitosamente', 'success');
-        limpiarFormulario();
-    } catch (e) {
-        console.error(e);
-        showNotification('No se pudo guardar la transacción', 'error');
-    }
-}
-
-// --- FUNCIONES AUXILIARES ---
-function limpiarFormulario() {
-    document.getElementById('paymentMethod').value = '';
-    document.getElementById('transactionAmount').value = '';
-    document.getElementById('transactionDescription').value = '';
-    document.getElementById('transactionDateTime').value = '';
-    document.querySelectorAll('.category-btn, .subcategory-btn').forEach(b => b.classList.remove('active'));
-}
-
-// --- BUSCAR CATEGORÍA / SUBCATEGORÍA ---
-async function buscarCategoriaPorNombre(nombre) {
-    const res = await fetch(API_CATEGORIAS);
-    if (!res.ok) return null;
-    const list = await res.json();
-    // Asegurarse que sea un array
-    if (!Array.isArray(list)) return null;
-    return list.find(c => c.nombreCategoria.toLowerCase() === nombre.toLowerCase());
-}
-
-async function buscarSubcategoriaPorNombre(nombre, idCategoria) {
-    const res = await fetch(`http://localhost:8080/api/subcategorias/categoria/${idCategoria}`);
-    if (!res.ok) return null;
-    const list = await res.json();
-    if (!Array.isArray(list)) return null;
-    return list.find(s => s.nombreSubcategoria.toLowerCase() === nombre.toLowerCase());
-}
-
-
-
+// ---- GESTIÓN DE CATEGORÍAS Y SUBCATEGORÍAS ----
 function initializeCategoryButtons() {
     // Cargar categorías personalizadas desde localStorage
     loadCustomCategoriesFromLocalStorage();
@@ -1581,14 +1274,16 @@ function initializeCategoryButtons() {
             showSubcategories('pagos', selectedCategory);
         }
         
-        // Botón personalizar en Inicio
+        // Botón personalizar en Inicio (sin funcionalidad)
         if (e.target.closest('#inicio #personalize-categories-btn')) {
-            showCustomizeCategoriesModal();
+            // Funcionalidad eliminada - no hacer nada
+            showNotification('La funcionalidad de personalizar categorías disponible para premium', 'info');
         }
         
-        // Botón personalizar en Pagos
+        // Botón personalizar en Pagos (sin funcionalidad)
         if (e.target.closest('#pagos #personalize-categories-btn-pagos')) {
-            showCustomizeCategoriesModal();
+            // Funcionalidad eliminada - no hacer nada
+            showNotification('La funcionalidad de personalizar categorías disponible para premium', 'info');
         }
     });
 }
@@ -1622,7 +1317,7 @@ function showSubcategories(section, category) {
             `;
         });
         
-        // Agregar botón "+" para nueva subcategoría
+        // Agregar botón "+" para nueva subcategoría (sin funcionalidad)
         html += `
             <button class="subcategory-btn subcategory-add-btn" data-category="${category}">
                 <i class="bi bi-plus"></i> Nueva Subcategoría
@@ -1636,8 +1331,8 @@ function showSubcategories(section, category) {
         document.querySelectorAll(`#${containerId} .subcategory-btn`).forEach(btn => {
             btn.addEventListener('click', function() {
                 if (this.classList.contains('subcategory-add-btn')) {
-                    // Si es el botón de añadir, abrir modal de personalización
-                    showCustomizeCategoriesModal(category);
+                    // Si es el botón de añadir, mostrar mensaje (sin funcionalidad)
+                    showNotification('La funcionalidad de agregar subcategorías disponible para premium', 'info');
                 } else {
                     document.querySelectorAll(`#${containerId} .subcategory-btn`).forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
@@ -1646,7 +1341,7 @@ function showSubcategories(section, category) {
             });
         });
     } else {
-        // Si no hay subcategorías, mostrar solo el botón para añadir
+        // Si no hay subcategorías, mostrar solo el botón para añadir (sin funcionalidad)
         let html = `
             <div class="section-divider"></div>
             <h6 class="d-flex align-items-center gap-2 mb-3 text-warning">
@@ -1660,11 +1355,11 @@ function showSubcategories(section, category) {
         `;
         container.innerHTML = html;
         
-        // Añadir event listener al botón de añadir
+        // Añadir event listener al botón de añadir (sin funcionalidad)
         const addButton = container.querySelector('.subcategory-add-btn');
         if (addButton) {
             addButton.addEventListener('click', function() {
-                showCustomizeCategoriesModal(category);
+                showNotification('La funcionalidad de agregar subcategorías no está disponible', 'info');
             });
         }
     }
@@ -1997,12 +1692,6 @@ function initializeEventListeners() {
     if (addTransactionBtn) {
         addTransactionBtn.addEventListener('click', addTransaction);
     }
-        // ---- NUEVO: Agregar transacción con BACKEND ----
-    const addTransactionBackendBtn = document.getElementById('addTransactionBackendBtn');
-
-    if (addTransactionBackendBtn) {
-        addTransactionBackendBtn.addEventListener('click', addTransactionBackend);
-    }
     
     // Cambiar de addTransactionPagos a addScheduledPayment
     if (addTransactionBtnPagos) {
@@ -2069,26 +1758,6 @@ function initializeEventListeners() {
         notificationStatusFilter.addEventListener('change', renderNotificationsSection);
     }
 
-    // Configurar botones del modal de personalización
-    const addNewCategoryBtn = document.getElementById('addNewCategoryBtn');
-    const addNewSubcategoryBtn = document.getElementById('addNewSubcategoryBtn');
-    
-    if (addNewCategoryBtn) {
-        addNewCategoryBtn.addEventListener('click', addNewCategory);
-    }
-    
-    if (addNewSubcategoryBtn) {
-        addNewSubcategoryBtn.addEventListener('click', addNewSubcategory);
-    }
-    
-    // Reinicializar el modal cuando se muestre
-    const customizeModal = document.getElementById('customizeCategoriesModal');
-    if (customizeModal) {
-        customizeModal.addEventListener('show.bs.modal', function() {
-            updateCustomizeCategoriesModal();
-        });
-    }
-    
     // Configurar filtro de informes
     const informesFilterBtn = document.getElementById('FiltroProfileBtn');
     const informesFiltersContainer = document.querySelector('#informes .filters-container');
@@ -2220,6 +1889,7 @@ function renderTransactions() {
             <td>
                 <div class="payment-method-with-logo-center">
                     ${paymentMethodLogo}
+                    <span class="payment-method-badge ${paymentMethodClass}">${transaction.paymentMethod}</span>
                 </div>
             </td>
             <td class="${transaction.type === 'ingreso' ? 'transaction-amount-income text-success' : 'transaction-amount-expense text-danger'}">
@@ -4024,21 +3694,13 @@ function initializeProfileEvents() {
             
             // Obtener valores del formulario
             const firstName = document.getElementById('firstName').value.trim();
-            const lastName1 = document.getElementById('lastName1').value.trim();
-            const lastName2 = document.getElementById('lastName2').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
             const email = document.getElementById('userEmail').value.trim();
             const age = document.getElementById('userEdad').value;
             
             // Actualizar perfil
-            const fullName = `${firstName} ${lastName1}`;
-            updateUserProfile(
-            document.getElementById("firstName").value,
-            document.getElementById("lastName1").value,
-            document.getElementById("lastName2").value,
-            document.getElementById("userEmail").value,
-            document.getElementById("userEdad").value
-);
-
+            const fullName = `${firstName} ${lastName}`;
+            updateUserProfile(fullName, email, age);
             
             // Actualizar avatar si hay uno temporal
             if (userProfile.tempAvatar) {
@@ -4062,14 +3724,12 @@ function initializeProfileEvents() {
 
 function loadProfileFormData() {
     const firstName = document.getElementById('firstName');
-    const lastName1 = document.getElementById('lastName1');
-    const lastName2 = document.getElementById('lastName2');
+    const lastName = document.getElementById('lastName');
     const userEmail = document.getElementById('userEmail');
     const userEdad = document.getElementById('userEdad');
     
     if (firstName) firstName.value = userProfile.firstName || 'Jairo';
-    if (lastName1) lastName1.value = userProfile.lastName1 || 'Castillo';
-    if (lastName2) lastName2.value = userProfile.lastName2 || 'Castillo';
+    if (lastName) lastName.value = userProfile.lastName || 'Castillo';
     if (userEmail) userEmail.value = userProfile.email || 'jairo@utp.edu.pe';
     if (userEdad) userEdad.value = userProfile.age || '20';
     
@@ -4089,14 +3749,12 @@ function loadProfileFormData() {
 
 function resetProfileForm() {
     const firstName = document.getElementById('firstName');
-    const lastName1 = document.getElementById('lastName1');
-    const lastName2 = document.getElementById('lastName2');
+    const lastName = document.getElementById('lastName');
     const userEmail = document.getElementById('userEmail');
     const userEdad = document.getElementById('userEdad');
     
     if (firstName) firstName.value = userProfile.firstName || 'Jairo';
-    if (lastName1) lastName1.value = userProfile.lastName1 || 'Castillo';
-    if (lastName2) lastName2.value = userProfile.lastName2 || 'Castillo';
+    if (lastName) lastName.value = userProfile.lastName || 'Castillo';
     if (userEmail) userEmail.value = userProfile.email || 'jairo@utp.edu.pe';
     if (userEdad) userEdad.value = userProfile.age || '20';
     
@@ -4137,19 +3795,12 @@ function validateProfileForm() {
     }
     
     // Validar apellido
-    const lastName1 = document.getElementById('lastName1');
-    if (lastName1 && !lastName1.value.trim()) {
-        markFieldInvalid('lastName1', 'El apellido Paterno es obligatorio');
+    const lastName = document.getElementById('lastName');
+    if (lastName && !lastName.value.trim()) {
+        markFieldInvalid('lastName', 'El apellido es obligatorio');
         isValid = false;
-    } else if (lastName1) {
-        markFieldValid('lastName1');
-    }
-    const lastName2 = document.getElementById('lastName2');
-    if (lastName2 && !lastName2.value.trim()) {
-        markFieldInvalid('lastName2', 'El apellido Materno es obligatorio');
-        isValid = false;
-    } else if (lastName2) {
-        markFieldValid('lastName2');
+    } else if (lastName) {
+        markFieldValid('lastName');
     }
     
     // Validar email
@@ -4215,18 +3866,19 @@ function markFieldValid(fieldId) {
     }
 }
 
-function updateUserProfile(firstName, lastName1, lastName2, email, age) {
-    userProfile.firstName = firstName;
-    userProfile.lastName1 = lastName1;
-    userProfile.lastName2 = lastName2;
-    userProfile.name = `${firstName} ${lastName1} ${lastName2}`.trim();
+function updateUserProfile(name, email, age) {
+    userProfile.name = name;
     userProfile.email = email;
     userProfile.age = age;
-
+    userProfile.firstName = name.split(' ')[0];
+    userProfile.lastName = name.split(' ').slice(1).join(' ');
+    
+    // Guardar en localStorage
     saveProfileToLocalStorage();
+    
+    // Agregar notificación
     addNotification('Perfil actualizado correctamente', 'info');
 }
-
 
 function updateProfileInApp() {
     // Actualizar barra superior
@@ -4269,518 +3921,73 @@ function updateProfileInApp() {
         }
     }
     
-    // --- Actualizar título principal con el nombre real del usuario ---
-const mainTitle = document.getElementById('main-title');
-if (mainTitle) {
-    mainTitle.innerHTML = `Bienvenido, <span class="text-gradient">${userProfile.firstName}</span>`;
+    // Actualizar título principal si contiene el nombre
+    const mainTitle = document.getElementById('main-title');
+    if (mainTitle && mainTitle.innerHTML.includes('Jairo')) {
+        mainTitle.innerHTML = mainTitle.innerHTML.replace('Jairo', userProfile.firstName);
+    }
 }
 
-}
- // Obtener iniciales del nombre
 function getInitials(name) {
-    if (!name || typeof name !== 'string' || name.trim() === '') {
-        // Si no hay name, intentar armarlo desde el perfil
-        if (userProfile && userProfile.nombre && userProfile.apellido_Paterno) {
-            const fullName = `${userProfile.nombre} ${userProfile.apellido_Paterno}`;
-            return fullName.split(' ').map(n => n[0]).join('').toUpperCase();
-        }
-        return '?'; // valor por defecto
-    }
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
 }
 
-
 // ---- PERSONALIZACIÓN DE CATEGORÍAS ----
 
-// Función para mostrar el modal de personalización de categorías
+// Función para mostrar el modal de personalización de categorías (SIN FUNCIONALIDAD)
 function showCustomizeCategoriesModal(preselectedCategory = null) {
-    // Guardar la sección actual antes de abrir el modal
-    const previousSection = currentSection;
-    
-    // Actualizar el contenido del modal
-    updateCustomizeCategoriesModal();
-    
-    // Mostrar el modal
-    const modalElement = document.getElementById('customizeCategoriesModal');
-    if (modalElement) {
-        const modal = new bootstrap.Modal(modalElement);
-        
-        // Agregar evento para restaurar la sección al cerrar el modal
-        modalElement.addEventListener('hidden.bs.modal', function() {
-            showSection(previousSection);
-        });
-        
-        modal.show();
-
-        // Si se proporciona una categoría pre-seleccionada, establecerla en el select de categoría padre
-        if (preselectedCategory) {
-            // Esperar a que el modal se muestre para que los elementos estén visibles
-            modalElement.addEventListener('shown.bs.modal', function() {
-                // Activar la pestaña de nueva subcategoría
-                const newSubcategoryTab = document.getElementById('new-subcategory-tab');
-                if (newSubcategoryTab) {
-                    newSubcategoryTab.click();
-                }
-
-                // Establecer la categoría padre
-                const parentCategorySelect = document.getElementById('parentCategory');
-                if (parentCategorySelect) {
-                    parentCategorySelect.value = preselectedCategory;
-                }
-            }, { once: true });
-        }
-    }
+    // Funcionalidad eliminada - solo mostrar mensaje
+    showNotification('La funcionalidad de personalizar categorías no está disponible', 'info');
 }
 
-// Función para actualizar el contenido del modal
+// Función para actualizar el contenido del modal (SIN FUNCIONALIDAD)
 function updateCustomizeCategoriesModal() {
-    updateParentCategoryOptions();
-    updateManageCategoriesTab();
+    // Funcionalidad eliminada - no hacer nada
 }
 
-// Función para actualizar las opciones de categorías padre
+// Función para actualizar las opciones de categorías padre (SIN FUNCIONALIDAD)
 function updateParentCategoryOptions() {
-    const parentCategorySelect = document.getElementById('parentCategory');
-    if (!parentCategorySelect) return;
-    
-    parentCategorySelect.innerHTML = '';
-    
-    // Agregar categorías predefinidas
-    Object.keys(subcategoriesMap).forEach(category => {
-        const option = document.createElement('option');
-        option.value = category;
-        option.textContent = getCategoryLabel(category);
-        parentCategorySelect.appendChild(option);
-    });
-    
-    // Agregar categorías personalizadas
-    if (customCategories && customCategories.length > 0) {
-        customCategories.forEach(category => {
-            const option = document.createElement('option');
-            option.value = category.name;
-            option.textContent = category.label;
-            parentCategorySelect.appendChild(option);
-        });
-    }
+    // Funcionalidad eliminada - no hacer nada
 }
 
-// Función para actualizar la lista de categorías personalizadas
+// Función para actualizar la lista de categorías personalizadas (SIN FUNCIONALIDAD)
 function updateCustomCategoriesList() {
-    const categoriesList = document.getElementById('customCategoriesList');
-    if (!categoriesList) return;
-    
-    if (!customCategories || customCategories.length === 0) {
-        categoriesList.innerHTML = '<p class="text-muted">No hay categorías personalizadas.</p>';
-        return;
-    }
-    
-    let html = '<h6>Categorías Personalizadas</h6><div class="list-group">';
-    
-    customCategories.forEach((category, index) => {
-        html += `
-            <div class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                    <i class="${category.icon} me-2"></i>
-                    <span>${category.label}</span>
-                </div>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteCustomCategory(${index})">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>
-        `;
-    });
-    
-    html += '</div>';
-    
-    categoriesList.innerHTML = html;
+    // Funcionalidad eliminada - no hacer nada
 }
 
-// Función para agregar nueva categoría
+// Función para agregar nueva categoría (SIN FUNCIONALIDAD)
 function addNewCategory() {
-    const nameInput = document.getElementById('newCategoryName');
-    const iconSelect = document.getElementById('newCategoryIcon');
-    
-    if (!nameInput || !iconSelect) return;
-    
-    const name = nameInput.value.trim();
-    const icon = iconSelect.value;
-    
-    if (!name) {
-        showNotification('Por favor ingresa un nombre para la categoría', 'error');
-        return;
-    }
-    
-    // Verificar si la categoría ya existe
-    const categoryExists = customCategories.some(cat => cat.name === name.toLowerCase()) || 
-                        Object.keys(subcategoriesMap).includes(name.toLowerCase());
-    
-    if (categoryExists) {
-        showNotification('Ya existe una categoría con ese nombre', 'error');
-        return;
-    }
-    
-    // Agregar la nueva categoría
-    const newCategory = {
-        name: name.toLowerCase(),
-        label: name,
-        icon: icon
-    };
-    
-    customCategories.push(newCategory);
-    
-    // Inicializar array de subcategorías para esta categoría
-    customSubcategories[name.toLowerCase()] = [];
-    
-    // Guardar en localStorage
-    saveCustomCategoriesToLocalStorage();
-    
-    // Limpiar formulario
-    nameInput.value = '';
-    
-    // Actualizar la lista de categorías
-    updateCustomCategoriesList();
-    
-    // Actualizar botones de categorías en la interfaz
-    updateCategoryButtons();
-    
-    // Cerrar el modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('customizeCategoriesModal'));
-    if (modal) {
-        modal.hide();
-    }
-    
-    showNotification('Categoría agregada exitosamente', 'success');
+    showNotification('La funcionalidad de agregar categorías disponible para premium', 'info');
 }
 
-// Función para agregar nueva subcategoría
+// Función para agregar nueva subcategoría (SIN FUNCIONALIDAD)
 function addNewSubcategory() {
-    const parentCategorySelect = document.getElementById('parentCategory');
-    const nameInput = document.getElementById('newSubcategoryName');
-    const iconSelect = document.getElementById('newSubcategoryIcon');
-    
-    if (!parentCategorySelect || !nameInput || !iconSelect) {
-        showNotification('Error: Elementos del formulario no encontrados', 'error');
-        return;
-    }
-    
-    const parentCategory = parentCategorySelect.value;
-    const name = nameInput.value.trim();
-    const icon = iconSelect.value;
-    
-    if (!name) {
-        showNotification('Por favor ingresa un nombre para la subcategoría', 'error');
-        return;
-    }
-    
-    if (!parentCategory) {
-        showNotification('Por favor selecciona una categoría padre', 'error');
-        return;
-    }
-    
-    // Verificar si la subcategoría ya existe
-    const existingSubcategories = subcategoriesMap[parentCategory] || customSubcategories[parentCategory] || [];
-    const subcategoryExists = existingSubcategories.some(sub => sub.name === name.toLowerCase());
-    
-    if (subcategoryExists) {
-        showNotification('Ya existe una subcategoría con ese nombre', 'error');
-        return;
-    }
-    
-    // Crear la nueva subcategoría
-    const newSubcategory = {
-        name: name.toLowerCase(),
-        label: name,
-        icon: icon
-    };
-    
-    // Determinar dónde guardar la subcategoría
-    if (subcategoriesMap[parentCategory]) {
-        // Es una categoría predefinida - guardar en customSubcategories
-        if (!customSubcategories[parentCategory]) {
-            customSubcategories[parentCategory] = [];
-        }
-        customSubcategories[parentCategory].push(newSubcategory);
-    } else {
-        // Es una categoría personalizada
-        if (!customSubcategories[parentCategory]) {
-            customSubcategories[parentCategory] = [];
-        }
-        customSubcategories[parentCategory].push(newSubcategory);
-    }
-    
-    // Guardar en localStorage
-    saveCustomCategoriesToLocalStorage();
-    
-    // Limpiar formulario
-    nameInput.value = '';
-    
-    // Actualizar la interfaz
-    updateParentCategoryOptions();
-    
-    showNotification('Subcategoría agregada exitosamente', 'success');
-    
-    // Cerrar el modal después de un breve delay
-    setTimeout(() => {
-        const modal = bootstrap.Modal.getInstance(document.getElementById('customizeCategoriesModal'));
-        if (modal) {
-            modal.hide();
-        }
-    }, 1500);
+    showNotification('La funcionalidad de agregar subcategorías disponible para premium', 'info');
 }
 
-// Función para eliminar categoría personalizada
+// Función para eliminar categoría personalizada (SIN FUNCIONALIDAD)
 function deleteCustomCategory(index) {
-    if (confirm('¿Estás seguro de que deseas eliminar esta categoría? También se eliminarán todas sus subcategorías.')) {
-        const category = customCategories[index];
-        
-        // Eliminar la categoría
-        customCategories.splice(index, 1);
-        
-        // Eliminar sus subcategorías
-        delete customSubcategories[category.name];
-        
-        // Guardar en localStorage
-        saveCustomCategoriesToLocalStorage();
-        
-        // Actualizar la lista de categorías
-        updateCustomCategoriesList();
-        
-        // Actualizar botones de categorías en la interfaz
-        updateCategoryButtons();
-        
-        showNotification('Categoría eliminada exitosamente', 'success');
-    }
+    showNotification('La funcionalidad de eliminar categorías disponible para premium', 'info');
 }
 
-// Función para editar una categoría personalizada
+// Función para editar una categoría personalizada (SIN FUNCIONALIDAD)
 function editCustomCategory(index) {
-    const category = customCategories[index];
-    if (!category) return;
-    
-    const newName = prompt('Nuevo nombre para la categoría:', category.label);
-    if (newName && newName.trim()) {
-        const oldName = category.name;
-        category.label = newName.trim();
-        category.name = newName.trim().toLowerCase();
-        
-        // Actualizar también en customSubcategories si existe
-        if (customSubcategories[oldName]) {
-            customSubcategories[category.name] = customSubcategories[oldName];
-            delete customSubcategories[oldName];
-        }
-        
-        saveCustomCategoriesToLocalStorage();
-        updateCategoryButtons();
-        updateManageCategoriesTab();
-        showNotification('Categoría actualizada exitosamente', 'success');
-    }
+    showNotification('La funcionalidad de editar categorías disponible para premium', 'info');
 }
 
-// Función para editar una subcategoría
+// Función para editar una subcategoría (SIN FUNCIONALIDAD)
 function editSubcategory(categoryName, subcategoryIndex, isCustomCategory = false) {
-    let subcategories;
-    if (isCustomCategory) {
-        subcategories = customSubcategories[categoryName] || [];
-    } else {
-        subcategories = subcategoriesMap[categoryName] || [];
-    }
-    
-    const subcategory = subcategories[subcategoryIndex];
-    if (!subcategory) return;
-    
-    const newName = prompt('Nuevo nombre para la subcategoría:', subcategory.label);
-    if (newName && newName.trim()) {
-        subcategory.label = newName.trim();
-        subcategory.name = newName.trim().toLowerCase();
-        
-        // Actualizar icono
-        const newIcon = prompt('Nuevo icono (clase Bootstrap Icons):', subcategory.icon);
-        if (newIcon) {
-            subcategory.icon = newIcon;
-        }
-        
-        saveCustomCategoriesToLocalStorage();
-        updateManageCategoriesTab();
-        showNotification('Subcategoría actualizada exitosamente', 'success');
-    }
+    showNotification('La funcionalidad de editar subcategorías disponible para premium', 'info');
 }
 
-// Función mejorada para eliminar subcategorías
+// Función mejorada para eliminar subcategorías (SIN FUNCIONALIDAD)
 function deleteSubcategory(categoryName, subcategoryName, isCustomCategory = false) {
-    if (!confirm('¿Estás seguro de que deseas eliminar esta subcategoría?')) {
-        return;
-    }
-    
-    if (isCustomCategory) {
-        // Eliminar de categorías personalizadas
-        if (customSubcategories[categoryName]) {
-            customSubcategories[categoryName] = customSubcategories[categoryName].filter(
-                sub => sub.name !== subcategoryName
-            );
-            // Si no quedan subcategorías, eliminar el array vacío
-            if (customSubcategories[categoryName].length === 0) {
-                delete customSubcategories[categoryName];
-            }
-        }
-    } else {
-        // Eliminar de categorías predefinidas (solo de customSubcategories)
-        if (customSubcategories[categoryName]) {
-            customSubcategories[categoryName] = customSubcategories[categoryName].filter(
-                sub => sub.name !== subcategoryName
-            );
-            if (customSubcategories[categoryName].length === 0) {
-                delete customSubcategories[categoryName];
-            }
-        }
-    }
-    
-    saveCustomCategoriesToLocalStorage();
-    updateManageCategoriesTab();
-    showNotification('Subcategoría eliminada exitosamente', 'success');
+    showNotification('La funcionalidad de eliminar subcategorías disponible para premium', 'info');
 }
 
-// Función mejorada para la pestaña de gestión
+// Función mejorada para la pestaña de gestión (SIN FUNCIONALIDAD)
 function updateManageCategoriesTab() {
-    const categoriesList = document.getElementById('customCategoriesList');
-    if (!categoriesList) return;
-    
-    let html = '<div class="manage-categories-container">';
-    
-    // Categorías Predefinidas
-    html += `
-        <h6 class="text-success mb-3">
-            <i class="bi bi-star-fill me-2"></i>Categorías Predefinidas
-        </h6>
-        <div class="list-group mb-4">
-    `;
-    
-    Object.keys(subcategoriesMap).forEach(category => {
-        const subcategories = subcategoriesMap[category] || [];
-        const customSubs = customSubcategories[category] || [];
-        const allSubcategories = [...subcategories, ...customSubs];
-        
-        html += `
-            <div class="list-group-item">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-${getCategoryIcon(category)} me-2 text-success"></i>
-                        <strong>${getCategoryLabel(category)}</strong>
-                    </div>
-                    <span class="badge bg-secondary">Predefinida</span>
-                </div>
-                <div class="subcategories-list">
-                    <h6 class="small text-muted mb-2">Subcategorías:</h6>
-                    <div class="d-flex flex-wrap gap-2">
-        `;
-        
-        if (allSubcategories.length === 0) {
-            html += `<span class="text-muted small">No hay subcategorías</span>`;
-        } else {
-            allSubcategories.forEach((sub, index) => {
-                const isCustom = index >= subcategories.length;
-                html += `
-                    <div class="subcategory-item badge bg-light text-dark d-flex align-items-center">
-                        <i class="${sub.icon} me-1"></i>
-                        <span>${sub.label}</span>
-                        <div class="btn-group ms-2">
-                            <button class="btn btn-sm btn-outline-warning" 
-                                onclick="editSubcategory('${category}', ${index}, ${isCustom})"
-                                title="Editar">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" 
-                                onclick="deleteSubcategory('${category}', '${sub.name}', ${isCustom})"
-                                title="Eliminar">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-        
-        html += `</div></div></div>`;
-    });
-    
-    html += `</div>`;
-    
-    // Categorías Personalizadas
-    if (customCategories.length > 0) {
-        html += `
-            <h6 class="text-success mb-3">
-                <i class="bi bi-sliders me-2"></i>Categorías Personalizadas
-            </h6>
-            <div class="list-group">
-        `;
-        
-        customCategories.forEach((category, index) => {
-            const subcategories = customSubcategories[category.name] || [];
-            
-            html += `
-                <div class="list-group-item">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div class="d-flex align-items-center">
-                            <i class="${category.icon} me-2 text-warning"></i>
-                            <strong>${category.label}</strong>
-                        </div>
-                        <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-primary" 
-                                onclick="editCustomCategory(${index})"
-                                title="Editar categoría">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" 
-                                onclick="deleteCustomCategory(${index})"
-                                title="Eliminar categoría">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="subcategories-list">
-                        <h6 class="small text-muted mb-2">Subcategorías:</h6>
-                        <div class="d-flex flex-wrap gap-2">
-            `;
-            
-            if (subcategories.length === 0) {
-                html += `<span class="text-muted small">No hay subcategorías</span>`;
-            } else {
-                subcategories.forEach((sub, subIndex) => {
-                    html += `
-                        <div class="subcategory-item badge bg-light text-dark d-flex align-items-center">
-                            <i class="${sub.icon} me-1"></i>
-                            <span>${sub.label}</span>
-                            <div class="btn-group ms-2">
-                                <button class="btn btn-sm btn-outline-warning" 
-                                    onclick="editSubcategory('${category.name}', ${subIndex}, true)"
-                                    title="Editar">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" 
-                                    onclick="deleteSubcategory('${category.name}', '${sub.name}', true)"
-                                    title="Eliminar">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-            
-            html += `</div></div></div>`;
-        });
-        
-        html += `</div>`;
-    } else {
-        html += `
-            <div class="text-center py-4">
-                <i class="bi bi-inbox display-4 text-muted"></i>
-                <p class="text-muted mt-3">No hay categorías personalizadas</p>
-            </div>
-        `;
-    }
-    
-    html += '</div>';
-    categoriesList.innerHTML = html;
+    // Funcionalidad eliminada - no hacer nada
 }
 
 // Función para actualizar botones de categorías en la interfaz
@@ -4821,7 +4028,7 @@ function updateCategoryButtonsInSection(sectionId) {
         });
     }
     
-    // Agregar botón de personalizar
+    // Agregar botón de personalizar (SIN FUNCIONALIDAD)
     const personalizeId = sectionId === 'inicio' ? 'personalize-categories-btn' : 'personalize-categories-btn-pagos';
     html += `
         <button class="category-btn" id="${personalizeId}">
@@ -5035,124 +4242,70 @@ function updateTotalIncome() {
     }
 }
 
-/* ---------- INGRESOS - LLAMADAS A LA API ---------- */
-const API_INGRESOS = 'http://localhost:8080/api/ingresos';
-
-/* 1. Cargar ingresos cuando se muestre la sección Inicio */
-async function cargarIngresosDesdeBackend() {
-    const user = JSON.parse(sessionStorage.getItem('loggedUser'));
-    if (!user) return;
-
-    try {
-        const res = await fetch(`${API_INGRESOS}/usuario/${user.id}`, {
-            headers: { 'Content-Type': 'application/json' }
-        });
-        if (!res.ok) throw new Error('Error al cargar ingresos');
-        const list = await res.json();          // List<Ingreso>
-        incomeRecords = list.map(i => ({       // adaptamos a tu objeto local
-            id: i.idIngreso,
-            methodId: i.idMedioPago,
-            methodName: i.medioPago?.nombreMedioPago || 'Sin medio',
-            amount: i.montoIngreso,
-            description: i.descripcion || '',
-            date: i.fechaIngreso,
-            formattedDate: formatDateTime(i.fechaIngreso),
-            type: 'ingreso'
-        }));
-        saveIncomeRecordsToLocalStorage();      // opcional (caché local)
-        renderIncomeRecords();                  // pintar tabla
-        updateTotalIncome();                    // sumar
-    } catch (e) {
-        console.error(e);
-        showNotification('No se pudieron cargar los ingresos', e);
-    }
-}
-
 // ---- AGREGAR INGRESO ----
-async function addIncome() {
+function addIncome() {
     const methodId = parseInt(document.getElementById('incomePaymentMethod').value);
     const amount = parseFloat(document.getElementById('incomeAmount').value);
     const description = document.getElementById('incomeDescription').value.trim();
-
+    
     if (!methodId) {
         showNotification('Por favor selecciona un medio de pago', 'error');
         return;
     }
-
+    
     if (isNaN(amount) || amount <= 0) {
         showNotification('Por favor ingresa un monto válido', 'error');
         return;
     }
-
-    const user = JSON.parse(sessionStorage.getItem('loggedUser'));
-    if (!user) {
-        showNotification('No hay sesión activa', 'error');
+    
+    const method = paymentMethods.find(m => m.id === methodId);
+    if (!method) {
+        showNotification('Error: Medio de pago no encontrado', 'error');
         return;
     }
-
-    const dto = {
-        idUsuario: user.id,
-        idMedioPago: methodId,
-        nombreIngreso: description || 'Ingreso sin descripción',
-        montoIngreso: amount,
-        descripcion: description,
-        fechaIngreso: new Date().toISOString().slice(0, 10)
+    
+    // Registrar el ingreso
+    method.balance += amount;
+    
+    const incomeRecord = {
+        id: Date.now(),
+        methodId: methodId,
+        methodName: method.name,
+        amount: amount,
+        description: description || 'Ingreso sin descripción',
+        date: new Date().toISOString(),
+        formattedDate: formatDateTime(new Date().toISOString()),
+        type: 'ingreso'
     };
+    
+    incomeRecords.push(incomeRecord);
+    
+    // Guardar cambios
+    savePaymentMethodsToLocalStorage();
+    saveIncomeRecordsToLocalStorage();
+    
+    // ACTUALIZAR TODAS LAS INTERFACES
+    renderPaymentMethods();
+    syncIncomeTables();
+    updatePaymentMethodsChart();
+    updateTotalBalance();
+    updateBalance(); // ACTUALIZAR BALANCE GENERAL
+    updateTotalIncome(); // ACTUALIZAR TOTAL INGRESOS EN SECCIÓN INGRESOS
+    
+    // ACTUALIZAR LOS SELECTS DE MÉTODOS DE PAGO EN TIEMPO REAL
+    updateAllPaymentMethodSelects();
 
-    try {
-        const res = await fetch(API_INGRESOS, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dto)
-        });
-
-        if (!res.ok) throw new Error('Error al guardar ingreso');
-
-        const nuevo = await res.json();
-
-        // ✅ Actualizar balance local del medio de pago
-        const method = paymentMethods.find(m => m.id === methodId);
-        if (method) {
-            method.balance += amount;
-            savePaymentMethodsToLocalStorage();
-        }
-
-        // ✅ Guardar ingreso en caché local
-        incomeRecords.push({
-            id: nuevo.idIngreso,
-            methodId: nuevo.idMedioPago,
-            methodName: nuevo.medioPago?.nombreMedioPago || method?.name || 'Sin medio',
-            amount: nuevo.montoIngreso,
-            description: nuevo.descripcion || '',
-            date: nuevo.fechaIngreso,
-            formattedDate: formatDateTime(nuevo.fechaIngreso),
-            type: 'ingreso'
-        });
-        saveIncomeRecordsToLocalStorage();
-
-        // ✅ Refrescar toda la UI
-        renderPaymentMethods();
-        syncIncomeTables();
-        updatePaymentMethodsChart();
-        updateTotalBalance();
-        updateBalance();
-        updateTotalIncome();
-        updateAllPaymentMethodSelects();
-        updateIncomeTableMessage();
-
-        // ✅ Limpiar formulario
-        document.getElementById('incomePaymentMethod').value = '';
-        document.getElementById('incomeAmount').value = '';
-        document.getElementById('incomeDescription').value = '';
-
-        // ✅ Notificaciones
-        addNotification(`Ingreso registrado: S/. ${amount.toFixed(2)} en ${method?.name}`, 'success');
-        showNotification('Ingreso registrado exitosamente', 'success');
-
-    } catch (e) {
-        console.error(e);
-        showNotification('No se pudo guardar el ingreso', 'error');
-    }
+    // Actualizar mensaje de tabla vacía
+    updateIncomeTableMessage();
+    
+    // Limpiar formulario
+    document.getElementById('incomePaymentMethod').value = '';
+    document.getElementById('incomeAmount').value = '';
+    document.getElementById('incomeDescription').value = '';
+    
+    // NOTIFICACIONES
+    addNotification(`Ingreso registrado: S/. ${amount.toFixed(2)} en ${method.name}`, 'success');
+    showNotification('Ingreso registrado exitosamente', 'success');
 }
 
 // ---- RENDERIZAR REGISTROS DE INGRESOS ----
@@ -5182,6 +4335,7 @@ function renderIncomeRecords() {
             <td>
                 <div class="payment-method-with-logo-center">
                     ${getPaymentMethodLogo(income.methodName)}
+                    <span class="payment-method-badge ${paymentMethodClass}">${income.methodName}</span>
                 </div>
             </td>
             <td class="transaction-amount-income text-success">+S/. ${income.amount.toFixed(2)}</td>
@@ -5570,7 +4724,7 @@ function showSection(sectionName) {
     // Actualizar título y subtítulo
     const sectionData = {
         inicio: {
-            title: 'Bienvenido, <span class="text-gradient"></span>',
+            title: 'Bienvenido, <span class="text-gradient">Jairo</span>',
             subtitle: 'Panel de control personal'
         },
         ingresos: {
@@ -5641,3 +4795,64 @@ function deleteScheduledPayment(id) {
     
     showNotification('Pago programado eliminado exitosamente', 'success');
 }
+
+// Mostrar modal premium al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    const premiumModal = new bootstrap.Modal(document.getElementById('premiumModal'));
+    premiumModal.show();
+    
+    // Funcionalidad para seleccionar plan
+    document.querySelectorAll('.plan-option').forEach(option => {
+        option.addEventListener('click', function() {
+            // Quitar selección anterior
+            document.querySelectorAll('.plan-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Agregar selección actual
+            this.classList.add('selected');
+        });
+    });
+    
+    // Funcionalidad del botón de suscripción
+    document.getElementById('subscribeNowBtn').addEventListener('click', function() {
+        const selectedPlan = document.querySelector('.plan-option.selected');
+        const planName = selectedPlan.querySelector('.plan-name').textContent;
+        const planPrice = selectedPlan.querySelector('.plan-price').textContent;
+        
+        // Mostrar mensaje de confirmación
+        alert(`¡Excelente elección! Has seleccionado el plan ${planName} por ${planPrice}. Serás redirigido al proceso de pago.`);
+        
+        // Cerrar modal después de suscribirse
+        const premiumModal = bootstrap.Modal.getInstance(document.getElementById('premiumModal'));
+        premiumModal.hide();
+        window.location.replace('pago.html');
+    });
+
+    // Funcionalidad del botón de cierre
+    document.getElementById('closePremiumBtn').addEventListener('click', function() {
+        const premiumModal = bootstrap.Modal.getInstance(document.getElementById('premiumModal'));
+        premiumModal.hide();
+        
+        // Opcional: Mostrar un mensaje o guardar en localStorage que el usuario cerró el modal
+        localStorage.setItem('premiumModalClosed', 'true');
+    });
+
+    document.getElementById('personalize-categories-btn').addEventListener('click', function() {
+        premiumModal.show();
+    });
+
+    document.getElementById('personalize-categories-btn-pagos').addEventListener('click', function() {
+        premiumModal.show();
+    });
+
+    document.getElementById('ajustesBtn').addEventListener('click', function() {
+        premiumModal.show();
+    });
+
+    // Funcionalidad del botón "Suscribirse" en el perfil
+    document.getElementById('openPremiumModalBtn').addEventListener('click', function() {
+        premiumModal.show();
+    });
+
+});

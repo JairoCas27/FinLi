@@ -1,0 +1,246 @@
+/* Estilos para el modal premium */
+.premium-modal {
+    --bg: #f5f7fb;
+    --glass: rgba(255,255,255,0.85);
+    --accent: #0ea46f;
+    --accent-2: #838e98;
+    --accent-3: #8e44ad;
+    --accent-4: #ff6b6b;
+    --muted: #6c757d;
+    --card-shadow: 0 8px 32px rgba(12, 37, 24, 0.1);
+    --hover-shadow: 0 12px 40px rgba(12, 37, 24, 0.15);
+}
+
+.compact-premium-card {
+    width: 100%;
+    max-width: 500px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(255,255,255,0.4);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+.compact-premium-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--hover-shadow);
+}
+
+.compact-premium-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.logo-container {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+}
+
+.logo-container img {
+    width: 70%;
+    height: 70%;
+    object-fit: contain;
+}
+
+.header-text h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.header-text p {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin: 0;
+}
+
+.plans-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.plan-option {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem 0.75rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.plan-option:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.plan-option.selected {
+    border-color: var(--accent);
+    background: rgba(14, 164, 111, 0.05);
+}
+
+.plan-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--muted);
+}
+
+.plan-option.selected .plan-name {
+    color: var(--accent);
+}
+
+.plan-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.plan-period {
+    font-size: 0.7rem;
+    color: var(--muted);
+}
+
+.plan-option:nth-child(2) .plan-price {
+    color: var(--accent);
+}
+
+.plan-option:nth-child(3) .plan-price {
+    color: var(--accent-3);
+}
+
+.savings-badge {
+    position: absolute;
+    top: 30px;
+    right: -25px;
+    background: var(--accent);
+    color: white;
+    padding: 0.25rem 2rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    transform: rotate(45deg);
+    box-shadow: 0 2px 8px rgba(14, 164, 111, 0.3);
+}
+
+.features-list {
+    margin-bottom: 1.5rem;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+}
+
+.feature-item i {
+    color: var(--accent);
+    margin-right: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.btn-subscribe {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-subscribe:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(14, 164, 111, 0.3);
+}
+
+.btn-subscribe i {
+    margin-right: 0.5rem;
+}
+
+.money-back {
+    text-align: center;
+    margin-top: 1rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+}
+
+.money-back i {
+    color: var(--accent);
+    margin-right: 0.25rem;
+}
+
+.close-premium-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.1);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.close-premium-btn:hover {
+    background: rgba(0,0,0,0.15);
+    color: #333;
+}
+
+@media (max-width: 576px) {
+    .compact-premium-card {
+        padding: 1.25rem;
+    }
+    
+    .plans-grid {
+        gap: 0.5rem;
+    }
+    
+    .plan-option {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .plan-price {
+        font-size: 1rem;
+    }
+}
+
