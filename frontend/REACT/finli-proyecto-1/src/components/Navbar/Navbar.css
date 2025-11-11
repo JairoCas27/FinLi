@@ -1,0 +1,38 @@
+/* Estilos base para todos los enlaces del Navbar */
+.navbar-nav .nav-link {
+    position: relative; 
+    color: #6c757d !important; /* Tono gris por defecto */
+    padding: 0.5rem 0; 
+    margin: 0 1rem; 
+    transition: all 0.3s ease; /* Transición para color y línea */
+    padding-bottom: 7px; 
+    /* Importante: Mantiene el mismo espacio que la línea, aunque esté vacía */
+}
+
+/*  Cambio de color de texto al pasar el cursor o al estar activo */
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+    color: #000 !important; 
+}
+
+/*  Definición del pseudo-elemento para crear la línea inferior */
+.navbar-nav .nav-link::after {
+    content: ''; 
+    position: absolute; 
+    width: 0; /* Empieza sin ancho */
+    height: 2px; 
+    bottom: 0; 
+    left: 50%; /* Inicia desde el centro */
+    background-color: var(--verdeOs); 
+    transition: all 0.3s ease; 
+}
+
+.navbar-nav .nav-link.active::after {
+    width: 100%; 
+    left: 0; 
+}
+
+.navbar-nav .nav-link:not(.active):hover::after {
+    width: 100%;
+    left: 0;
+}

@@ -50,3 +50,7 @@ body {
     color: var(--verdeOs); /* color del icono */
     margin-bottom: 1.5rem; /* espacio debajo del icono */
 }
+
+.img-fluid {
+    width: 500px;
+}

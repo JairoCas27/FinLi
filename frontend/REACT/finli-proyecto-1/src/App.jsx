@@ -1,35 +1,51 @@
-import React from 'react';
-import { useState } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import './App.css'
-import Navbar from './components/Navbar/Navbar'; 
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './components/AuthContext/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
+import Navbar from './components/Navbar/Navbar';
 import Footer from './components/Footer/Footer';
-import Inicio from './pages/Inicio/Inicio'; 
+
+// Páginas públicas
+import Login from './pages/Autenticacion/Login';
+import Register from './pages/Autenticacion/Register';
+import RecoverPassword from './pages/Autenticacion/RecoverPassword';
+import NewPassword from './pages/Autenticacion/NewPassword';
+import Inicio from './pages/Inicio/Inicio';
 import Nosotros from './pages/Nosotros/Nosotros';
 import Servicios from './pages/Servicios/Servicios';
 
-function App() {
-  const [count, setCount] = useState(0);
+// Páginas protegidas
+import Usuario from './pages/Usuario/Usuario';
 
+function App() {
   return (
-    <Router> 
-      <Navbar /> 
-      <main> 
-        <Routes> 
-          {/* Ruta de Inicio */}
-          <Route path="/" element={<Inicio />} /> 
-          
-          {/* Añadir las nuevas rutas que definiste en el Navbar: */}
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          {/* Rutas públicas */}
+          <Route path="/" element={<Inicio />} />
           <Route path="/nosotros" element={<Nosotros />} />
           <Route path="/servicios" element={<Servicios />} />
-          {/*<Route path="/login" element={<Login />} /> */}
-          
-          <Route path="*" element={<h2>404 - Página no encontrada</h2>} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/registro" element={<Register />} />
+          <Route path="/recuperar-contrasena" element={<RecoverPassword />} />
+          <Route path="/nueva-contrasena" element={<NewPassword />} />
+
+          {/* Rutas protegidas */}
+          <Route 
+            path="/usuario" 
+            element={
+              <ProtectedRoute>
+                <Usuario />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* Ruta por defecto */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </main>
-      <Footer /> 
-    </Router>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 
-export default App
+export default App;

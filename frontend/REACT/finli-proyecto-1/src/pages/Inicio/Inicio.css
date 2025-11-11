@@ -19,38 +19,6 @@ p, form{
   font-family: 'Poppins'; /* fuente para cuerpos de texto */
 }
 
-/* Estilos para el menú de navegación */
-.navbar-nav .nav-link {
-  position: relative; /* para pseudo-elementos */
-  color: #6c757d !important; /* tono gris por defecto */
-  padding: 0.5rem 0; /* espacio vertical en cada enlace */
-  margin: 0 1rem; /* separación lateral entre links */
-  transition: all 0.3s ease; /* transición */
-}
-
-.navbar-nav .nav-link:hover,
-.navbar-nav .nav-link.active {
-  color: #000 !important; /* negro para resaltar */
-}
-
-/* Efecto de línea inferior */
-.navbar-nav .nav-link::after {
-  content: ''; /* pseudo-elemento vacío para la línea */
-  position: absolute; /* posicionado respecto al enlace */
-  width: 0; /* empieza sin ancho */
-  height: 2px; /* grosor de la línea */
-  bottom: 0; /* pegado al fondo del enlace */
-  left: 50%; /* inicia desde el centro */
-  background-color: var(--verdeOs); /* color de la línea */
-  transition: all 0.3s ease; /* anima la expansión */
-}
-
-.navbar-nav .nav-link:hover::after,
-.navbar-nav .nav-link.active::after {
-  width: 100%; /* se expande al ancho total */
-  left: 0; /* y se alinea al inicio */
-}
-
 /* Estilos de botones personalizados */
 .btn-custom {
   font-family: 'Poppins'; /* Tipo de letra */

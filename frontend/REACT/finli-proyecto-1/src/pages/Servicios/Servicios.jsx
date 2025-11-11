@@ -13,10 +13,7 @@ function Servicios() {
                         <Col lg={8} className="mx-auto text-center">
                             <h1 className="h1 fw-bold mb-4">Tus metas financieras, hechas realidad.</h1>
                             <p className="lead mb-5">Descubre todas las herramientas de FinLi diseñadas para que tomes el control de tu dinero de forma inteligente.</p>
-                             <h2 className="mb-4">¿Listo para tomar el control de tus finanzas?</h2>
-                            <p className="lead mb-4">Comienza hoy mismo a transformar tu relación con el dinero</p>
-                            <a href="/frontend/src/pages/Autenticación/login.html" className="btn btn-custom btn-lg">Comenzar Ahora</a>
-                       </Col>
+                         </Col>
                     </Row>
                 </Container>
             </section>
@@ -24,7 +21,7 @@ function Servicios() {
             <section id="services" className="service-section">
                 <Container>
                     <div id="gestion" className="row align-items-center mb-4">
-                        <Col lg={5}>
+                        <Col lg={6}>
                             <div className="service-card">
                                 <div className="service-icon">
                                     <i className="bi bi-cash-coin"></i>
@@ -35,13 +32,13 @@ function Servicios() {
                                 <p className="fst-italic">"Tu dinero, bajo control y explicado para que tomes decisiones informadas. Tu historia financiera siempre organizada y el dinero de tu bolsillo mejor gestionado."</p>
                             </div>
                         </Col>
-                        <Col lg={5}>
+                        <Col lg={6}>
                             <img src="./img/Contenido/gestion.png" alt="Gestión de Ingresos y Gastos" className="img-fluid" />
                         </Col>
                     </div>
 
                     <div id="analisis" className="row align-items-center mb-4 flex-lg-row-reverse">
-                        <Col lg={5}>
+                        <Col lg={6}>
                             <div className="service-card">
                                 <div className="service-icon">
                                     <i className="bi bi-bar-chart-line"></i>
@@ -53,13 +50,13 @@ function Servicios() {
                                 <p>Con esta información, puedes tomar decisiones informadas para optimizar tus finanzas.</p>
                             </div>
                         </Col>
-                        <Col lg={5}>
+                        <Col lg={6}>
                             <img src="./img/Contenido/reporte.png" alt="Análisis y Reportes Visuales" className="img-fluid" />
                         </Col>
                     </div>
 
                     <div id="pagos" className="row align-items-center">
-                        <Col lg={5}>
+                        <Col lg={6}>
                             <div className="service-card">
                                 <div className="service-icon">
                                     <i className="bi bi-wallet2"></i>
@@ -71,7 +68,7 @@ function Servicios() {
                                 <p>Con todo esto, podrás planificar tu futuro financiero sin estrés.</p>
                             </div>
                         </Col>
-                        <Col lg={5}>
+                        <Col lg={6}>
                             <img src="https://img.freepik.com/vector-premium/ilustracion-vectorial-sobre-concepto-o-agenda-fecha-pago-dinero-calendario_675567-10354.jpg" alt="Pagos y Presupuestos Inteligentes" className="img-fluid" />
                         </Col>
                     </div>
