@@ -138,6 +138,54 @@ const subcategoriesMap = {
 document.addEventListener('DOMContentLoaded', function() {
     // Cargar datos desde localStorage
     loadDataFromLocalStorage();
+
+ // ---- CARGAR DATOS DEL USUARIO LOGUEADO ----
+const loggedRaw = sessionStorage.getItem('loggedUser');
+if (loggedRaw) {
+  try {
+    const u = JSON.parse(loggedRaw);
+
+    // --- 1) Top-bar (bienvenida, avatar, nombre rápido) ---
+    const mainTitle    = document.getElementById('main-title');
+    const userName     = document.getElementById('user-name');
+    const userEmail    = document.getElementById('user-email');
+    const userInitials = document.getElementById('userInitials');
+    const avatarSm     = document.querySelector('.avatar-sm');
+
+    const fullName = `${u.nombre || ''} ${u.apellidoPaterno || ''} ${u.apellidoMaterno || ''}`.trim();
+    const FullName = u.nombre || 'Usuario';
+    window.USER_SHORT = u.nombre?.split(' ')[0] || 'Usuario';   // solo 1er nombre
+    window.USER_FULL  = u.nombre || 'Usuario'; 
+
+    if (mainTitle)    mainTitle.innerHTML   = `Bienvenido, <span class="text-gradient">${FullName}</span>`;
+    if (userName)     userName.textContent  = fullName;
+    if (userEmail)    userEmail.textContent = u.email || '';
+    if (userInitials) userInitials.textContent = (u.nombre?.[0] + (u.apellidoPaterno?.[0] || '')).toUpperCase();
+    if (avatarSm)     avatarSm.innerHTML = `<span>${(u.nombre?.[0] + (u.apellidoPaterno?.[0] || '')).toUpperCase()}</span>`;
+
+    // --- 2) Sincronizar objeto userProfile (para la sección “Mi Perfil”) ---
+    userProfile.name  = fullName;
+    userProfile.email = u.email || '';
+    userProfile.age   = u.edad || '';
+    userProfile.firstName = u.nombre || '';
+    userProfile.lastName  = `${u.apellidoPaterno || ''} ${u.apellidoMaterno || ''}`.trim();
+    saveProfileToLocalStorage();
+    updateProfileInApp();  // refresca la pantalla “Mi Perfil”
+
+    // --- 3) Mostrar todos los datos en consola ---
+console.table({
+  'Nombre(s)'      : u.nombre || '',
+  'Apellido Paterno': u.apellidoPaterno || '',
+  'Apellido Materno': u.apellidoMaterno || '',
+  'Edad'           : u.edad || '',
+  'Correo'         : u.email || ''
+});
+
+  } catch (e) {
+    console.warn('No se pudieron cargar los datos del usuario logueado', e);
+  }
+}
+
     loadPaymentMethodsFromLocalStorage();
     loadTransfersFromLocalStorage();
     loadIncomeRecordsFromLocalStorage();
@@ -348,8 +396,8 @@ function initializeNavigation() {
 
     const sectionData = {
         inicio: {
-            title: 'Bienvenido, <span class="text-gradient">Jairo</span>',
-            subtitle: 'Panel de control personal'
+        title: `Bienvenido, <span class="text-gradient">${window.USER_FULL}</span>`,
+        subtitle: 'Panel de control personal'
         },
         ingresos: {
             title: 'Gestión de <span class="text-gradient">Ingresos</span>',
