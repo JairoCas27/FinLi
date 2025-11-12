@@ -5007,3 +5007,208 @@ window.addEventListener('DOMContentLoaded', () => {
         cargarIngresosDesdeBD();
     }
 });
+
+let categoriasBD = []; // aquí guardaremos las categorías reales
+
+async function cargarCategoriasDesdeBD() {
+  try {
+    const res = await fetch("http://localhost:8080/api/categorias");
+    if (!res.ok) throw new Error("Error al cargar categorías");
+    categoriasBD = await res.json();
+
+    console.table("📥 Categorías cargadas desde BD:", categoriasBD.map(c => ({
+      ID: c.idCategoria,
+      Nombre: c.nombreCategoria
+    })));
+  } catch (err) {
+    console.error("❌ Error cargando categorías:", err);
+  }
+}
+
+let subcategoriasBD = []; // aquí guardaremos las subcategorías reales
+
+async function cargarSubcategoriasDesdeBD() {
+  try {
+    const res = await fetch("http://localhost:8080/api/subcategorias");
+    if (!res.ok) throw new Error("Error al cargar subcategorías");
+    subcategoriasBD = await res.json();
+
+    console.table("📥 Subcategorías cargadas desde BD:", subcategoriasBD.map(s => ({
+      ID: s.idSubcategoria,
+      Nombre: s.nombreSubcategoria,
+      CategoriaID: s.categoria?.idCategoria
+    })));
+  } catch (err) {
+    console.error("❌ Error cargando subcategorías:", err);
+  }
+}
+
+function obtenerIdsPorNombres(nombreCategoria, nombreSubcategoria) {
+  const categoria = categoriasBD.find(c => c.nombreCategoria === nombreCategoria);
+  const subcategoria = subcategoriasBD.find(s => s.nombreSubcategoria === nombreSubcategoria);
+
+  if (!categoria) {
+    console.warn("❌ Categoría no encontrada:", nombreCategoria);
+    return { categoryId: null, subcategoryId: null };
+  }
+
+  if (!subcategoria) {
+    console.warn("❌ Subcategoría no encontrada:", nombreSubcategoria);
+    return { categoryId: categoria.idCategoria, subcategoryId: null };
+  }
+
+  return {
+    categoryId: categoria.idCategoria,
+    subcategoryId: subcategoria.idSubcategoria
+  };
+}
+
+function obtenerNombreCategoriaLocal(idCategoria) {
+  const cat = categoriasBD.find(c => c.idCategoria === idCategoria);
+  return cat ? cat.nombreCategoria : "Sin categoría";
+}
+
+function obtenerNombreSubcategoriaLocal(idSubcategoria) {
+  const sub = subcategoriasBD.find(s => s.idSubcategoria === idSubcategoria);
+  return sub ? sub.nombreSubcategoria : "Sin subcategoría";
+}
+
+async function guardarTransaccionEnBD(transaccion) {
+    console.log("🧪 guardarTransaccionEnBD fue llamada");
+  const usuario = JSON.parse(sessionStorage.getItem('loggedUser'));
+  if (!usuario || !usuario.id) {
+    console.warn("⚠️ No hay usuario logueado");
+    return;
+  }
+
+  const { categoryId, subcategoryId } = obtenerIdsPorNombres(
+    transaccion.category,
+    transaccion.subcategory
+  );
+
+  if (!categoryId || !subcategoryId) {
+    console.error("❌ Faltan IDs de categoría o subcategoría");
+    return;
+  }
+
+  const payload = {
+    nombreTransaccion: transaccion.description || "Sin descripción",
+    tipo: "GASTO",
+    monto: transaccion.amount,
+    fecha: new Date(transaccion.dateTime).toISOString(),
+    descripcionTransaccion: transaccion.description || "",
+    idUsuario: usuario.id,
+    idMedioPago: transaccion.paymentMethodId,
+    idCategoria: categoryId,
+    idSubcategoria: subcategoryId,
+    etiqueta: transaccion.description || "Sin etiqueta"
+  };
+
+  console.log("📤 Enviando transacción a BD:", JSON.stringify(payload, null, 2));
+
+  try {
+    const res = await fetch("http://localhost:8080/api/transacciones", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    console.log("📡 Respuesta del servidor:", res.status, res.statusText);
+
+    if (!res.ok) {
+  const texto = await res.text();
+  console.error("❌ Error al guardar transacción:", texto);
+  return;
+}
+
+const saved = await res.json();
+console.log("✅ Transacción guardada en BD:", saved);
+
+    console.log("✅ Transacción guardada en BD:", saved);
+  } catch (err) {
+    console.error("❌ Excepción guardando transacción:", err);
+  }
+}
+
+async function cargarTransaccionesDesdeBD() {
+  const usuario = JSON.parse(sessionStorage.getItem('loggedUser'));
+  if (!usuario || !usuario.id) {
+    console.warn("⚠️ No hay usuario logueado");
+    return;
+  }
+
+  try {
+    const res = await fetch(`http://localhost:8080/api/transacciones/usuario/${usuario.id}`);
+    if (!res.ok) throw new Error("Error al cargar transacciones");
+    const transaccionesBD = await res.json();
+    console.log("📄 Transacción cruda completa:", JSON.stringify(transaccionesBD[0], null, 2));
+    console.table("📥 Transacciones crudas desde BD:", transaccionesBD.map(t => ({
+  ID: t.idTransaccion,
+  Monto: t.monto,
+  CategoriaID: t.idCategoria,
+  SubcategoriaID: t.idSubcategoria,
+  MedioPagoID: t.idMedioPago
+})));
+
+    console.table("📥 Transacciones obtenidas desde BD:", transaccionesBD.map(t => ({
+      ID: t.idTransaccion,
+      Nombre: t.nombreTransaccion,
+      Monto: t.monto,
+      Fecha: t.fecha,
+      MedioPago: t.mediopago?.nombreMedioPago || "❌ Sin medio",
+      Categoria: t.categoria?.nombreCategoria || "❌ Sin cat.",
+      Subcategoria: t.subcategoria?.nombreSubcategoria || "❌ Sin subcat."
+    })));
+
+    // Mapear a formato local
+    transactions = transaccionesBD.map(t => ({
+      id: t.idTransaccion,
+      type: 'gasto',
+      amount: parseFloat(t.monto),
+      description: t.descripcionTransaccion || t.nombreTransaccion,
+      category: t.categoria || 'Sin categoría',
+subcategory: t.subcategoria || 'Sin subcategoría',
+paymentMethod: t.mediopago || 'Sin medio de pago',
+      paymentMethodId: t.idMedioPago,
+      image: t.imagen || null,
+      dateTime: t.fecha,
+      formattedDate: formatDateTime(t.fecha),
+      status: 'completado'
+    }));
+
+    saveTransactionsToLocalStorage();
+    renderTransactions();
+    updateBalance();
+  } catch (err) {
+    console.error("❌ Error cargando transacciones:", err);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const loggedRaw = sessionStorage.getItem('loggedUser');
+  if (loggedRaw) {
+    await cargarCategoriasDesdeBD();
+    await cargarSubcategoriasDesdeBD();
+    cargarTransaccionesDesdeBD();
+  }
+});
+
+console.log("🔄 Sobrescribiendo addTransaction...");
+
+const addTransactionOriginal = addTransaction;
+
+addTransaction = async function () {
+  console.log("🧪 addTransaction nuevo ejecutado");
+  addTransactionOriginal(); // guarda localmente
+
+  const ultimaTransaccion = transactions[transactions.length - 1];
+  console.log("🧾 Última transacción local:", ultimaTransaccion);
+
+  if (ultimaTransaccion) {
+    await guardarTransaccionEnBD(ultimaTransaccion);
+  } else {
+    console.warn("⚠️ No hay transacción para enviar");
+  }
+};
+
+console.log("✅ addTransaction fue sobrescrito");
