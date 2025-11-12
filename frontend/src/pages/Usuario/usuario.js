@@ -4904,3 +4904,106 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 });
+
+// ==== INTEGRACIÓN CON BACKEND: INGRESOS ====
+
+// 1. Guardar ingreso en BD
+async function guardarIngresoEnBD(incomeRecord) {
+    const usuario = JSON.parse(sessionStorage.getItem('loggedUser'));
+    if (!usuario || !usuario.id) {
+        console.error("No hay usuario logueado");
+        return;
+    }
+
+    const payload = {
+        idUsuario: usuario.id,
+        idMedioPago: incomeRecord.methodId,
+        nombreIngreso: incomeRecord.description || "Ingreso sin nombre",
+        montoIngreso: incomeRecord.amount,
+        descripcion: incomeRecord.description || "",
+        fechaIngreso: new Date().toISOString().slice(0, 10)
+    };
+
+    try {
+        const res = await fetch("http://localhost:8080/api/ingresos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error("Error al guardar ingreso");
+        const saved = await res.json();
+        console.log("✅ Ingreso guardado en BD:", saved);
+    } catch (err) {
+        console.error("❌ Error guardando ingreso:", err);
+    }
+}
+
+// 2. Cargar ingresos del usuario logueado
+async function cargarIngresosDesdeBD() {
+    const usuario = JSON.parse(sessionStorage.getItem('loggedUser'));
+    if (!usuario || !usuario.id) {
+        console.warn("No hay usuario logueado");
+        return;
+    }
+
+    try {
+        const res = await fetch(`http://localhost:8080/api/ingresos/usuario/${usuario.id}`);
+        if (!res.ok) throw new Error("Error al cargar ingresos");
+        const ingresosBD = await res.json();
+
+        console.table("📥 Ingresos obtenidos desde BD:", ingresosBD.map(i => ({
+            ID: i.idIngreso,
+            Nombre: i.nombreIngreso,
+            Monto: i.montoIngreso,
+            Fecha: i.fechaIngreso,
+            MedioPagoID: i.idMedioPago,
+            Descripción: i.descripcion
+        })));
+
+        // Mapear a formato local
+        incomeRecords = ingresosBD.map(i => ({
+            id: i.idIngreso,
+            methodId: i.idMedioPago,
+            methodName: obtenerNombreMedioPagoLocal(i.idMedioPago),
+            amount: parseFloat(i.montoIngreso),
+            description: i.descripcion || i.nombreIngreso,
+            date: i.fechaIngreso,
+            formattedDate: formatDateTime(i.fechaIngreso + "T00:00"),
+            type: 'ingreso'
+        }));
+
+        saveIncomeRecordsToLocalStorage();
+        renderIncomeRecords();
+        updateTotalIncome();
+        updateBalance();
+    } catch (err) {
+        console.error("❌ Error cargando ingresos:", err);
+    }
+}
+
+// 3. Helper: obtener nombre del medio de pago localmente
+function obtenerNombreMedioPagoLocal(idMedioPago) {
+    const metodo = paymentMethods.find(m => m.id === idMedioPago);
+    return metodo ? metodo.name : "Sin medio de pago";
+}
+
+// 4. Sobrescribir addIncome para que también guarde en BD
+const addIncomeOriginal = addIncome;
+addIncome = async function () {
+    // Llamar a la lógica original primero
+    addIncomeOriginal();
+
+    // Obtener el último ingreso añadido
+    const ultimo = incomeRecords[incomeRecords.length - 1];
+    if (ultimo) {
+        await guardarIngresoEnBD(ultimo);
+    }
+};
+
+// 5. Al cargar la página, si hay usuario logueado → cargar sus ingresos
+window.addEventListener('DOMContentLoaded', () => {
+    const loggedRaw = sessionStorage.getItem('loggedUser');
+    if (loggedRaw) {
+        cargarIngresosDesdeBD();
+    }
+});
