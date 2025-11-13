@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,10 +8,12 @@
     <link rel="icon" href="/frontend/public/img/Logo/LogoFinLi.png" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="usuario.css">
     <link rel="stylesheet" href="cardPremium.css">
 </head>
+
 <body>
     <div class="container-fluid">
         <div class="app-shell">
@@ -28,14 +31,16 @@
                 <nav class="mt-3">
                     <a class="nav-link active" data-section="inicio"><i class="bi bi-house-door-fill"></i> Inicio</a>
                     <a class="nav-link" data-section="ingresos"><i class="bi bi-cash-coin"></i> Metodos de Pago</a>
-                    <a class="nav-link" data-section="pagos"><i class="bi bi-calendar-plus-fill"></i> Agenda de Pagos</a>
+                    <a class="nav-link" data-section="pagos"><i class="bi bi-calendar-plus-fill"></i> Agenda de
+                        Pagos</a>
                     <a class="nav-link" data-section="informes"><i class="bi bi-graph-up-arrow"></i> Informes</a>
                     <a class="nav-link" data-section="notificaciones"><i class="bi bi-bell-fill"></i> Notificaciones</a>
                     <a class="nav-link" data-section="perfil"><i class="bi bi-person-bounding-box"></i> Perfil</a>
                 </nav>
 
                 <div class="mt-4">
-                    <button class="btn btn-outline-secondary btn-logout" id="logoutBtn"><i class="bi bi-box-arrow-right me-2"></i> Cerrar sesión</button>
+                    <button class="btn btn-outline-secondary btn-logout" id="logoutBtn"><i
+                            class="bi bi-box-arrow-right me-2"></i> Cerrar sesión</button>
                 </div>
             </aside>
 
@@ -49,26 +54,34 @@
                     </div>
 
                     <div class="d-flex align-items-center gap-3">
-                        
+
                         <!-- Notifications Dropdown -->
                         <div class="dropdown">
-                            <button class="btn btn-sm btn-light position-relative dropdown-toggle" type="button" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button class="btn btn-sm btn-light position-relative dropdown-toggle" type="button"
+                                id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-bell"></i>
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                                <span
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                    style="font-size: 0.6rem;">
                                 </span>
                             </button>
-                            <ul class="dropdown-menu dropdown-notifications dropdown-menu-end" aria-labelledby="notificationsDropdown">
+                            <ul class="dropdown-menu dropdown-notifications dropdown-menu-end"
+                                aria-labelledby="notificationsDropdown">
                                 <li>
                                     <h6 class="dropdown-header">Notificaciones</h6>
                                 </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-center small" href="#" onclick="showSection('notificaciones')">Ver todas las notificaciones</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item text-center small" href="#"
+                                        onclick="showSection('notificaciones')">Ver todas las notificaciones</a></li>
                             </ul>
                         </div>
-                        
+
                         <!-- Avatar y datos rápidos del usuario -->
                         <div class="d-flex align-items-center gap-2">
-                            <div class="avatar-sm" style="background:linear-gradient(135deg,var(--verdeOs),var(--grisOs))">
+                            <div class="avatar-sm"
+                                style="background:linear-gradient(135deg,var(--verdeOs),var(--grisOs))">
                                 <span id="userInitials">JC</span>
                             </div>
                             <div class="text-end d-none d-sm-block">
@@ -113,11 +126,13 @@
                             </div>
                             <div class="transaction-form-item">
                                 <label class="form-label fw-semibold">Monto S/.</label>
-                                <input type="number" class="form-control" id="incomeAmount" placeholder="0.00" step="0.01">
+                                <input type="number" class="form-control" id="incomeAmount" placeholder="0.00"
+                                    step="0.01">
                             </div>
                             <div class="transaction-form-item">
                                 <label class="form-label fw-semibold">Descripción</label>
-                                <input type="text" class="form-control" id="incomeDescription" placeholder="Descripción del ingreso">
+                                <input type="text" class="form-control" id="incomeDescription"
+                                    placeholder="Descripción del ingreso">
                             </div>
                         </div>
                         <div class="d-flex justify-content-end mt-3">
@@ -132,7 +147,7 @@
                         <h5 class="d-flex align-items-center gap-2 mb-3">
                             <i class="bi bi-plus-circle me-2"></i> Añadir Transacción
                         </h5>
-                        
+
                         <!-- Fila de tipo, monto, fecha y hora -->
                         <div class="transaction-form-grid">
                             <div class="transaction-form-item">
@@ -143,7 +158,8 @@
                             </div>
                             <div class="transaction-form-item">
                                 <label class="form-label fw-semibold">Monto S/. </label>
-                                <input type="number" class="form-control" id="transactionAmount" placeholder="0.00" step="0.01">
+                                <input type="number" class="form-control" id="transactionAmount" placeholder="0.00"
+                                    step="0.01">
                             </div>
                             <div class="transaction-form-item">
                                 <label class="form-label fw-semibold">Fecha y Hora</label>
@@ -164,25 +180,26 @@
                             </div>
                             <div class="transaction-form-item">
                                 <label class="form-label fw-semibold">Etiqueta</label>
-                                <input type="text" class="form-control" id="transactionDescription" placeholder="Etiqueta de la transacción...">
+                                <input type="text" class="form-control" id="transactionDescription"
+                                    placeholder="Etiqueta de la transacción...">
                             </div>
                         </div>
 
                         <!-- SELECCIONA CATEGORÍA -->
                         <div class="section-divider"></div>
-                        
+
                         <h6 class="d-flex align-items-center gap-2 mb-3">
                             <i class="bi bi-tags-fill"></i> Selecciona Categoría
                         </h6>
-                        
+
                         <!-- Botones de categoría -->
                         <div class="category-buttons">
                             <button class="category-btn" data-category="vivienda">
                                 <i class="bi bi-house"></i> Vivienda
-                            </button>   
+                            </button>
                             <button class="category-btn" data-category="transporte">
                                 <i class="bi bi-car-front"></i> Transporte
-                            </button>                         
+                            </button>
                             <button class="category-btn" data-category="alimentacion">
                                 <i class="bi bi-cup-straw"></i> Alimentacion
                             </button>
@@ -250,7 +267,8 @@
                                             <div class="empty-state">
                                                 <i class="bi bi-cash-coin"></i>
                                                 <div>No hay ingresos registradas</div>
-                                                <small class="text-muted">Agrega tu primer ingreso usando el formulario</small>
+                                                <small class="text-muted">Agrega tu primer ingreso usando el
+                                                    formulario</small>
                                             </div>
                                         </td>
                                     </tr>
@@ -267,7 +285,7 @@
                             <button class="btn btn-outline-success" id="FiltroTraProfileBtn">
                                 <i class="bi bi-funnel"></i> Filtro
                             </button>
-                            
+
                             <!-- Filtros -->
                             <div class="filters-container row mb-4 d-none">
                                 <!-- Periodo -->
@@ -275,10 +293,14 @@
                                     <div class="filter-group">
                                         <div class="filter-label">Periodo</div>
                                         <div class="btn-group w-100" role="group" aria-label="Periodo">
-                                            <button class="btn btn-sm btn-outline-success active" data-period="mensual">Mensual</button>
-                                            <button class="btn btn-sm btn-outline-success" data-period="quincenal">Quincenal</button>
-                                            <button class="btn btn-sm btn-outline-success" data-period="semanal">Semanal</button>
-                                            <button class="btn btn-sm btn-outline-success" data-period="diario">Diario</button>
+                                            <button class="btn btn-sm btn-outline-success active"
+                                                data-period="mensual">Mensual</button>
+                                            <button class="btn btn-sm btn-outline-success"
+                                                data-period="quincenal">Quincenal</button>
+                                            <button class="btn btn-sm btn-outline-success"
+                                                data-period="semanal">Semanal</button>
+                                            <button class="btn btn-sm btn-outline-success"
+                                                data-period="diario">Diario</button>
                                         </div>
                                     </div>
                                 </div>
@@ -287,9 +309,9 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="section-divider"></div>
-                        
+
                         <div class="table-responsive text-center">
                             <table class="table align-middle">
                                 <thead>
@@ -317,16 +339,18 @@
                         <h5 class="d-flex align-items-center gap-2 mb-3">
                             <i class="bi bi-wallet2"></i> Gestión de Medios de Pago
                         </h5>
-                        
+
                         <!-- Formulario para agregar medio de pago -->
                         <div class="transaction-form-grid">
                             <div class="transaction-form-item">
                                 <label class="form-label fw-semibold">Nombre del Medio de Pago</label>
-                                <input type="text" class="form-control" id="paymentMethodName" placeholder="Ej: Yape, BCP, etc.">
+                                <input type="text" class="form-control" id="paymentMethodName"
+                                    placeholder="Ej: Yape, BCP, etc.">
                             </div>
                             <div class="transaction-form-item">
                                 <label class="form-label fw-semibold">Monto Inicial S/.</label>
-                                <input type="number" class="form-control" id="initialAmount" placeholder="0.00" step="0.01">
+                                <input type="number" class="form-control" id="initialAmount" placeholder="0.00"
+                                    step="0.01">
                             </div>
                             <div class="transaction-form-item">
                                 <label class="form-label fw-semibold">&nbsp;</label>
@@ -339,20 +363,21 @@
                         <!-- fila que contiene gráfica -->
                         <div class="row align-items-center">
                             <div class="col-12 col-md-6 order-1 order-md-1">
-                            <div class="chart-container" style="height: 350px;">
-                                <canvas id="paymentMethodsChart"></canvas>
+                                <div class="chart-container" style="height: 350px;">
+                                    <canvas id="paymentMethodsChart"></canvas>
+                                </div>
                             </div>
-                            </div>
-                        
+
                             <!-- Total -->
-                            <div class="col-12 col-md-6 order-2 order-md-2 d-flex justify-content-center justify-content-md-end">
-                            <div class="card-stat text-center">
-                                <h6 class="d-flex align-items-center gap-2 justify-content-center mb-3">
-                                <i class="bi bi-cash-stack text-success"></i> Total de Ingresos
-                                </h6>
-                                <div class="fs-3 fw-bold text-success" id="totalIncomeAmount">S/. 0.00</div>
-                                <small class="text-muted">Suma de todos los ingresos registrados</small>
-                            </div>
+                            <div
+                                class="col-12 col-md-6 order-2 order-md-2 d-flex justify-content-center justify-content-md-end">
+                                <div class="card-stat text-center">
+                                    <h6 class="d-flex align-items-center gap-2 justify-content-center mb-3">
+                                        <i class="bi bi-cash-stack text-success"></i> Total de Ingresos
+                                    </h6>
+                                    <div class="fs-3 fw-bold text-success" id="totalIncomeAmount">S/. 0.00</div>
+                                    <small class="text-muted">Suma de todos los ingresos registrados</small>
+                                </div>
                             </div>
                         </div>
 
@@ -373,7 +398,7 @@
                             </table>
                         </div>
                     </div>
-                    
+
                     <!-- Transferencias entre Medios de Pago -->
                     <div class="card-stat fade-in mb-4">
                         <h5 class="d-flex align-items-center gap-2 mb-3">
@@ -394,7 +419,8 @@
                             </div>
                             <div class="transaction-form-item">
                                 <label class="form-label fw-semibold">Monto S/.</label>
-                                <input type="number" class="form-control" id="transferAmount" placeholder="0.00" step="0.01">
+                                <input type="number" class="form-control" id="transferAmount" placeholder="0.00"
+                                    step="0.01">
                             </div>
                         </div>
 
@@ -437,7 +463,7 @@
                         <h5 class="d-flex align-items-center gap-2 mb-3">
                             <i class="bi bi-plus-circle-dotted"></i> Insertar Nuevo Pago
                         </h5>
-                        
+
                         <!-- Fila de tipo, monto, fecha y hora -->
                         <div class="transaction-form-grid">
                             <div class="transaction-form-item">
@@ -469,25 +495,26 @@
                             </div>
                             <div class="transaction-form-item">
                                 <label class="form-label fw-semibold">Monto S/. </label>
-                                <input type="number" class="form-control" id="transactionAmountPagos" placeholder="0.00" step="0.01">
+                                <input type="number" class="form-control" id="transactionAmountPagos" placeholder="0.00"
+                                    step="0.01">
                             </div>
                         </div>
 
                         <!-- SELECCIONA CATEGORÍA -->
                         <div class="section-divider"></div>
-                        
+
                         <h6 class="d-flex align-items-center gap-2 mb-3">
                             <i class="bi bi-tags"></i> Selecciona Categoría
                         </h6>
-                        
+
                         <!-- Botones de categoría -->
                         <div class="category-buttons">
                             <button class="category-btn" data-category="vivienda">
                                 <i class="bi bi-house"></i> Vivienda
-                            </button>   
+                            </button>
                             <button class="category-btn" data-category="transporte">
                                 <i class="bi bi-car-front"></i> Transporte
-                            </button>                         
+                            </button>
                             <button class="category-btn" data-category="alimentacion">
                                 <i class="bi bi-cup-straw"></i> Alimentacion
                             </button>
@@ -521,7 +548,7 @@
                         <div id="subcategories-container-pagos">
                             <!-- Las subcategorías se cargarán aquí dinámicamente -->
                         </div>
-                        
+
                         <div class="d-flex justify-content-end mt-3">
                             <!-- Botón principal para agregar la transacción -->
                             <button class="btn btn-primary" id="addTransactionBtnPagos">
@@ -544,10 +571,14 @@
                                 <div class="filter-group">
                                     <div class="filter-label">Periodo</div>
                                     <div class="btn-group w-100" role="group" aria-label="Periodo">
-                                        <button class="btn btn-sm btn-outline-success active" data-period="mensual">Mensual</button>
-                                        <button class="btn btn-sm btn-outline-success" data-period="quincenal">Quincenal</button>
-                                        <button class="btn btn-sm btn-outline-success" data-period="semanal">Semanal</button>
-                                        <button class="btn btn-sm btn-outline-success" data-period="diario">Diario</button>
+                                        <button class="btn btn-sm btn-outline-success active"
+                                            data-period="mensual">Mensual</button>
+                                        <button class="btn btn-sm btn-outline-success"
+                                            data-period="quincenal">Quincenal</button>
+                                        <button class="btn btn-sm btn-outline-success"
+                                            data-period="semanal">Semanal</button>
+                                        <button class="btn btn-sm btn-outline-success"
+                                            data-period="diario">Diario</button>
                                     </div>
                                 </div>
                             </div>
@@ -557,7 +588,7 @@
                         </div>
 
                         <div class="section-divider"></div>
-                        
+
                         <div class="table-responsive">
                             <table class="table align-middle">
                                 <thead>
@@ -584,7 +615,7 @@
                         <button class="btn btn-outline-success mb-4" id="FiltroProfileBtn">
                             <i class="bi bi-funnel"></i> Filtro
                         </button>
-                        
+
                         <!-- Filtros -->
                         <div class="filters-container row mb-4 d-none">
                             <!-- Filtro de Periodo -->
@@ -592,20 +623,24 @@
                                 <div class="filter-group">
                                     <div class="filter-label">Periodo</div>
                                     <div class="btn-group w-100" role="group" aria-label="Periodo">
-                                        <button class="btn btn-sm btn-outline-success active" data-period="mensual">Mensual</button>
-                                        <button class="btn btn-sm btn-outline-success" data-period="quincenal">Quincenal</button>
-                                        <button class="btn btn-sm btn-outline-success" data-period="semanal">Semanal</button>
-                                        <button class="btn btn-sm btn-outline-secondary" data-filter="limpiar">Limpiar</button>
+                                        <button class="btn btn-sm btn-outline-success active"
+                                            data-period="mensual">Mensual</button>
+                                        <button class="btn btn-sm btn-outline-success"
+                                            data-period="quincenal">Quincenal</button>
+                                        <button class="btn btn-sm btn-outline-success"
+                                            data-period="semanal">Semanal</button>
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                            data-filter="limpiar">Limpiar</button>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Filtro de Categorías -->
                             <div class="col-md-8">
                                 <div class="filter-group">
                                     <div class="filter-label">Filtrar por Categorías</div>
                                 </div>
-                                
+
                                 <!-- Contenedor para categorías y subcategorías -->
                                 <div id="informes-category-filter-container" class="mt-3">
                                     <!-- Se cargará dinámicamente -->
@@ -655,15 +690,18 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-4">
                             <div class="filter-group">
                                 <div class="filter-label">Exportar</div>
                                 <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-outline-primary flex-fill"><i class="bi bi-filetype-pdf me-1"></i> PDF</button>
-                                    <button class="btn btn-sm btn-outline-success flex-fill"><i class="bi bi-filetype-xls me-1"></i> EXCEL</button>
-                                    <button class="btn btn-sm btn-outline-success flex-fill"><i class="bi bi-filetype-jpg me-1"></i> JPG</button>
+                                    <button class="btn btn-sm btn-outline-primary flex-fill"><i
+                                            class="bi bi-filetype-pdf me-1"></i> PDF</button>
+                                    <button class="btn btn-sm btn-outline-success flex-fill"><i
+                                            class="bi bi-filetype-xls me-1"></i> EXCEL</button>
+                                    <button class="btn btn-sm btn-outline-success flex-fill"><i
+                                            class="bi bi-filetype-jpg me-1"></i> JPG</button>
                                 </div>
                             </div>
                         </div>
@@ -722,7 +760,7 @@
                                 <div>No hay notificaciones</div>
                                 <small class="text-muted">Tus notificaciones aparecerán aquí</small>
                             </div>
-                            
+
                             <div class="notifications-list" id="notifications-list">
                                 <!-- Las notificaciones se cargarán aquí dinámicamente -->
                             </div>
@@ -735,10 +773,12 @@
                     <div class="card-stat fade-in mb-4">
                         <div class="profile-header">
                             <div class="profile-avatar" id="profileAvatar">
-                                <div id="avatarPlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:2rem;">JC</div>
+                                <div id="avatarPlaceholder"
+                                    style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:2rem;">
+                                    JC</div>
                             </div>
                             <div class="profile-info">
-                                <div class="profile-name">Jairo Castillo</div>
+                                <div class="profile-name" id="profileFullName"></div>
                                 <div class="profile-email">jairo@utp.edu.pe</div>
                             </div>
                             <button class="btn btn-outline-success" id="editProfileBtn">
@@ -749,30 +789,38 @@
                         <!-- Formulario de edición de perfil -->
                         <div id="profileForm" style="display: none;">
                             <div class="section-divider"></div>
-                            
+
                             <h5 class="mb-3">Información Personal</h5>
                             <form>
                                 <div class="profile-picture-edit">
                                     <div class="profile-picture-preview" id="profilePicturePreview">
-                                        <div id="profilePicturePlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:3rem;">JC</div>
+                                        <div id="profilePicturePlaceholder"
+                                            style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:3rem;">
+                                            JC</div>
                                     </div>
-                                    <button type="button" class="profile-picture-change-btn" id="changeProfilePictureBtn">
+                                    <button type="button" class="profile-picture-change-btn"
+                                        id="changeProfilePictureBtn">
                                         <i class="bi bi-camera me-1"></i> Cambiar foto de perfil
                                     </button>
                                     <input type="file" id="avatarInput" accept="image/*" style="display: none;">
-                                    <button type="button" class="btn btn-outline-danger mt-2" id="removeProfilePhotoBtn" style="display: none;">
+                                    <button type="button" class="btn btn-outline-danger mt-2" id="removeProfilePhotoBtn"
+                                        style="display: none;">
                                         <i class="bi bi-trash me-1"></i> Eliminar foto
                                     </button>
                                 </div>
-                                
+
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label for="firstName" class="form-label">Nombre</label>
                                         <input type="text" class="form-control" id="firstName" value="Jairo">
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label for="lastName" class="form-label">Apellido</label>
-                                        <input type="text" class="form-control" id="lastName" value="Castillo">
+                                        <label for="apellidoPaterno" class="form-label">Apellido Paterno</label>
+                                        <input type="text" class="form-control" id="apellidoPaterno" value="">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="apellidoMaterno" class="form-label">Apellido Materno</label>
+                                        <input type="text" class="form-control" id="apellidoMaterno" value="">
                                     </div>
                                 </div>
                                 <div class="mb-3">
@@ -783,22 +831,22 @@
                                     <label for="userEdad" class="form-label">Edad</label>
                                     <input type="number" class="form-control" id="userEdad" value="20">
                                 </div>
-                                
+
                                 <!-- Cambio de contraseña -->
                                 <h5 class="mb-3 mt-4">Cambiar Contraseña</h5>
                                 <div class="mb-3">
                                     <label for="currentPassword" class="form-label">Contraseña actual</label>
-                                    <input type="password" class="form-control" id="currentPassword">
+                                    <input type="password" class="form-control" id="currentPassword" placeholder="Contraseña actual">
                                 </div>
                                 <div class="mb-3">
                                     <label for="newPassword" class="form-label">Nueva contraseña</label>
-                                    <input type="password" class="form-control" id="newPassword">
+                                    <input type="password" class="form-control" id="newPassword" placeholder="Nueva contraseña">
                                 </div>
                                 <div class="mb-3">
                                     <label for="confirmPassword" class="form-label">Confirmar nueva contraseña</label>
-                                    <input type="password" class="form-control" id="confirmPassword">
+                                    <input type="password" class="form-control" id="confirmPassword" placeholder="Confirmar nueva contraseña">
                                 </div>
-                                
+
                                 <div class="d-flex justify-content-end gap-2">
                                     <button type="button" class="btn btn-secondary" id="cancelEditBtn">Cancelar</button>
                                     <button type="submit" class="btn btn-primary">Guardar Cambios</button>
@@ -840,7 +888,7 @@
                         <div class="premium-card">
                             <h3 class="premium-title">Hazte Premium</h3>
                             <p class="muted">Desbloquea todas las funciones premium</p>
-                            
+
                             <table class="premium-price-table">
                                 <tr>
                                     <td>Anual</td>
@@ -855,7 +903,7 @@
                                     <td>S/.49.99</td>
                                 </tr>
                             </table>
-                            
+
                             <button class="btn btn-primary w-100 mt-3" id="openPremiumModalBtn">
                                 <i class="bi bi-star-fill me-2"></i> Suscribirse
                             </button>
@@ -891,7 +939,8 @@
     </div>
 
     <!-- Modal para ver detalles de transacción -->
-    <div class="modal fade transaction-detail-modal" id="viewTransactionModal" tabindex="-1" aria-labelledby="viewTransactionModalLabel" aria-hidden="true">
+    <div class="modal fade transaction-detail-modal" id="viewTransactionModal" tabindex="-1"
+        aria-labelledby="viewTransactionModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="transaction-detail-header text-center">
@@ -908,7 +957,8 @@
     </div>
 
     <!-- Modal para editar transacción -->
-    <div class="modal fade transaction-edit-modal" id="editTransactionModal" tabindex="-1" aria-labelledby="editTransactionModalLabel" aria-hidden="true">
+    <div class="modal fade transaction-edit-modal" id="editTransactionModal" tabindex="-1"
+        aria-labelledby="editTransactionModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="transaction-edit-header text-center">
@@ -926,7 +976,8 @@
     </div>
 
     <!-- Modal para personalizar categorías -->
-    <div class="modal fade" id="customizeCategoriesModal" tabindex="-1" aria-labelledby="customizeCategoriesModalLabel" aria-hidden="true">
+    <div class="modal fade" id="customizeCategoriesModal" tabindex="-1" aria-labelledby="customizeCategoriesModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
@@ -938,28 +989,36 @@
                 <div class="modal-body">
                     <ul class="nav nav-tabs" id="customizeTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="new-category-tab" data-bs-toggle="tab" data-bs-target="#new-category" type="button" role="tab" aria-controls="new-category" aria-selected="true">
+                            <button class="nav-link active" id="new-category-tab" data-bs-toggle="tab"
+                                data-bs-target="#new-category" type="button" role="tab" aria-controls="new-category"
+                                aria-selected="true">
                                 Nueva Categoría
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="new-subcategory-tab" data-bs-toggle="tab" data-bs-target="#new-subcategory" type="button" role="tab" aria-controls="new-subcategory" aria-selected="false">
+                            <button class="nav-link" id="new-subcategory-tab" data-bs-toggle="tab"
+                                data-bs-target="#new-subcategory" type="button" role="tab"
+                                aria-controls="new-subcategory" aria-selected="false">
                                 Nueva Subcategoría
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="manage-categories-tab" data-bs-toggle="tab" data-bs-target="#manage-categories" type="button" role="tab" aria-controls="manage-categories" aria-selected="false">
+                            <button class="nav-link" id="manage-categories-tab" data-bs-toggle="tab"
+                                data-bs-target="#manage-categories" type="button" role="tab"
+                                aria-controls="manage-categories" aria-selected="false">
                                 Gestionar Categorías
                             </button>
                         </li>
                     </ul>
-                    
+
                     <div class="tab-content mt-3" id="customizeTabsContent">
                         <!-- Pestaña Nueva Categoría -->
-                        <div class="tab-pane fade show active" id="new-category" role="tabpanel" aria-labelledby="new-category-tab">
+                        <div class="tab-pane fade show active" id="new-category" role="tabpanel"
+                            aria-labelledby="new-category-tab">
                             <div class="mb-3">
                                 <label for="newCategoryName" class="form-label">Nombre de la categoría</label>
-                                <input type="text" class="form-control" id="newCategoryName" placeholder="Ej: Mascotas, Viajes, etc.">
+                                <input type="text" class="form-control" id="newCategoryName"
+                                    placeholder="Ej: Mascotas, Viajes, etc.">
                             </div>
                             <div class="mb-3">
                                 <label for="newCategoryIcon" class="form-label">Selecciona un icono</label>
@@ -980,9 +1039,10 @@
                                 <i class="bi bi-plus-circle me-2"></i>Agregar Categoría
                             </button>
                         </div>
-                        
+
                         <!-- Pestaña Nueva Subcategoría -->
-                        <div class="tab-pane fade" id="new-subcategory" role="tabpanel" aria-labelledby="new-subcategory-tab">
+                        <div class="tab-pane fade" id="new-subcategory" role="tabpanel"
+                            aria-labelledby="new-subcategory-tab">
                             <div class="mb-3">
                                 <label for="parentCategory" class="form-label">Categoría padre</label>
                                 <select class="form-select" id="parentCategory">
@@ -991,7 +1051,8 @@
                             </div>
                             <div class="mb-3">
                                 <label for="newSubcategoryName" class="form-label">Nombre de la subcategoría</label>
-                                <input type="text" class="form-control" id="newSubcategoryName" placeholder="Ej: Comida para mascotas, Vuelos, etc.">
+                                <input type="text" class="form-control" id="newSubcategoryName"
+                                    placeholder="Ej: Comida para mascotas, Vuelos, etc.">
                             </div>
                             <div class="mb-3">
                                 <label for="newSubcategoryIcon" class="form-label">Selecciona un icono</label>
@@ -1012,9 +1073,10 @@
                                 <i class="bi bi-plus-circle me-2"></i>Agregar Subcategoría
                             </button>
                         </div>
-                        
+
                         <!-- Pestaña Gestionar Categorías -->
-                        <div class="tab-pane fade" id="manage-categories" role="tabpanel" aria-labelledby="manage-categories-tab">
+                        <div class="tab-pane fade" id="manage-categories" role="tabpanel"
+                            aria-labelledby="manage-categories-tab">
                             <div id="customCategoriesList">
                                 <!-- Las categorías personalizadas se mostrarán aquí -->
                             </div>
@@ -1029,7 +1091,8 @@
     </div>
 
     <!-- Modal para suscripción Premium -->
-    <div class="modal fade premium-modal" id="premiumModal" tabindex="-1" aria-labelledby="premiumModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal fade premium-modal" id="premiumModal" tabindex="-1" aria-labelledby="premiumModalLabel"
+        aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-body p-0">
@@ -1038,7 +1101,7 @@
                             <i class="bi bi-x-lg"></i>
                         </button>
                         <div class="savings-badge">AHORRA 57%</div>
-                        
+
                         <div class="card-header">
                             <div class="logo-container">
                                 <img src="/frontend/public/img/Logo/LogoFinLi.png" alt="Logo Finli">
@@ -1048,7 +1111,7 @@
                                 <p>Desbloquea todas las funciones</p>
                             </div>
                         </div>
-                        
+
                         <div class="plans-grid">
                             <div class="plan-option">
                                 <div class="bi bi-calendar-check text-info"></div>
@@ -1056,14 +1119,14 @@
                                 <div class="plan-price">S/.3.69</div>
                                 <div class="plan-period">por mes</div>
                             </div>
-                            
+
                             <div class="plan-option selected">
                                 <div class="bi bi-gem text-success"></div>
                                 <div class="plan-name">ANUAL</div>
                                 <div class="plan-price">S/.18.99</div>
                                 <div class="plan-period">por año</div>
                             </div>
-                            
+
                             <div class="plan-option">
                                 <div class="bi bi-award text-warning"></div>
                                 <div class="plan-name">DE POR VIDA</div>
@@ -1071,7 +1134,7 @@
                                 <div class="plan-period">pago único</div>
                             </div>
                         </div>
-                        
+
                         <div class="features-list">
                             <div class="feature-item">
                                 <i class="bi bi-check-circle-fill"></i>
@@ -1090,11 +1153,11 @@
                                 <span>Soporte prioritario</span>
                             </div>
                         </div>
-                        
+
                         <button class="btn-subscribe" id="subscribeNowBtn">
                             <i class="bi bi-lightning-fill"></i> Suscribirse ahora
                         </button>
-                        
+
                         <div class="money-back">
                             <i class="bi bi-shield-check"></i> Garantía de 30 días
                         </div>
@@ -1105,7 +1168,8 @@
     </div>
 
     <!-- Modal para el formulario de contacto -->
-    <div class="modal fade contact-modal" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+    <div class="modal fade contact-modal" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="contact-header">
@@ -1117,15 +1181,18 @@
                     <form class="contact-form" id="contactForm">
                         <div class="mb-3">
                             <label for="contactName" class="form-label">Nombre</label>
-                            <input type="text" class="form-control" id="contactName" placeholder="Ejm. Rafael Lopez Aliaga" required>
+                            <input type="text" class="form-control" id="contactName"
+                                placeholder="Ejm. Rafael Lopez Aliaga" required>
                         </div>
                         <div class="mb-3">
                             <label for="contactEmail" class="form-label">Correo Electrónico</label>
-                            <input type="email" class="form-control" id="contactEmail" placeholder="Ejm. utepino@gmail.com" required>
+                            <input type="email" class="form-control" id="contactEmail"
+                                placeholder="Ejm. utepino@gmail.com" required>
                         </div>
                         <div class="mb-3">
                             <label for="contactMessage" class="form-label">Mensaje</label>
-                            <textarea class="form-control" id="contactMessage" placeholder="Escriba su duda..." rows="5" required></textarea>
+                            <textarea class="form-control" id="contactMessage" placeholder="Escriba su duda..." rows="5"
+                                required></textarea>
                         </div>
                         <button type="submit" class="btn btn-send">
                             <i class="bi bi-send me-2"></i>Enviar
@@ -1147,4 +1214,5 @@
     <script src="usuario.js"></script>
 
 </body>
+
 </html>

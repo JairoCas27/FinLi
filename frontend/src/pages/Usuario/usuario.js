@@ -168,6 +168,8 @@ if (loggedRaw) {
     userProfile.email = u.email || '';
     userProfile.age   = u.edad || '';
     userProfile.firstName = u.nombre || '';
+    userProfile.apellidoPaterno = u.apellidoPaterno || '';
+    userProfile.apellidoMaterno = u.apellidoMaterno || '';
     userProfile.lastName  = `${u.apellidoPaterno || ''} ${u.apellidoMaterno || ''}`.trim();
     saveProfileToLocalStorage();
     updateProfileInApp();  // refresca la pantalla “Mi Perfil”
@@ -3732,22 +3734,27 @@ function initializeProfileEvents() {
     // Guardar cambios del perfil
     const profileForm = document.getElementById('profileForm');
     if (profileForm) {
-        profileForm.addEventListener('submit', function(e) {
+        profileForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+                console.log('🟢 Formulario enviado - submit disparado');
+
             // Validar formulario
             if (!validateProfileForm()) {
+                        console.log('🔴 validateProfileForm devolvió false');
+
                 return;
             }
-            
+                console.log('🟢 validateProfileForm pasó');
+
             // Obtener valores del formulario
             const firstName = document.getElementById('firstName').value.trim();
-            const lastName = document.getElementById('lastName').value.trim();
+            const apellidoPaterno = document.getElementById('apellidoPaterno').value.trim();
+            const apellidoMaterno = document.getElementById('apellidoMaterno').value.trim();
             const email = document.getElementById('userEmail').value.trim();
             const age = document.getElementById('userEdad').value;
             
             // Actualizar perfil
-            const fullName = `${firstName} ${lastName}`;
+            const fullName = `${firstName} ${apellidoPaterno} ${apellidoMaterno}`;
             updateUserProfile(fullName, email, age);
             
             // Actualizar avatar si hay uno temporal
@@ -3759,6 +3766,52 @@ function initializeProfileEvents() {
             // Guardar en localStorage
             saveProfileToLocalStorage();
             
+            // 🔐 Validar contraseña solo si se llenó algo
+            let passwordPayload = {};
+            const currentPwd = document.getElementById('currentPassword').value.trim();
+            const newPwd = document.getElementById('newPassword').value.trim();
+            const confirmPwd = document.getElementById('confirmPassword').value.trim();
+
+            if (currentPwd || newPwd || confirmPwd) {
+                if (!currentPwd) {
+                    alert('Debes ingresar tu contraseña actual');
+                    return;
+                }
+                if (newPwd !== confirmPwd) {
+                    alert('La nueva contraseña y su confirmación no coinciden');
+                    return;
+                }
+                if (newPwd.length < 6) {
+                    alert('La nueva contraseña debe tener al menos 6 caracteres');
+                    return;
+                }
+                passwordPayload = {
+                contrasenaActual: currentPwd,
+                contrasena: newPwd
+                };
+        }
+
+            // ✅ Enviar los cambios al backend
+            await actualizarPerfilEnBD({
+            nombre: firstName,
+            apellidoPaterno: apellidoPaterno,
+            apellidoMaterno: apellidoMaterno,
+            correo: email,
+            edad: parseInt(age), 
+            ...passwordPayload // 🔐 solo se agrega si se llenó
+            });
+
+            // ✅ Actualizar sessionStorage para que al recargar use los datos nuevos
+            const updatedUser = {
+                ...JSON.parse(sessionStorage.getItem('loggedUser')),
+                nombre: firstName,
+                apellidoPaterno: apellidoPaterno,
+                apellidoMaterno: apellidoMaterno,
+                email: email,
+                edad: parseInt(age)
+            };
+sessionStorage.setItem('loggedUser', JSON.stringify(updatedUser));
+
             // MOSTRAR NOTIFICACIÓN Y RECARGAR LA PÁGINA
             showNotification('Perfil actualizado correctamente', 'success');
             
@@ -3777,7 +3830,9 @@ function loadProfileFormData() {
     const userEdad = document.getElementById('userEdad');
     
     if (firstName) firstName.value = userProfile.firstName || 'Jairo';
-    if (lastName) lastName.value = userProfile.lastName || 'Castillo';
+    const apellidos = userProfile.lastName ? userProfile.lastName.split(' ') : ['', ''];
+    document.getElementById('apellidoPaterno').value = apellidos[0] || '';
+    document.getElementById('apellidoMaterno').value = apellidos[1] || '';
     if (userEmail) userEmail.value = userProfile.email || 'jairo@utp.edu.pe';
     if (userEdad) userEdad.value = userProfile.age || '20';
     
@@ -3843,12 +3898,12 @@ function validateProfileForm() {
     }
     
     // Validar apellido
-    const lastName = document.getElementById('lastName');
-    if (lastName && !lastName.value.trim()) {
-        markFieldInvalid('lastName', 'El apellido es obligatorio');
-        isValid = false;
-    } else if (lastName) {
-        markFieldValid('lastName');
+    const apellidoPaterno = document.getElementById('apellidoPaterno').value.trim();
+    const apellidoMaterno = document.getElementById('apellidoMaterno').value.trim();
+
+    if (!apellidoPaterno || !apellidoMaterno) {
+    alert('Ambos apellidos son obligatorios');
+    return false;
     }
     
     // Validar email
@@ -3919,7 +3974,9 @@ function updateUserProfile(name, email, age) {
     userProfile.email = email;
     userProfile.age = age;
     userProfile.firstName = name.split(' ')[0];
-    userProfile.lastName = name.split(' ').slice(1).join(' ');
+    userProfile.apellidoPaterno = apellidoPaterno;
+    userProfile.apellidoMaterno = apellidoMaterno;
+    userProfile.lastName = `${apellidoPaterno} ${apellidoMaterno}`;
     
     // Guardar en localStorage
     saveProfileToLocalStorage();
@@ -3930,6 +3987,8 @@ function updateUserProfile(name, email, age) {
 
 function updateProfileInApp() {
     // Actualizar barra superior
+    const fullName = `${userProfile.firstName} ${userProfile.apellidoPaterno} ${userProfile.apellidoMaterno}`;
+    document.getElementById('profileFullName').textContent = fullName;
     const userName = document.getElementById('user-name');
     const userEmail = document.getElementById('user-email');
     const userInitials = document.getElementById('userInitials');
@@ -5000,6 +5059,7 @@ addIncome = async function () {
     }
 };
 
+
 // 5. Al cargar la página, si hay usuario logueado → cargar sus ingresos
 window.addEventListener('DOMContentLoaded', () => {
     const loggedRaw = sessionStorage.getItem('loggedUser');
@@ -5212,3 +5272,23 @@ addTransaction = async function () {
 };
 
 console.log("✅ addTransaction fue sobrescrito");
+
+async function actualizarPerfilEnBD(datos) {
+    const usuario = JSON.parse(sessionStorage.getItem('loggedUser'));
+    if (!usuario?.id) return;
+
+    try {
+
+        const res = await fetch(`http://localhost:8080/api/usuarios/${usuario.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+
+        if (!res.ok) throw new Error('Error al actualizar');
+        console.log('✅ Perfil actualizado en BD');
+    } catch (err) {
+        console.error('❌ Error actualizando perfil:', err);
+        alert('No se pudo actualizar el perfil en el servidor');
+    }
+}
