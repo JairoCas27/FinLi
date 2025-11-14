@@ -1,0 +1,119 @@
+package com.finli.service;
+
+import com.finli.model.*;
+import com.finli.repository.*;
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.Optional;
+
+@Service
+@RequiredArgsConstructor
+public class SuscripcionService {
+
+    private final SuscripcionRepository suscripcionRepository;
+    private final TipoSuscripcionRepository tipoSuscripcionRepository;
+    private final EstadoSuscripcionRepository estadoSuscripcionRepository;
+    private final UsuarioRepository usuarioRepository;
+
+    /**
+     * 📌 Crear una suscripción gratuita automáticamente
+     *    cuando se registra un nuevo usuario.
+     */
+    public void crearSuscripcionGratuita(Integer idUsuario) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        TipoSuscripcion tipo = tipoSuscripcionRepository.findById(4)
+                .orElseThrow(() -> new RuntimeException("Tipo de suscripción gratuita no encontrada"));
+
+        EstadoSuscripcion estado = estadoSuscripcionRepository.findById(1)
+                .orElseThrow(() -> new RuntimeException("Estado de suscripción activa no encontrado"));
+
+        Suscripcion suscripcion = Suscripcion.builder()
+                .usuario(usuario)
+                .tipoSuscripcion(tipo)
+                .estadoSuscripcion(estado)
+                .fechaInicio(LocalDate.now())
+                .fechaFin(null) // gratuito → sin límite
+                .build();
+
+        suscripcionRepository.save(suscripcion);
+    }
+
+    /**
+     * 📌 Cambiar el tipo de suscripción del usuario (cuando compra un plan)
+     */
+    public Suscripcion cambiarSuscripcion(Integer idUsuario, Integer idTipoSuscripcion) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        Suscripcion suscripcion = suscripcionRepository.findByUsuario(usuario)
+                .orElseThrow(() -> new RuntimeException("Suscripción no encontrada para el usuario"));
+
+        TipoSuscripcion nuevoTipo = tipoSuscripcionRepository.findById(idTipoSuscripcion)
+                .orElseThrow(() -> new RuntimeException("Tipo de suscripción no encontrado"));
+
+        EstadoSuscripcion estadoActivo = estadoSuscripcionRepository.findById(1)
+                .orElseThrow(() -> new RuntimeException("Estado activo no encontrado"));
+
+        suscripcion.setTipoSuscripcion(nuevoTipo);
+        suscripcion.setEstadoSuscripcion(estadoActivo);
+        suscripcion.setFechaInicio(LocalDate.now());
+
+        // 🔧 Configurar fecha fin según tipo
+        switch (idTipoSuscripcion) {
+            case 1: // Mensual
+                suscripcion.setFechaFin(LocalDate.now().plusMonths(1));
+                break;
+            case 2: // Anual
+                suscripcion.setFechaFin(LocalDate.now().plusYears(1));
+                break;
+            case 3: // De por vida
+                suscripcion.setFechaFin(null);
+                break;
+            case 4: // Gratuito
+                suscripcion.setFechaFin(null);
+                break;
+        }
+
+        return suscripcionRepository.save(suscripcion);
+    }
+
+    /**
+     * 📌 Ver la suscripción actual de un usuario
+     */
+    public Optional<Suscripcion> obtenerPorUsuario(Integer idUsuario) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        return suscripcionRepository.findByUsuario(usuario);
+    }
+
+    /**
+     * ⚙️ (Opcional futuro) Revisar y expirar suscripciones caducadas
+     *    Esto lo puedes luego programar con @Scheduled
+     */
+
+     @Scheduled(cron = "0 0 0 * * *") // Todos los días a medianoche
+
+    public void verificarSuscripcionesExpiradas() {
+        suscripcionRepository.findByFechaFinBefore(LocalDate.now()).forEach(s -> {
+            if (s.getFechaFin() != null) {
+                EstadoSuscripcion expirada = estadoSuscripcionRepository.findById(4)
+                        .orElseThrow(() -> new RuntimeException("Estado Expirada no encontrado"));
+
+                TipoSuscripcion gratuita = tipoSuscripcionRepository.findById(4)
+                        .orElseThrow(() -> new RuntimeException("Tipo Gratuito no encontrado"));
+
+                s.setEstadoSuscripcion(expirada);
+                s.setTipoSuscripcion(gratuita);
+                s.setFechaFin(null);
+                suscripcionRepository.save(s);
+            }
+        });
+    }
+}
+

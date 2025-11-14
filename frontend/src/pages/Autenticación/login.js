@@ -32,15 +32,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const userData = await response.json();
 
-            // ✅ Guardamos sesión correctamente
+            // 🟦 Guardar sesión
             sessionStorage.setItem("loggedUser", JSON.stringify(userData));
-
             console.log("✅ Usuario logueado:", userData);
 
-            alert(`Inicio de sesión exitoso. ¡Bienvenido, ${userData.nombre || "usuario"}!`);
+            // Extraemos datos que el backend manda
+            const tipo = userData.tipoSuscripcion;                // "Gratuito", "Mensual", etc.
+            const estado = userData.estadoUsuario?.idEstado || 1; // Si viene null, asumimos activo
 
-            // Redirigir al panel principal del usuario
-            window.location.href = "/frontend/src/pages/Usuario/usuario.html";
+            console.log("TIPO SUB:", tipo, " (tipo real:", typeof tipo, ")");
+            console.log("ESTADO SUB:", estado, " (estado real:", typeof estado, ")");
+
+            // =====================================================
+            // 🔥 VALIDACIÓN DEL ESTADO DE SUSCRIPCIÓN
+            // =====================================================
+
+            if (estado === 2) {
+                alert("❌ Tu cuenta está SUSPENDIDA. No puedes ingresar.");
+                return;
+            }
+
+            if (estado === 3) {
+                alert("⚠ Tu suscripción fue cancelada. Los beneficios seguirán hasta que termine el periodo actual.");
+            }
+
+            if (estado === 4) {
+                alert("⚠ Tu suscripción ha expirado. Serás redirigido al panel gratuito.");
+                window.location.href = "/frontend/src/pages/Usuario/usuario.html";
+                return;
+            }
+
+            // =====================================================
+            // 🎯 VALIDACIÓN DEL TIPO DE SUSCRIPCIÓN (STRING)
+            // =====================================================
+
+            if (tipo === "Gratuito") {
+                window.location.href = "/frontend/src/pages/Usuario/usuario.html";
+                return;
+            }
+
+            if (tipo === "Mensual" || tipo === "Anual" || tipo === "De por vida") {
+                window.location.href = "/frontend/src/pages/Usuario/premium.html";
+                return;
+            }
+
+            // Si llega hasta aquí, recibiste un valor raro
+            alert("Error: Tipo de suscripción desconocido.");
+
         } catch (error) {
             console.error("❌ Error al conectarse con el servidor:", error);
             alert("Hubo un problema al conectarse con el servidor.");

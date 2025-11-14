@@ -5279,6 +5279,12 @@ async function actualizarPerfilEnBD(datos) {
 
     try {
 
+        if (!res.ok) {
+        const msg = await res.text();
+        alert(msg); // "La contraseña actual es incorrecta"
+        return;
+    }
+
         const res = await fetch(`http://localhost:8080/api/usuarios/${usuario.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },

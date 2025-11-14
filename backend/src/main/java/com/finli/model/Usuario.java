@@ -54,6 +54,11 @@ public class Usuario {
     @JsonIgnore
     private List<Transaccion> transacciones;
 
+    @OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Suscripcion> suscripciones;
+
+
     @ManyToOne(fetch = FetchType.LAZY) 
     @JoinColumn(name = "id_estadoUsuario", nullable = false)
     @JsonIgnore 

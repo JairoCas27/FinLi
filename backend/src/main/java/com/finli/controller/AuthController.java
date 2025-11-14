@@ -30,6 +30,7 @@ public class AuthController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+        
     }
 
     @PostMapping("/register")
@@ -42,8 +43,7 @@ public class AuthController {
         }
     }
 
-    // ENDPOINT: SOLICITAR RECUPERACIÓN 
- 
+    // ENDPOINT: SOLICITAR RECUPERACIÓN
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestBody Map<String, String> request) {
         String email = request.get("email");
@@ -58,7 +58,7 @@ public class AuthController {
         } catch (RuntimeException e) {
             // Manejamos errores del servicio ( Correo no registrado, fallo de envío)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                 .body("Error al iniciar la recuperación: " + e.getMessage());
+                                  .body("Error al iniciar la recuperación: " + e.getMessage());
         }
     }
 
