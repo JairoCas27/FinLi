@@ -53,7 +53,7 @@ if (yearSpan) yearSpan.textContent = new Date().getFullYear();
 /**
  * Función principal de carga y filtrado (LLAMA AL BACKEND DE JAVA).
  */
-async function loadUsers(page = 1, subscriptionType = 'all') {
+async function loadUsers(page = 1, subscriptionType = 'all', searchTerm = '') { 
     currentPage = page;
     currentSubscriptionFilter = subscriptionType;
 
@@ -64,10 +64,15 @@ async function loadUsers(page = 1, subscriptionType = 'all') {
     if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Cargando usuarios...</td></tr>';
     if (paginationContainer) paginationContainer.innerHTML = '';
 
-    const url = new URL(API_URL_BASE + ENDPOINT_USUARIOS, window.location.origin);
+const url = new URL(API_URL_BASE + ENDPOINT_USUARIOS, window.location.origin);
     url.searchParams.append('page', currentPage);
     url.searchParams.append('limit', ROWS_PER_PAGE);
     url.searchParams.append('subscriptionType', currentSubscriptionFilter); 
+    
+    // --- NUEVA LÍNEA CLAVE ---
+    if (searchTerm) {
+        url.searchParams.append('searchTerm', searchTerm);
+    }
 
     try {
         const response = await fetch(url.toString());
@@ -605,6 +610,23 @@ function initializeCharts() {
 // ==============================================================================
 
 document.addEventListener('DOMContentLoaded', function() {
+
+    // Asignación del Listener para la Barra de Búsqueda (Sección Usuarios)
+    const searchInput = document.getElementById('searchUsersInput');
+    if (searchInput) {
+        let searchTimer; // Para evitar saturar el servidor con peticiones (Debounce)
+        
+        searchInput.addEventListener('input', (event) => {
+            clearTimeout(searchTimer);
+            const newSearchTerm = event.target.value.trim();
+            
+            // Esperar 300ms después de que el usuario deja de escribir
+            searchTimer = setTimeout(() => {
+                // Reinicia la paginación a la página 1 al buscar
+                loadUsers(1, currentSubscriptionFilter, newSearchTerm); 
+            }, 300); 
+        });
+    }
     
     const navLinks = document.querySelectorAll('.sidebar .nav-link');
     navLinks.forEach(link => {

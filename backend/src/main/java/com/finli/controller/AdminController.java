@@ -1,10 +1,9 @@
-package com.finli.controller;
+package com.finli.controller; 
 
 // NUEVA IMPORTACIÓN NECESARIA
 import com.finli.dto.PaginacionUsuarioResponse;
 // La importación de UsuarioResponse ya no es necesaria en el método listarUsuarios,
 // pero la dejamos si se usa en otros métodos.
-
 
 import com.finli.model.EstadoUsuario;
 import com.finli.model.Usuario;
@@ -31,17 +30,19 @@ public class AdminController {
     private final ExcelExportService excelExportService;
 
     // =================================================================================
-    // === LISTAR USUARIOS (REEMPLAZADO por Paginación y Filtro) ===
+    // === LISTAR USUARIOS (ACTUALIZADO: Añade Búsqueda) ===
     // =================================================================================
     /**
-     * Endpoint para obtener usuarios con paginación y filtrado por estado.
-     * Endpoint: GET /api/admin/usuarios?page=1&limit=10&status=all
+     * Endpoint para obtener usuarios con paginación, filtrado por estado y BÚSQUEDA.
+     * Endpoint: GET /api/admin/usuarios?page=1&limit=10&status=all&searchTerm=ejemplo
      */
     @GetMapping("/usuarios") // Mapeado a /api/admin/usuarios
     public ResponseEntity<PaginacionUsuarioResponse> getUsuariosPaginadosYFiltrados(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(defaultValue = "all") String status) {
+            // El frontend envía 'subscriptionType', pero aquí lo capturamos como 'status' para usarlo en el servicio
+            @RequestParam(defaultValue = "all", name = "subscriptionType") String status, 
+            @RequestParam(required = false) String searchTerm) { // <-- NUEVO PARÁMETRO DE BÚSQUEDA
 
         // Opcional: Validar que el estado del filtro sea uno de los permitidos
         if (!status.equalsIgnoreCase("all") && 
@@ -50,8 +51,13 @@ public class AdminController {
             status = "all";
         }
         
-        // La llamada al servicio AdministradorService que creamos en el Paso 5.
-        PaginacionUsuarioResponse response = administradorService.getUsuariosPaginadosYFiltrados(page, limit, status);
+        // Llama al servicio AdministradorService, PASANDO EL TÉRMINO DE BÚSQUEDA
+        PaginacionUsuarioResponse response = administradorService.getUsuariosPaginadosYFiltrados(
+            page, 
+            limit, 
+            status, 
+            searchTerm // <-- PASANDO EL NUEVO TÉRMINO
+        );
 
         return ResponseEntity.ok(response);
     }
