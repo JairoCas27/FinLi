@@ -2,25 +2,25 @@ package com.finli.service;
 
 import com.finli.dto.PaginacionUsuarioResponse;
 import com.finli.dto.UsuarioResponse;
-import com.finli.dto.UsuarioResponse.SuscripcionActualResponse; 
-import com.finli.model.EstadoSuscripcion; 
-import com.finli.model.TipoSuscripcion; 
+import com.finli.dto.UsuarioResponse.SuscripcionActualResponse;
+import com.finli.model.EstadoSuscripcion;
+import com.finli.model.TipoSuscripcion;
 import com.finli.model.EstadoUsuario;
-import com.finli.model.Suscripciones; 
+import com.finli.model.Suscripciones;
 import com.finli.model.Usuario;
 import com.finli.repository.EstadoUsuarioRepository;
-import com.finli.repository.SuscripcionesRepository; 
+import com.finli.repository.SuscripcionesRepository;
 import com.finli.repository.TipoSuscripcionRepository;
 import com.finli.repository.UsuarioRepository;
-import com.finli.dto.UpdateUserRequest; // Necesario para la estructura del POST
+import org.mindrot.jbcrypt.BCrypt;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort; 
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils; 
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -32,14 +32,13 @@ import java.util.stream.Collectors;
 public class AdministradorService {
 
     private final UsuarioRepository usuarioRepository;
-    private final ServicioAutenticacion servicioAutenticacion; 
+    private final ServicioAutenticacion servicioAutenticacion;
     private final EstadoUsuarioRepository estadoUsuarioRepository;
     private final SuscripcionesRepository suscripcionesRepository;
-    private final TipoSuscripcionRepository tipoSuscripcionRepository; 
-    // private final PasswordEncoder passwordEncoder; // <-- Descomentar si usas Spring Security
+    private final TipoSuscripcionRepository tipoSuscripcionRepository;
     
-    private final Integer ID_ESTADO_ACTIVO = 1; 
-    private final Integer ID_ESTADO_INACTIVO = 2; 
+    private final Integer ID_ESTADO_ACTIVO = 1;
+    private final Integer ID_ESTADO_INACTIVO = 2;
     private final Integer ID_ESTADO_SUSCRIPCION_ACTIVA = 1; // ID 1 de EstadoSuscripcion = 'Activa'
 
     // ====================================================================================
@@ -54,8 +53,8 @@ public class AdministradorService {
         boolean isSearching = StringUtils.hasText(searchTerm);
         
         Pageable pageable = PageRequest.of(
-            page - 1, 
-            limit, 
+            page - 1,
+            limit,
             Sort.by(Sort.Direction.DESC, "id")
         );
         
@@ -85,7 +84,7 @@ public class AdministradorService {
                 .collect(Collectors.toList());
 
         return new PaginacionUsuarioResponse(
-                listaResponse, 
+                listaResponse,
                 paginaUsuarios.getTotalElements()
         );
     }
@@ -97,14 +96,14 @@ public class AdministradorService {
         
         Optional<Suscripciones> suscripcionOpt = suscripcionesRepository.findFirstByUsuario_IdOrderByFechaInicioDesc(usuario.getId());
         
-        SuscripcionActualResponse suscripcionDto = suscripcionOpt.map(suscripcion -> 
+        SuscripcionActualResponse suscripcionDto = suscripcionOpt.map(suscripcion ->
             SuscripcionActualResponse.builder()
                 .idTipoSuscripcion(suscripcion.getTipoSuscripcion().getIdTipoSuscripcion())
                 .nombreTipoSuscripcion(suscripcion.getTipoSuscripcion().getNombreTipoSuscripcion())
                 .estadoSuscripcion(suscripcion.getEstadoSuscripcion().getNombreEstado())
                 .fechaInicio(suscripcion.getFechaInicio())
                 .build()
-        ).orElseGet(() -> 
+        ).orElseGet(() ->
             SuscripcionActualResponse.builder()
                 .idTipoSuscripcion(4) // Asume ID 4 es el plan 'Gratuito'
                 .nombreTipoSuscripcion("Gratuito (No registrado)")
@@ -139,10 +138,16 @@ public class AdministradorService {
     @Transactional
     public Usuario guardarCliente(Usuario usuarioAInsertar, Integer nuevoTipoSuscripcionId) {
         
-        // 1. Guardar el usuario (Esto asigna el ID)
+        // 1. Hashear la contraseña antes de guardar (jBCrypt)
+        if (StringUtils.hasText(usuarioAInsertar.getContrasena())) {
+            String contrasenaHasheada = BCrypt.hashpw(usuarioAInsertar.getContrasena(), BCrypt.gensalt());
+            usuarioAInsertar.setContrasena(contrasenaHasheada);
+        }
+        
+        // 2. Guardar el usuario (Esto asigna el ID)
         Usuario usuarioGuardado = usuarioRepository.save(usuarioAInsertar);
 
-        // 2. Crear el registro de suscripción inicial
+        // 3. Crear el registro de suscripción inicial
         this.crearSuscripcionInicial(usuarioGuardado, nuevoTipoSuscripcionId);
         
         return usuarioGuardado;
@@ -171,9 +176,9 @@ public class AdministradorService {
             
             // 3. ACTUALIZACIÓN DE CONTRASEÑA (Solo si se proporciona una nueva)
             if (StringUtils.hasText(nuevaContrasena)) {
-                // usuarioExistente.setContrasena(passwordEncoder.encode(nuevaContrasena)); // USAR SI HAY ENCODER
-                usuarioExistente.setContrasena(nuevaContrasena); 
-                System.out.println("ADVERTENCIA: Contraseña actualizada sin hashear en AdministradorService.java.");
+                // HASHEO con jBCrypt
+                String contrasenaHasheada = BCrypt.hashpw(nuevaContrasena, BCrypt.gensalt());
+                usuarioExistente.setContrasena(contrasenaHasheada);
             }
             
             // 4. ACTUALIZACIÓN DEL TIPO DE SUSCRIPCIÓN (Lógica de Creación de nuevo registro)
@@ -197,7 +202,7 @@ public class AdministradorService {
      * Compara y actualiza la suscripción del usuario creando un nuevo registro si el plan cambia.
      */
     private void actualizarOSetearSuscripcion(Usuario usuario, Integer nuevoTipoSuscripcionId) {
-        if (nuevoTipoSuscripcionId == null) return; 
+        if (nuevoTipoSuscripcionId == null) return;
 
         // 1. Obtener la suscripción actual (la más reciente)
         Optional<Suscripciones> suscripcionRecienteOpt = suscripcionesRepository.findFirstByUsuario_IdOrderByFechaInicioDesc(usuario.getId());
@@ -237,7 +242,7 @@ public class AdministradorService {
     // ====================================================================================
 
     public List<Usuario> obtenerListaDeUsuariosParaExportar() {
-        return usuarioRepository.findAll(Sort.by(Sort.Direction.DESC, "id")); 
+        return usuarioRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
     }
 
     public List<EstadoUsuario> listarTodosEstadosUsuario() {
