@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.time.LocalDate; // <-- NUEVA IMPORTACIÓN
 
 @Entity
 @Table(name = "Usuarios")
@@ -34,6 +35,10 @@ public class Usuario {
 
     @Column(nullable = false)
     private Integer edad;
+    
+    // --- NUEVO CAMPO AÑADIDO ---
+    @Column(name = "fecha_registro") 
+    private LocalDate fechaRegistro; // Asumo que el campo en tu DB es DATE o DATETIME
 
     @ManyToOne(fetch = FetchType.LAZY) 
     @JoinColumn(name = "id_estadoUsuario", nullable = false) 

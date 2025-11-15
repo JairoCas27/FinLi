@@ -6,6 +6,7 @@
 const API_URL_BASE = 'http://localhost:8080'; // <-- Ajusta el puerto si es diferente al 8080
 const ENDPOINT_USUARIOS = '/api/admin/usuarios';
 const ENDPOINT_ESTADOS = '/api/admin/estados-usuario';
+const ENDPOINT_TIPOS_SUSCRIPCION = '/api/admin/tipos-suscripcion';
 const ENDPOINT_EXPORTAR = '/api/admin/usuarios/exportar';
 
 // ==============================================================================
@@ -364,12 +365,60 @@ async function cargarEstadosUsuario(selectId) {
     }
 }
 
+// ... (Despues de la funcion cargarEstadosUsuario) ...
+
+/**
+ * Llama al backend para obtener la lista de Tipos de Suscripción 
+ * (Gratuito, Mensual, Anual, De por vida) y pobla el select de edición.
+ */
+async function cargarTiposSuscripcion(selectId) {
+    const selectElement = document.getElementById(selectId);
+    if (!selectElement) return;
+    
+    selectElement.innerHTML = '<option value="">Cargando tipos de suscripción...</option>';
+
+    try {
+        const response = await fetch(API_BASE_URL + ENDPOINT_TIPOS_SUSCRIPCION);
+        if (!response.ok) throw new Error('Error al obtener tipos de suscripción: ' + response.statusText);
+
+        const tiposSuscripcion = await response.json();
+        
+        selectElement.innerHTML = '<option value="">-- Seleccione Tipo de Suscripción --</option>'; 
+        tiposSuscripcion.forEach(tipo => {
+            const option = document.createElement('option');
+            // GARANTIZAMOS que el valor sea una CADENA, aunque el ID sea un número
+            option.value = String(tipo.idTipoSuscripcion); // <--- CLAVE
+            option.textContent = tipo.nombreTipoSuscripcion;
+            selectElement.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error("Error al cargar tipos de suscripción:", error);
+        selectElement.innerHTML = '<option value="">Error de carga</option>';
+    }
+}
+
 const editUserModalElement = document.getElementById('editUserModal');
 if (editUserModalElement) {
+    // Al abrir el modal
     editUserModalElement.addEventListener('show.bs.modal', async () => {
-        await cargarEstadosUsuario('editUserSubscriptionType'); 
-        const user = currentUsersCache.find(u => u.id === currentEditingUserId);
-        cargarDatosUsuarioParaEdicion(user);
+        // 1. Cargar la lista de ESTADOS (Activo/Desactivado)
+        await cargarEstadosUsuario('editUserEstadoUsuario'); 
+        // 2. Cargar la lista de TIPOS DE SUSCRIPCIÓN
+        await cargarTiposSuscripcion('editUserTipoSuscripcion'); 
+        
+        // --- SOLUCIÓN DE LECTURA ASÍNCRONA ---
+        // Se asume que loadUsers ha recargado currentUsersCache con el dato más reciente
+        
+        setTimeout(() => {
+            const user = currentUsersCache.find(u => u.id === currentEditingUserId);
+            if (user) {
+                cargarDatosUsuarioParaEdicion(user);
+            } else {
+                 console.error(`Usuario ID ${currentEditingUserId} no encontrado en la caché. Imposible pre-seleccionar datos.`);
+            }
+        }, 0); 
+        // ----------------------------------------------
     });
 }
 
@@ -424,16 +473,49 @@ document.getElementById('saveUserBtn').addEventListener('click', async function(
 });
 
 
+// ... (código anterior se mantiene)
+
 function cargarDatosUsuarioParaEdicion(user) {
     if (!user) return;
     
+    // Rellenamos el campo oculto con el ID para la actualización
+    document.getElementById('editUserIdHidden').value = user.id || ''; 
+    
+    // 1. Relleno de los campos de datos personales
     document.getElementById('editUserName').value = user.nombre || ''; 
+    document.getElementById('editUserApellidoPaterno').value = user.apellidoPaterno || ''; 
+    document.getElementById('editUserApellidoMaterno').value = user.apellidoMaterno || ''; 
+    document.getElementById('editUserEdad').value = user.edad || ''; 
+    
+    // Correo, Fecha de Registro y Contraseña (Se mantienen)
     document.getElementById('editUserEmail').value = user.correo || '';
     document.getElementById('editUserRegistrationDate').value = user.fechaRegistro ? user.fechaRegistro.split('T')[0] : ''; 
-    
+    document.getElementById('editUserPassword').value = ''; // Siempre vacía
+
+    // 1. Relleno del ESTADO DE USUARIO (Activo/Desactivado)
     const estadoUsuarioId = user.estadoUsuario ? user.estadoUsuario.idEstado : null;
-    document.getElementById('editUserSubscriptionType').value = estadoUsuarioId; 
+    const selectEstadoUsuario = document.getElementById('editUserEstadoUsuario');
+    if (estadoUsuarioId) {
+        selectEstadoUsuario.value = String(estadoUsuarioId); // <--- DEBE SER STRING()
+    } else {
+        selectEstadoUsuario.selectedIndex = 0;
+    }
+
+    // 2. Relleno del TIPO DE SUSCRIPCIÓN 
+    const suscripcionActual = user.suscripcionActual || {};
+    const idPlanActual = suscripcionActual.idTipoSuscripcion;
+
+    const selectTipoSuscripcion = document.getElementById('editUserTipoSuscripcion');
+
+    if (idPlanActual) {
+        selectTipoSuscripcion.value = String(idPlanActual); // <--- DEBE SER STRING()
+    } else {
+        selectTipoSuscripcion.selectedIndex = 0; 
+    }
+
 }
+
+// ... (alrededor de la línea 287 en tu admin.js)
 
 document.getElementById('updateUserBtn').addEventListener('click', async function() {
     const form = document.getElementById('editUserForm');
@@ -443,19 +525,36 @@ document.getElementById('updateUserBtn').addEventListener('click', async functio
         return;
     }
     
-    const userId = currentEditingUserId;
+    // 1. Obtener el ID del campo oculto
+    const userId = document.getElementById('editUserIdHidden').value || currentEditingUserId; 
     
+    // 2. Recolección de valores de los 5 nuevos/modificados campos
+    const newPassword = document.getElementById('editUserPassword').value; 
+    const estadoUsuarioId = parseInt(document.getElementById('editUserEstadoUsuario').value, 10);
+    const tipoSuscripcionId = parseInt(document.getElementById('editUserTipoSuscripcion').value, 10);
+
+    // 3. Construcción del DTO de Actualización
     const usuarioActualizado = {
         id: userId, 
-        nombre: form.editUserName.value,
-        apellidoPaterno: '', 
-        apellidoMaterno: '', 
-        correo: form.editUserEmail.value,
-        edad: 18, 
-        fechaRegistro: form.editUserRegistrationDate.value,
+        
+        // Datos personales (los 5 nuevos/modificados)
+        nombre: document.getElementById('editUserName').value,
+        apellidoPaterno: document.getElementById('editUserApellidoPaterno').value,
+        apellidoMaterno: document.getElementById('editUserApellidoMaterno').value,
+        edad: parseInt(document.getElementById('editUserEdad').value, 10),
+        
+        // Campos que ya existían
+        correo: document.getElementById('editUserEmail').value,
+        fechaRegistro: document.getElementById('editUserRegistrationDate').value,
+        
+        // Estado Activo/Inactivo
         estadoUsuario: { 
-             idEstado: parseInt(form.editUserSubscriptionType.value, 10)
-        }
+             idEstado: estadoUsuarioId
+        },
+        
+        // Contraseña y Tipo de Suscripción (Auxiliares)
+        nuevaContrasena: newPassword || null,
+        nuevoTipoSuscripcionId: tipoSuscripcionId
     };
     
     this.disabled = true; 
@@ -469,8 +568,12 @@ document.getElementById('updateUserBtn').addEventListener('click', async functio
 
         if (response.ok) { 
             alert(`✅ Usuario ID ${userId} actualizado correctamente.`);
+            
+            // --- CAMBIO CLAVE: FORZAR RECARGA ANTES DE CERRAR EL MODAL ---
+            // Esto asegura que currentUsersCache tenga los datos frescos
+            await loadUsers(currentPage, currentSubscriptionFilter); 
+            
             editUserModal.hide(); 
-            loadUsers(currentPage, currentSubscriptionFilter); 
         } else if (response.status === 404) {
             alert(`❌ Error: Usuario ID ${userId} no encontrado.`);
         } else {
@@ -484,7 +587,7 @@ document.getElementById('updateUserBtn').addEventListener('click', async functio
     } finally {
         this.disabled = false; 
     }
-});
+});;
 
 document.addEventListener('click', function(e) {
     

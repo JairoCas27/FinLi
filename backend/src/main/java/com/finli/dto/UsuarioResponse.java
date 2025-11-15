@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -11,18 +12,20 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UsuarioResponse {
     private Integer id;
-    private String correo; // Corregido: Usas 'correo' en el Controller, no 'email'
+    private String correo; 
     private String nombre;
     private String apellidoPaterno;
-    private String apellidoMaterno;
-    private Integer edad;
-    private String fechaRegistro; // Asumimos que lo mapeas como String para el frontend
+    private String apellidoMaterno; // Añadido
+    private Integer edad;          // Añadido
+    private String fechaRegistro; 
     
-    // Campo CLAVE: Necesario para mostrar el estado en el frontend
+    // Campo CLAVE: Estado Activo/Inactivo
     private EstadoUsuarioResponse estadoUsuario; 
 
-    // --- CLASE INTERNA PARA EL ESTADO ---
-    // Esto es un DTO anidado para estructurar la respuesta del estado.
+    // --- NUEVO CAMPO PARA LA SUSCRIPCIÓN ACTUAL ---
+    private SuscripcionActualResponse suscripcionActual;
+    
+    // --- CLASE INTERNA PARA EL ESTADO ACTIVO/INACTIVO ---
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -30,5 +33,17 @@ public class UsuarioResponse {
     public static class EstadoUsuarioResponse {
         private Integer idEstado;
         private String nombreEstado;
+    }
+    
+    // --- NUEVA CLASE INTERNA PARA LA SUSCRIPCIÓN ACTUAL ---
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SuscripcionActualResponse {
+        private Integer idTipoSuscripcion;    // ID del plan (Mensual, Anual) para el SELECT
+        private String nombreTipoSuscripcion; // Nombre del plan (para mostrar en la tabla)
+        private String estadoSuscripcion;     // Estado (Activa, Cancelada)
+        private LocalDate fechaInicio;
     }
 }

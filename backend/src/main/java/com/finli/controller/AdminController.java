@@ -1,12 +1,12 @@
 package com.finli.controller; 
 
-// NUEVA IMPORTACIÓN NECESARIA
+// NUEVAS IMPORTACIONES NECESARIAS
 import com.finli.dto.PaginacionUsuarioResponse;
-// La importación de UsuarioResponse ya no es necesaria en el método listarUsuarios,
-// pero la dejamos si se usa en otros métodos.
-
+import com.finli.dto.UpdateUserRequest; // <-- NUEVA IMPORTACIÓN
 import com.finli.model.EstadoUsuario;
+import com.finli.model.TipoSuscripcion;
 import com.finli.model.Usuario;
+import com.finli.repository.TipoSuscripcionRepository;
 import com.finli.service.AdministradorService;
 import com.finli.service.ExcelExportService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.time.LocalDate; // Para mapear la fecha de registro
 import java.util.List;
 import java.util.Optional;
 
@@ -28,40 +29,41 @@ public class AdminController {
 
     private final AdministradorService administradorService;
     private final ExcelExportService excelExportService;
+    private final TipoSuscripcionRepository tipoSuscripcionRepository;
 
     // =================================================================================
-    // === LISTAR USUARIOS (ACTUALIZADO: Añade Búsqueda) ===
+    // === LISTAR USUARIOS (Con Búsqueda) ===
     // =================================================================================
-    /**
-     * Endpoint para obtener usuarios con paginación, filtrado por estado y BÚSQUEDA.
-     * Endpoint: GET /api/admin/usuarios?page=1&limit=10&status=all&searchTerm=ejemplo
-     */
-    @GetMapping("/usuarios") // Mapeado a /api/admin/usuarios
+    @GetMapping("/usuarios")
     public ResponseEntity<PaginacionUsuarioResponse> getUsuariosPaginadosYFiltrados(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int limit,
-            // El frontend envía 'subscriptionType', pero aquí lo capturamos como 'status' para usarlo en el servicio
             @RequestParam(defaultValue = "all", name = "subscriptionType") String status, 
-            @RequestParam(required = false) String searchTerm) { // <-- NUEVO PARÁMETRO DE BÚSQUEDA
+            @RequestParam(required = false) String searchTerm) { 
 
-        // Opcional: Validar que el estado del filtro sea uno de los permitidos
         if (!status.equalsIgnoreCase("all") && 
             !status.equalsIgnoreCase("active") && 
             !status.equalsIgnoreCase("inactive")) {
             status = "all";
         }
         
-        // Llama al servicio AdministradorService, PASANDO EL TÉRMINO DE BÚSQUEDA
         PaginacionUsuarioResponse response = administradorService.getUsuariosPaginadosYFiltrados(
             page, 
             limit, 
             status, 
-            searchTerm // <-- PASANDO EL NUEVO TÉRMINO
+            searchTerm 
         );
 
         return ResponseEntity.ok(response);
     }
     // =================================================================================
+    // === LISTAR TIPOS DE SUSCRIPCIÓN ===
+    // =================================================================================
+    @GetMapping("/tipos-suscripcion")
+    public ResponseEntity<List<TipoSuscripcion>> listarTiposSuscripcion() {
+        List<TipoSuscripcion> tipos = tipoSuscripcionRepository.findAll();
+        return ResponseEntity.ok(tipos);
+    }
     // =================================================================================
 
     // CREAR CLIENTE (Se mantiene)
@@ -71,17 +73,38 @@ public class AdminController {
         return new ResponseEntity<>(nuevoUsuario, HttpStatus.CREATED);
     }
 
-    // ACTUALIZAR USUARIO (Se mantiene)
+    // =================================================================================
+    // === ACTUALIZAR USUARIO (MODIFICADO: Usa UpdateUserRequest DTO) ===
+    // =================================================================================
     @PutMapping("/usuarios/{id}")
-    public ResponseEntity<Usuario> actualizarUsuario(@PathVariable Integer id, @RequestBody Usuario usuario) {
-        usuario.setId(id);
-
-        Optional<Usuario> usuarioActualizado = administradorService.actualizarUsuario(usuario);
+    // Cambiamos Usuario por UpdateUserRequest para capturar todos los datos del frontend
+    public ResponseEntity<Usuario> actualizarUsuario(@PathVariable Integer id, @RequestBody UpdateUserRequest request) {
+        
+        // 1. Mapear DTO de entrada a la Entidad Usuario para la parte de datos personales y estado
+        Usuario usuarioAActualizar = Usuario.builder()
+            .id(id)
+            .correo(request.getCorreo())
+            .nombre(request.getNombre())
+            .apellidoPaterno(request.getApellidoPaterno())
+            .apellidoMaterno(request.getApellidoMaterno())
+            .edad(request.getEdad())
+            // Convertir String de fecha a LocalDate para la Entidad (asumiendo formato y no nulo)
+            .fechaRegistro(request.getFechaRegistro() != null ? LocalDate.parse(request.getFechaRegistro()) : null)
+            .estadoUsuario(request.getEstadoUsuario())
+            .build();
+            
+        // 2. Llamamos al servicio pasando el Usuario y los campos auxiliares
+        Optional<Usuario> usuarioActualizado = administradorService.actualizarUsuario(
+            usuarioAActualizar,
+            request.getNuevaContrasena(),
+            request.getNuevoTipoSuscripcionId()
+        );
 
         return usuarioActualizado
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+    // =================================================================================
 
     // LISTAR ESTADOS DE USUARIO (Se mantiene)
     @GetMapping("/estados-usuario")
