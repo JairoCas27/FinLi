@@ -422,6 +422,8 @@ if (editUserModalElement) {
     });
 }
 
+// ... (código anterior se mantiene)
+
 document.getElementById('saveUserBtn').addEventListener('click', async function() {
     const form = document.getElementById('addUserForm');
     
@@ -430,22 +432,37 @@ document.getElementById('saveUserBtn').addEventListener('click', async function(
         return;
     }
 
+    // 1. Recolección de valores del formulario
+    const estadoUsuarioId = parseInt(document.getElementById('userEstadoUsuario').value, 10);
+    const tipoSuscripcionId = parseInt(document.getElementById('userTipoSuscripcion').value, 10);
+
+    // 2. Construcción del DTO de Creación (Usuario)
     const nuevoCliente = {
-        nombre: form.userName.value, 
-        apellidoPaterno: '', 
-        apellidoMaterno: '', 
-        correo: form.userEmail.value, 
-        contrasena: form.userPassword.value,
-        edad: 18, 
-        fechaRegistro: form.userRegistrationDate.value, 
+        nombre: document.getElementById('userName').value, 
+        apellidoPaterno: document.getElementById('userApellidoPaterno').value, // <-- NUEVO
+        apellidoMaterno: document.getElementById('userApellidoMaterno').value, // <-- NUEVO
+        correo: document.getElementById('userEmail').value, 
+        contrasena: document.getElementById('userPassword').value, // Obligatoria al crear
+        edad: parseInt(document.getElementById('userEdad').value, 10), // <-- NUEVO
+        fechaRegistro: document.getElementById('userRegistrationDate').value, 
+        
+        // Estado Activo/Inactivo
         estadoUsuario: { 
-             idEstado: 1 
-        }
+             idEstado: estadoUsuarioId 
+        },
+
+        // Campo auxiliar, usado en el controlador para mapear contrasena
+        nuevaContrasena: document.getElementById('userPassword').value, 
+        
+        // Campo auxiliar para la suscripción inicial
+        nuevoTipoSuscripcionId: tipoSuscripcionId // Enviamos el ID para que el backend lo maneje
+
     };
     
     this.disabled = true; 
     
     try {
+        // Envíamos el DTO de Usuario, que ahora tiene el campo auxiliar de suscripción
         const response = await fetch(API_BASE_URL + ENDPOINT_USUARIOS, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -458,6 +475,7 @@ document.getElementById('saveUserBtn').addEventListener('click', async function(
             alert(`✅ Cliente ${data.nombre} agregado con ID: ${data.id}.`);
             form.reset(); 
             addUserModal.hide(); 
+            // Recargar la tabla en la página 1 para ver el nuevo usuario
             loadUsers(1); 
         } else {
             alert(`❌ Error al crear cliente: ${data.message || 'Error desconocido'}`);
@@ -711,6 +729,41 @@ function initializeCharts() {
 // ==============================================================================
 // === INICIALIZACIÓN DE LA APLICACIÓN Y ASIGNACIÓN DE EVENTOS ===
 // ==============================================================================
+
+// ... (código anterior se mantiene)
+
+// Listener para el botón "Agregar Usuario" que abre el modal
+const addUserBtn = document.getElementById('addUserModalBtn'); // Asegúrate que tu botón tenga este ID, o usa 'addUserBtn' si es el caso.
+if (addUserBtn) {
+    addUserBtn.addEventListener('click', () => {
+        // Al hacer clic, simplemente mostramos el modal.
+        addUserModal.show(); 
+    });
+}
+
+// Listener para el MODAL de Agregar Usuario que carga las opciones (¡AQUÍ ESTÁ LA CLAVE!)
+const addUserModalElement = document.getElementById('addUserModal');
+if (addUserModalElement) {
+    // Escucha el evento que Bootstrap dispara justo ANTES de mostrar el modal.
+    addUserModalElement.addEventListener('show.bs.modal', async () => {
+        // 1. Cargar la lista de ESTADOS (Activo/Desactivado)
+        await cargarEstadosUsuario('userEstadoUsuario'); // ID de SELECT del modal Agregar
+        // 2. Cargar la lista de TIPOS DE SUSCRIPCIÓN
+        await cargarTiposSuscripcion('userTipoSuscripcion'); // ID de SELECT del modal Agregar
+        
+        // Opcional: Establecer la fecha de registro actual por defecto
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('userRegistrationDate').value = today;
+    });
+    
+    // Listener para limpiar campos al cerrar
+    addUserModalElement.addEventListener('hide.bs.modal', () => {
+        document.getElementById('addUserForm').reset();
+        document.getElementById('userPassword').value = ''; 
+    });
+}
+
+// ... (El resto de tu código comienza con document.addEventListener('DOMContentLoaded', function() { ... )
 
 document.addEventListener('DOMContentLoaded', function() {
 

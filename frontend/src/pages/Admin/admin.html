@@ -515,42 +515,74 @@
                     <h5 class="modal-title" id="addUserModalLabel">Agregar Nuevo Usuario</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <form id="addUserForm">
-                        <div class="photo-preview-container">
-                            <img id="addPhotoPreview" class="photo-preview" alt="Vista previa de la foto">
-                        </div>
-                        <div class="mb-3">
-                            <label for="userPhoto" class="form-label">Foto de perfil</label>
-                            <input type="file" class="form-control" id="userPhoto" accept="image/*">
-                        </div>
-                        <div class="mb-3">
-                            <label for="userName" class="form-label">Nombre completo</label>
-                            <input type="text" class="form-control" id="userName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="userEmail" class="form-label">Correo electrónico</label>
-                            <input type="email" class="form-control" id="userEmail" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="userSubscriptionType" class="form-label">Tipo de Suscripción</label>
-                            <select class="form-select" id="userSubscriptionType" required>
-                                <option value="Sin suscripción">Sin suscripción</option>
-                                <option value="Mensual">Mensual</option>
-                                <option value="Anual">Anual</option>
-                                <option value="De por vida">De por vida</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="userRegistrationDate" class="form-label">Fecha de Registro</label>
-                            <input type="date" class="form-control" id="userRegistrationDate" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="userPassword" class="form-label">Contraseña</label>
-                            <input type="password" class="form-control" id="userPassword" required>
-                        </div>
-                    </form>
-                </div>
+                <form id="addUserForm">
+    <!-- FOTO DE PERFIL (Se mantiene) -->
+    <div class="photo-preview-container">
+        <img id="addPhotoPreview" class="photo-preview" alt="Vista previa de la foto">
+    </div>
+    <div class="mb-3">
+        <label for="userPhoto" class="form-label">Foto de perfil</label>
+        <input type="file" class="form-control" id="userPhoto" accept="image/*">
+    </div>
+
+    <!-- 1. NOMBRE(S) -->
+    <div class="mb-3">
+        <label for="userName" class="form-label">Nombre(s)</label>
+        <input type="text" class="form-control" id="userName" required>
+    </div>
+
+    <!-- 2. APELLIDO PATERNO -->
+    <div class="mb-3">
+        <label for="userApellidoPaterno" class="form-label">Apellido Paterno</label>
+        <input type="text" class="form-control" id="userApellidoPaterno" required>
+    </div>
+
+    <!-- 3. APELLIDO MATERNO -->
+    <div class="mb-3">
+        <label for="userApellidoMaterno" class="form-label">Apellido Materno</label>
+        <input type="text" class="form-control" id="userApellidoMaterno" required>
+    </div>
+
+    <!-- CORREO ELECTRÓNICO (Se mantiene) -->
+    <div class="mb-3">
+        <label for="userEmail" class="form-label">Correo electrónico</label>
+        <input type="email" class="form-control" id="userEmail" required>
+    </div>
+
+    <!-- 4. CONTRASEÑA (Obligatoria para la creación) -->
+    <div class="mb-3">
+        <label for="userPassword" class="form-label">Contraseña</label>
+        <input type="password" class="form-control" id="userPassword" required>
+    </div>
+
+    <!-- 5. EDAD -->
+    <div class="mb-3">
+        <label for="userEdad" class="form-label">Edad</label>
+        <input type="number" class="form-control" id="userEdad" min="1" max="120" required>
+    </div>
+
+    <!-- 6. ESTADO DE USUARIO (Activo/Inactivo - Nuevo) -->
+    <div class="mb-3">
+        <label for="userEstadoUsuario" class="form-label">Estado de Usuario</label>
+        <select class="form-select" id="userEstadoUsuario" required>
+            <!-- Opciones: Activo, Desactivado (Cargadas por JS) -->
+        </select>
+    </div>
+
+    <!-- 7. TIPO DE SUSCRIPCIÓN (Nuevo) -->
+    <div class="mb-3">
+        <label for="userTipoSuscripcion" class="form-label">Tipo de Suscripción</label>
+        <select class="form-select" id="userTipoSuscripcion" required>
+            <!-- Opciones: Gratuito, Mensual, Anual, De por vida (Cargadas por JS) -->
+        </select>
+    </div>
+
+    <!-- FECHA DE REGISTRO (Se mantiene) -->
+    <div class="mb-3">
+        <label for="userRegistrationDate" class="form-label">Fecha de Registro</label>
+        <input type="date" class="form-control" id="userRegistrationDate" required>
+    </div>
+</form>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-success" id="saveUserBtn">Guardar Usuario</button>

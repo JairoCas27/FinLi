@@ -3,15 +3,16 @@ package com.finli.service;
 import com.finli.dto.PaginacionUsuarioResponse;
 import com.finli.dto.UsuarioResponse;
 import com.finli.dto.UsuarioResponse.SuscripcionActualResponse; 
-import com.finli.model.EstadoSuscripcion; // <-- NUEVA IMPORTACIÓN
-import com.finli.model.TipoSuscripcion;   // <-- NUEVA IMPORTACIÓN
+import com.finli.model.EstadoSuscripcion; 
+import com.finli.model.TipoSuscripcion; 
 import com.finli.model.EstadoUsuario;
 import com.finli.model.Suscripciones; 
 import com.finli.model.Usuario;
 import com.finli.repository.EstadoUsuarioRepository;
 import com.finli.repository.SuscripcionesRepository; 
+import com.finli.repository.TipoSuscripcionRepository;
 import com.finli.repository.UsuarioRepository;
-import com.finli.repository.TipoSuscripcionRepository; // <-- NUEVA INYECCIÓN
+import com.finli.dto.UpdateUserRequest; // Necesario para la estructura del POST
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,7 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils; 
 
-import java.time.LocalDate; // Para manejar fechas de suscripción
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -31,18 +32,18 @@ import java.util.stream.Collectors;
 public class AdministradorService {
 
     private final UsuarioRepository usuarioRepository;
-    private final ServicioAutenticacion servicioAutenticacion; // Mantenido, aunque no usado directamente en los métodos que refactorizamos
+    private final ServicioAutenticacion servicioAutenticacion; 
     private final EstadoUsuarioRepository estadoUsuarioRepository;
     private final SuscripcionesRepository suscripcionesRepository;
-    private final TipoSuscripcionRepository tipoSuscripcionRepository; // <-- NUEVA INYECCIÓN
-    // private final PasswordEncoder passwordEncoder; // <-- Pendiente si necesitas hashear
+    private final TipoSuscripcionRepository tipoSuscripcionRepository; 
+    // private final PasswordEncoder passwordEncoder; // <-- Descomentar si usas Spring Security
     
     private final Integer ID_ESTADO_ACTIVO = 1; 
     private final Integer ID_ESTADO_INACTIVO = 2; 
     private final Integer ID_ESTADO_SUSCRIPCION_ACTIVA = 1; // ID 1 de EstadoSuscripcion = 'Activa'
 
     // ====================================================================================
-    // === MÉTODO: LISTAR PAGINADO Y FILTRADO (CON BÚSQUEDA Y SUSCRIPCIÓN)
+    // === MÉTODOS DE LISTADO Y MAPEO (Lectura) ===
     // ====================================================================================
 
     /**
@@ -69,7 +70,6 @@ public class AdministradorService {
             } else {
                 paginaUsuarios = usuarioRepository.findBySearchTerm(searchTerm, pageable);
             }
-
         } else {
             if (status.equalsIgnoreCase("active")) {
                 paginaUsuarios = usuarioRepository.findByEstadoUsuario_IdEstado(ID_ESTADO_ACTIVO, pageable);
@@ -80,7 +80,6 @@ public class AdministradorService {
             }
         }
 
-        // Mapear las entidades Usuario a los DTOs UsuarioResponse usando el nuevo método local
         List<UsuarioResponse> listaResponse = paginaUsuarios.getContent().stream()
                 .map(this::toUsuarioResponse)
                 .collect(Collectors.toList());
@@ -91,19 +90,13 @@ public class AdministradorService {
         );
     }
     
-    // ====================================================================================
-    // === NUEVO MÉTODO DE MAPEO DE ENTIDAD A DTO (Inclusión de Suscripción) ===
-    // ====================================================================================
-    
     /**
      * Mapea la entidad Usuario al DTO UsuarioResponse y añade la información de suscripción.
      */
     private UsuarioResponse toUsuarioResponse(Usuario usuario) {
         
-        // 1. Obtener la suscripción más reciente para el usuario (independiente del estado).
         Optional<Suscripciones> suscripcionOpt = suscripcionesRepository.findFirstByUsuario_IdOrderByFechaInicioDesc(usuario.getId());
         
-        // 2. Mapear la información de suscripción para el DTO.
         SuscripcionActualResponse suscripcionDto = suscripcionOpt.map(suscripcion -> 
             SuscripcionActualResponse.builder()
                 .idTipoSuscripcion(suscripcion.getTipoSuscripcion().getIdTipoSuscripcion())
@@ -112,16 +105,14 @@ public class AdministradorService {
                 .fechaInicio(suscripcion.getFechaInicio())
                 .build()
         ).orElseGet(() -> 
-            // Si no hay suscripción, asume el plan por defecto (Gratuito, ID 4 de tu BD)
             SuscripcionActualResponse.builder()
-                .idTipoSuscripcion(4) 
+                .idTipoSuscripcion(4) // Asume ID 4 es el plan 'Gratuito'
                 .nombreTipoSuscripcion("Gratuito (No registrado)")
                 .estadoSuscripcion("Inactivo")
                 .fechaInicio(null)
                 .build()
         );
         
-        // 3. Mapear el resto de los datos del usuario.
         return UsuarioResponse.builder()
                 .id(usuario.getId())
                 .correo(usuario.getCorreo())
@@ -130,26 +121,37 @@ public class AdministradorService {
                 .apellidoMaterno(usuario.getApellidoMaterno())
                 .edad(usuario.getEdad())
                 .fechaRegistro(usuario.getFechaRegistro() != null ? usuario.getFechaRegistro().toString() : null)
-                // Mapeo del estado Activo/Inactivo
                 .estadoUsuario(UsuarioResponse.EstadoUsuarioResponse.builder()
                         .idEstado(usuario.getEstadoUsuario().getIdEstado())
                         .nombreEstado(usuario.getEstadoUsuario().getNombreEstado())
                         .build())
-                // Añadir la suscripción mapeada
                 .suscripcionActual(suscripcionDto)
                 .build();
     }
-    
+
     // ====================================================================================
-    // === MÉTODO: ACTUALIZAR USUARIO (COMPLETAMENTE MODIFICADO) ===
+    // === MÉTODOS DE ESCRITURA (Creación y Edición) ===
     // ====================================================================================
-    
+
+    /**
+     * Crea un nuevo usuario y su registro de suscripción inicial.
+     */
+    @Transactional
+    public Usuario guardarCliente(Usuario usuarioAInsertar, Integer nuevoTipoSuscripcionId) {
+        
+        // 1. Guardar el usuario (Esto asigna el ID)
+        Usuario usuarioGuardado = usuarioRepository.save(usuarioAInsertar);
+
+        // 2. Crear el registro de suscripción inicial
+        this.crearSuscripcionInicial(usuarioGuardado, nuevoTipoSuscripcionId);
+        
+        return usuarioGuardado;
+    }
+
+
     /**
      * Actualiza todos los campos de un usuario, incluyendo la contraseña (opcional) 
      * y el tipo de suscripción.
-     * * @param usuarioConCambios Entidad con datos personales y estado de usuario.
-     * @param nuevaContrasena La nueva contraseña (o null/vacia si no se cambia).
-     * @param nuevoTipoSuscripcionId El ID del nuevo plan de suscripción.
      */
     @Transactional
     public Optional<Usuario> actualizarUsuario(Usuario usuarioConCambios, String nuevaContrasena, Integer nuevoTipoSuscripcionId) {
@@ -161,7 +163,6 @@ public class AdministradorService {
             usuarioExistente.setApellidoMaterno(usuarioConCambios.getApellidoMaterno());
             usuarioExistente.setCorreo(usuarioConCambios.getCorreo());
             usuarioExistente.setEdad(usuarioConCambios.getEdad());
-            // No actualizamos la fecha de registro (es de solo lectura)
 
             // 2. ACTUALIZACIÓN DEL ESTADO DE USUARIO (Activo/Inactivo)
             if (usuarioConCambios.getEstadoUsuario() != null && usuarioConCambios.getEstadoUsuario().getIdEstado() != null) {
@@ -170,7 +171,6 @@ public class AdministradorService {
             
             // 3. ACTUALIZACIÓN DE CONTRASEÑA (Solo si se proporciona una nueva)
             if (StringUtils.hasText(nuevaContrasena)) {
-                // ADVERTENCIA: La contraseña se guarda sin hashear. 
                 // usuarioExistente.setContrasena(passwordEncoder.encode(nuevaContrasena)); // USAR SI HAY ENCODER
                 usuarioExistente.setContrasena(nuevaContrasena); 
                 System.out.println("ADVERTENCIA: Contraseña actualizada sin hashear en AdministradorService.java.");
@@ -185,15 +185,24 @@ public class AdministradorService {
     }
 
     /**
+     * Crea el registro de suscripción inicial para un nuevo usuario.
+     */
+    private void crearSuscripcionInicial(Usuario usuario, Integer nuevoTipoSuscripcionId) {
+         if (nuevoTipoSuscripcionId == null) return;
+         this.actualizarOSetearSuscripcion(usuario, nuevoTipoSuscripcionId);
+    }
+
+
+    /**
      * Compara y actualiza la suscripción del usuario creando un nuevo registro si el plan cambia.
      */
     private void actualizarOSetearSuscripcion(Usuario usuario, Integer nuevoTipoSuscripcionId) {
-        if (nuevoTipoSuscripcionId == null) return; // No hay cambio de suscripción
+        if (nuevoTipoSuscripcionId == null) return; 
 
         // 1. Obtener la suscripción actual (la más reciente)
         Optional<Suscripciones> suscripcionRecienteOpt = suscripcionesRepository.findFirstByUsuario_IdOrderByFechaInicioDesc(usuario.getId());
 
-        // 2. Determinar si es necesario un cambio
+        // 2. Determinar si es necesario un cambio (incluyendo el caso de que no haya suscripción aún)
         boolean necesitaCambio = true;
         
         if (suscripcionRecienteOpt.isPresent()) {
@@ -206,10 +215,8 @@ public class AdministradorService {
         
         if (necesitaCambio) {
             // 3. Crear nuevo registro de suscripción
-
-            // Buscamos la nueva entidad TipoSuscripcion
             TipoSuscripcion nuevoPlan = tipoSuscripcionRepository.findById(nuevoTipoSuscripcionId)
-                                            .orElseThrow(() -> new IllegalArgumentException("ID de TipoSuscripcion no válido: " + nuevoTipoSuscripcionId));
+                    .orElseThrow(() -> new IllegalArgumentException("ID de TipoSuscripcion no válido: " + nuevoTipoSuscripcionId));
 
             // Creamos un nuevo registro de suscripción
             Suscripciones nuevaSuscripcion = Suscripciones.builder()
@@ -217,23 +224,20 @@ public class AdministradorService {
                 .tipoSuscripcion(nuevoPlan)
                 .estadoSuscripcion(EstadoSuscripcion.builder().idEstadoSuscripcion(ID_ESTADO_SUSCRIPCION_ACTIVA).build()) // Asume Activa
                 .fechaInicio(LocalDate.now())
-                .fechaFin(null) // Para planes anuales o mensuales, aquí pondrías la fecha fin calculada
+                .fechaFin(null) // La fecha fin se establecería en base a la lógica de negocio (ej: +1 año)
                 .build();
                 
             suscripcionesRepository.save(nuevaSuscripcion);
         }
     }
 
+
     // ====================================================================================
-    // === EL RESTO DE TUS MÉTODOS SE MANTIENEN IGUAL ===
+    // === OTROS MÉTODOS ===
     // ====================================================================================
 
     public List<Usuario> obtenerListaDeUsuariosParaExportar() {
         return usuarioRepository.findAll(Sort.by(Sort.Direction.DESC, "id")); 
-    }
-
-    public Usuario guardarCliente(Usuario usuario) {
-        return usuarioRepository.save(usuario);
     }
 
     public List<EstadoUsuario> listarTodosEstadosUsuario() {
@@ -247,7 +251,6 @@ public class AdministradorService {
                     .build();
 
             usuario.setEstadoUsuario(estadoInactivo);
-
             usuarioRepository.save(usuario);
             return true;
         }).orElse(false);

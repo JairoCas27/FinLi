@@ -2,7 +2,7 @@ package com.finli.controller;
 
 // NUEVAS IMPORTACIONES NECESARIAS
 import com.finli.dto.PaginacionUsuarioResponse;
-import com.finli.dto.UpdateUserRequest; // <-- NUEVA IMPORTACIÓN
+import com.finli.dto.UpdateUserRequest; 
 import com.finli.model.EstadoUsuario;
 import com.finli.model.TipoSuscripcion;
 import com.finli.model.Usuario;
@@ -17,13 +17,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.time.LocalDate; // Para mapear la fecha de registro
+import java.time.LocalDate; 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/admin")
-@RequiredArgsConstructor
+@RequiredArgsConstructor 
 @CrossOrigin(origins = "*")
 public class AdminController {
 
@@ -66,21 +66,41 @@ public class AdminController {
     }
     // =================================================================================
 
-    // CREAR CLIENTE (Se mantiene)
+    // CREAR CLIENTE (POST - CORREGIDO para DataIntegrityViolationException)
     @PostMapping("/usuarios")
-    public ResponseEntity<Usuario> crearCliente(@RequestBody Usuario usuario) {
-        Usuario nuevoUsuario = administradorService.guardarCliente(usuario);
+    public ResponseEntity<Usuario> crearCliente(@RequestBody UpdateUserRequest request) { 
+        
+        // Mapeo defensivo: asegura que la contraseña NUNCA sea null, sino cadena vacía ("")
+        String contrasena = request.getNuevaContrasena() != null ? request.getNuevaContrasena() : "";
+
+        // 1. Mapear DTO de entrada a la Entidad Usuario
+        Usuario usuarioAInsertar = Usuario.builder()
+            .correo(request.getCorreo())
+            .contrasena(contrasena) // Usa el valor forzado a no nulo
+            .nombre(request.getNombre())
+            .apellidoPaterno(request.getApellidoPaterno())
+            .apellidoMaterno(request.getApellidoMaterno())
+            .edad(request.getEdad())
+            // La fecha de registro se mapea de String a LocalDate o usa la fecha actual
+            .fechaRegistro(request.getFechaRegistro() != null ? LocalDate.parse(request.getFechaRegistro()) : LocalDate.now())
+            .estadoUsuario(request.getEstadoUsuario()) 
+            .build();
+            
+        // 2. Llamada al servicio (guarda usuario y crea suscripción inicial)
+        Usuario nuevoUsuario = administradorService.guardarCliente(
+            usuarioAInsertar, 
+            request.getNuevoTipoSuscripcionId() 
+        );
         return new ResponseEntity<>(nuevoUsuario, HttpStatus.CREATED);
     }
 
     // =================================================================================
-    // === ACTUALIZAR USUARIO (MODIFICADO: Usa UpdateUserRequest DTO) ===
+    // === ACTUALIZAR USUARIO (PUT - Usa UpdateUserRequest DTO) ===
     // =================================================================================
     @PutMapping("/usuarios/{id}")
-    // Cambiamos Usuario por UpdateUserRequest para capturar todos los datos del frontend
     public ResponseEntity<Usuario> actualizarUsuario(@PathVariable Integer id, @RequestBody UpdateUserRequest request) {
         
-        // 1. Mapear DTO de entrada a la Entidad Usuario para la parte de datos personales y estado
+        // 1. Mapear DTO de entrada a la Entidad Usuario
         Usuario usuarioAActualizar = Usuario.builder()
             .id(id)
             .correo(request.getCorreo())
@@ -88,7 +108,7 @@ public class AdminController {
             .apellidoPaterno(request.getApellidoPaterno())
             .apellidoMaterno(request.getApellidoMaterno())
             .edad(request.getEdad())
-            // Convertir String de fecha a LocalDate para la Entidad (asumiendo formato y no nulo)
+            // Convertir String de fecha a LocalDate
             .fechaRegistro(request.getFechaRegistro() != null ? LocalDate.parse(request.getFechaRegistro()) : null)
             .estadoUsuario(request.getEstadoUsuario())
             .build();
@@ -101,8 +121,8 @@ public class AdminController {
         );
 
         return usuarioActualizado
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
     }
     // =================================================================================
 
