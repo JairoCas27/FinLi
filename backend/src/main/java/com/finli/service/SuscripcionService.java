@@ -1,5 +1,6 @@
 package com.finli.service;
 
+import com.finli.dto.SuscripcionResponse;
 import com.finli.model.*;
 import com.finli.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +48,7 @@ public class SuscripcionService {
     /**
      * 📌 Cambiar el tipo de suscripción del usuario (cuando compra un plan)
      */
-    public Suscripcion cambiarSuscripcion(Integer idUsuario, Integer idTipoSuscripcion) {
+    public SuscripcionResponse cambiarSuscripcion(Integer idUsuario, Integer idTipoSuscripcion) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
@@ -80,7 +81,19 @@ public class SuscripcionService {
                 break;
         }
 
-        return suscripcionRepository.save(suscripcion);
+        Suscripcion actualizada = suscripcionRepository.save(suscripcion);
+
+// 🔥 Cargar las relaciones antes de acceder (evita proxy)
+actualizada.getEstadoSuscripcion().getNombreEstado();
+actualizada.getTipoSuscripcion().getNombreTipoSuscripcion();
+
+return SuscripcionResponse.builder()
+        .idSuscripcion(actualizada.getIdSuscripcion())
+        .tipoSuscripcion(actualizada.getTipoSuscripcion().getNombreTipoSuscripcion())
+        .estadoSuscripcion(actualizada.getEstadoSuscripcion().getNombreEstado())
+        .fechaInicio(actualizada.getFechaInicio())
+        .fechaFin(actualizada.getFechaFin())
+        .build();
     }
 
     /**

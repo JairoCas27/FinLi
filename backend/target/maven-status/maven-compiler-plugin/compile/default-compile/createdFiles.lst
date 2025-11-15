@@ -52,6 +52,7 @@ com\finli\config\SchedulerConfig.class
 com\finli\service\EmailService.class
 com\finli\service\AdministradorService.class
 com\finli\controller\AuthController.class
+com\finli\dto\SuscripcionResponse$SuscripcionResponseBuilder.class
 com\finli\model\MedioPago.class
 com\finli\model\Usuario.class
 com\finli\repository\UsuarioRepository.class

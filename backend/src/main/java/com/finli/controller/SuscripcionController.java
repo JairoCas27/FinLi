@@ -1,5 +1,6 @@
 package com.finli.controller;
 
+import com.finli.dto.SuscripcionResponse;
 import com.finli.model.Suscripcion;
 import com.finli.service.SuscripcionService;
 import lombok.RequiredArgsConstructor;
@@ -35,8 +36,8 @@ public class SuscripcionController {
             @RequestParam Integer idUsuario,
             @RequestParam Integer idTipoSuscripcion) {
         try {
-            Suscripcion actualizada = suscripcionService.cambiarSuscripcion(idUsuario, idTipoSuscripcion);
-            return ResponseEntity.ok(actualizada);
+            SuscripcionResponse actualizada = suscripcionService.cambiarSuscripcion(idUsuario, idTipoSuscripcion);
+return ResponseEntity.ok(actualizada);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

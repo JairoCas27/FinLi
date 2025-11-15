@@ -1,3 +1,5 @@
+
+
 // Datos de planes
 const plans = {
     mensual: {
@@ -40,6 +42,14 @@ const backLink = document.getElementById('back-link');
 
 // Plan seleccionado actualmente
 let selectedPlan = 'anual';
+
+// 🔥 Recuperar usuario logueado
+const loggedUser = JSON.parse(sessionStorage.getItem("loggedUser"));
+
+if (!loggedUser) {
+  alert("No estás autenticado. Serás redirigido al login.");
+  window.location.href = "/frontend/src/pages/Login/login.html";
+}
 
 // Inicializar la página
 document.addEventListener('DOMContentLoaded', function() {
@@ -231,23 +241,54 @@ function validateForm() {
 }
 
 // Procesar el pago
+// Procesar el pago
 function processPayment() {
-    if (!validateForm()) {
-        alert('Por favor corrige los errores en el formulario antes de continuar.');
-        return;
-    }
-    
-    // Mostrar pantalla de carga
-    loadingOverlay.classList.add('active');
-    
-    // Simular procesamiento de pago
-    setTimeout(function() {
-        // Ocultar pantalla de carga
-        loadingOverlay.classList.remove('active');
-        
-        // Mostrar mensaje de éxito
-        showSuccessMessage();
-    }, 3000);
+  if (!validateForm()) {
+    alert("Por favor corrige los errores en el formulario.");
+    return;
+  }
+
+  const planMap = {
+    mensual: 1,
+    anual: 2,
+    vitalicio: 3
+  };
+
+  const idTipoSuscripcion = planMap[selectedPlan];
+
+  const formData = new URLSearchParams();
+  formData.append("idUsuario", loggedUser.id);
+  formData.append("idTipoSuscripcion", idTipoSuscripcion);
+
+  // Mostrar pantalla de carga
+  loadingOverlay.classList.add('active');
+
+  fetch("http://localhost:8080/api/suscripciones/cambiar", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: formData
+  })
+    .then(res => res.json())
+    .then(data => {
+      console.log("✅ Suscripción actualizada:", data);
+
+      // Actualizar sessionStorage
+      loggedUser.tipoSuscripcion = selectedPlan === "vitalicio" ? "De por vida" : selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1);
+      loggedUser.estadoSuscripcion = "Activa";
+      loggedUser.fechaFinSuscripcion = data.fechaFin || null;
+      sessionStorage.setItem("loggedUser", JSON.stringify(loggedUser));
+
+      // Ocultar carga y mostrar éxito
+      loadingOverlay.classList.remove('active');
+      showSuccessMessage();
+    })
+    .catch(err => {
+      console.error("❌ Error al actualizar suscripción:", err);
+      loadingOverlay.classList.remove('active');
+      alert("Ocurrió un error al procesar tu suscripción.");
+    });
 }
 
 // Mostrar mensaje de éxito
@@ -261,7 +302,7 @@ function showSuccessMessage() {
                 <i class="bi bi-check-lg"></i>
             </div>
             <h3>¡Pago Completado Exitosamente!</h3>
-            <p class="text-muted">Tu suscripción a FinLi Premium <strong>${plan.name}</strong> ha sido activada.</p>
+            <p class="text-muted">¡Felicidades ${loggedUser.nombre}! Tu suscripción <strong>${plan.name}</strong> ha sido activada.</p>
             <div class="summary-details mt-3">
                 <div class="detail-row">
                     <span>Plan:</span>
