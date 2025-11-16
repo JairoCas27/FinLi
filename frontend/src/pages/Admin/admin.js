@@ -8,6 +8,8 @@ const ENDPOINT_USUARIOS = '/api/admin/usuarios';
 const ENDPOINT_ESTADOS = '/api/admin/estados-usuario';
 const ENDPOINT_TIPOS_SUSCRIPCION = '/api/admin/tipos-suscripcion';
 const ENDPOINT_EXPORTAR = '/api/admin/usuarios/exportar';
+const ENDPOINT_CATEGORIAS = '/api/categorias'; // Ruta base de categorías
+const ENDPOINT_SUBCATEGORIAS = '/api/categorias/subcategorias'; // Ruta para crear subcategorías
 
 // ==============================================================================
 // === VARIABLES GLOBALES ===
@@ -712,11 +714,13 @@ function switchSection(sectionId) {
         } else if (sectionId === 'reportes') {
             initializeCharts();
         } else if (sectionId === 'apartados') {
-             // Lógica para cargar categorías, subcategorías y medios de pago predeterminados
-             console.log('Cargando datos de Apartados (Gestión de contenido)...');
+            // Lógica para cargar categorías, subcategorías y medios de pago predeterminados
+            console.log('Cargando datos de Apartados (Gestión de contenido)...');
+            // 💡 LLAMADA CRÍTICA: Se llama a la función para cargar y mostrar las categorías
+            cargarCategoriasDefault(); 
         } else if (sectionId === 'actividades') {
-             // Lógica para cargar el timeline de actividades
-             console.log('Cargando Historial de Actividades...');
+            // Lógica para cargar el timeline de actividades
+            console.log('Cargando Historial de Actividades...');
         }
     }
 }
@@ -761,6 +765,217 @@ if (addUserModalElement) {
         document.getElementById('addUserForm').reset();
         document.getElementById('userPassword').value = ''; 
     });
+}
+
+// ==============================================================================
+// === LÓGICA DE CATEGORÍAS Y SUBCATEGORÍAS (SECCIÓN APARTADOS) ===
+// ==============================================================================
+
+// Nota: El ADMIN_EMAIL solo se usará para los métodos POST (Creación), no para la carga base.
+const ADMIN_EMAIL = 'admin@finli.com'; // O la forma real de obtener el email de sesión
+
+/**
+ * 1. Carga las categorías existentes con id_usuario=NULL (base) para listarlas y llenar los selects.
+ */
+async function cargarCategoriasDefault(selectId = null) {
+    const defaultCategoriesList = document.getElementById('defaultCategoriesList');
+    
+    // Limpiar listas y selects
+    if (defaultCategoriesList) defaultCategoriesList.innerHTML = '';
+    
+    const selectElement = selectId ? document.getElementById(selectId) : null;
+    if (selectElement) {
+        selectElement.innerHTML = '<option value="" disabled selected>Cargando...</option>';
+    }
+
+    try {
+        // 💡 CAMBIO CRÍTICO: Usamos el endpoint /api/categorias/base que no requiere email, 
+        // y devuelve categorías con id_usuario = NULL.
+        const response = await fetch(`${API_URL_BASE}${ENDPOINT_CATEGORIAS}/base`);
+        
+        if (!response.ok) {
+            throw new Error('Error al obtener categorías base: ' + response.statusText);
+        }
+        
+        const categorias = await response.json();
+
+        // 1. Llenar el Dropdown (para el modal de Subcategoría)
+        if (selectElement) {
+            selectElement.innerHTML = '<option value="" disabled selected>-- Seleccione Categoría Padre --</option>';
+            categorias.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.idCategoria;
+                option.textContent = cat.nombreCategoria;
+                selectElement.appendChild(option);
+            });
+        }
+        
+        // 2. Renderizar la lista en la sección "Apartados"
+        if (defaultCategoriesList) {
+            if (categorias.length === 0) {
+                defaultCategoriesList.innerHTML = '<div class="alert alert-info">No hay categorías base registradas.</div>';
+            } else {
+                defaultCategoriesList.innerHTML = '';
+                categorias.forEach(cat => {
+                    const item = document.createElement('a');
+                    item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                    item.innerHTML = `
+                        <span class="d-flex align-items-center gap-2">
+                             <i class="bi bi-tag-fill"></i>
+                             ${cat.nombreCategoria}
+                        </span>
+                        <span class="badge bg-secondary rounded-pill">${cat.subcategorias ? cat.subcategorias.length : 0} Subcategorías</span>
+                    `;
+                    defaultCategoriesList.appendChild(item);
+                });
+            }
+        }
+        
+        return categorias;
+
+    } catch (error) {
+        console.error("Error al cargar categorías/subcategorías:", error);
+        if (selectElement) selectElement.innerHTML = '<option value="">Error de carga</option>';
+        if (defaultCategoriesList) defaultCategoriesList.innerHTML = '<div class="alert alert-danger">Error al cargar categorías. Revisa la consola.</div>';
+    }
+}
+
+
+/**
+ * 2. Prepara y muestra el modal para agregar Categoría.
+ */
+function showAddCategoryModal() {
+    const categoryModal = new bootstrap.Modal(document.getElementById('categoryModal'));
+    document.getElementById('categoryModalLabel').textContent = 'Agregar Nueva Categoría';
+    document.getElementById('categoryForm').reset();
+    
+    // Ocultar el campo de icono si no se usa realmente en el DTO de creación
+    // Si usas el icono en tu DTO (que no lo incluimos, solo nombre), deberías ajustarlo
+    document.getElementById('categoryIcon').parentNode.style.display = 'none';
+
+    categoryModal.show();
+}
+
+/**
+ * 3. Prepara y muestra el modal para agregar Subcategoría.
+ */
+async function showAddSubcategoryModal() {
+    const subcategoryModal = new bootstrap.Modal(document.getElementById('subcategoryModal'));
+    document.getElementById('subcategoryModalLabel').textContent = 'Agregar Nueva Subcategoría';
+    document.getElementById('subcategoryForm').reset();
+    
+    // ⚠️ CRÍTICO: Cargar las categorías en el select 'parentCategory'
+    await cargarCategoriasDefault('parentCategory');
+
+    // Ocultar el campo de icono si no se usa realmente
+    document.getElementById('subcategoryIcon').parentNode.style.display = 'none';
+
+    subcategoryModal.show();
+}
+
+
+/**
+ * 4. Maneja el envío del formulario para crear una Categoría.
+ */
+async function manejarCreacionCategoria() {
+    const saveBtn = document.getElementById('saveCategoryBtn');
+    const form = document.getElementById('categoryForm');
+    
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    const nombreCategoria = document.getElementById('categoryName').value;
+    
+    // DTO: CrearCategoriaRequest.java
+    const data = {
+        nombreCategoria: nombreCategoria,
+        // Usamos el ID de un usuario administrador/base (ej: 1) o null si el backend lo permite.
+        // Como tu Controller exige el email para obtener el ID, lo dejamos simple aquí:
+        // El Controller se encargará de obtener el ID a partir de ADMIN_EMAIL.
+    };
+
+    saveBtn.disabled = true;
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = 'Guardando...';
+
+    try {
+        // POST /api/categorias?email=admin@finli.com
+        const response = await fetch(`${API_URL_BASE}${ENDPOINT_CATEGORIAS}?email=${ADMIN_EMAIL}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (response.status === 201) {
+            alert(`✅ Categoría "${nombreCategoria}" creada con éxito.`);
+            form.reset();
+            new bootstrap.Modal(document.getElementById('categoryModal')).hide();
+            cargarCategoriasDefault(); // Recargar la lista de categorías en la sección
+        } else {
+            const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+            alert(`❌ Error al crear categoría: ${errorData.message || response.statusText}`);
+        }
+    } catch (error) {
+        console.error('Error de red:', error);
+        alert('❌ Error de conexión con el servidor.');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+    }
+}
+
+/**
+ * 5. Maneja el envío del formulario para crear una Subcategoría.
+ */
+async function manejarCreacionSubcategoria() {
+    const saveBtn = document.getElementById('saveSubcategoryBtn');
+    const form = document.getElementById('subcategoryForm');
+    
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    const idCategoria = document.getElementById('parentCategory').value;
+    const nombreSubcategoria = document.getElementById('subcategoryName').value;
+
+    // DTO: CrearSubcategoriaRequest.java
+    const data = {
+        nombreSubcategoria: nombreSubcategoria,
+        idCategoria: parseInt(idCategoria, 10), // Convertir a número
+        // El Controller se encarga de obtener el idUsuario
+    };
+
+    saveBtn.disabled = true;
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = 'Guardando...';
+
+    try {
+        // POST /api/categorias/subcategorias?email=admin@finli.com
+        const response = await fetch(`${API_URL_BASE}${ENDPOINT_SUBCATEGORIAS}?email=${ADMIN_EMAIL}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (response.status === 201) {
+            alert(`✅ Subcategoría "${nombreSubcategoria}" creada con éxito.`);
+            form.reset();
+            new bootstrap.Modal(document.getElementById('subcategoryModal')).hide();
+            cargarCategoriasDefault(); // Recargar la lista de categorías para actualizar los contadores
+        } else {
+            const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+            alert(`❌ Error al crear subcategoría: ${errorData.message || response.statusText}`);
+        }
+    } catch (error) {
+        console.error('Error de red:', error);
+        alert('❌ Error de conexión con el servidor.');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+    }
 }
 
 // ... (El resto de tu código comienza con document.addEventListener('DOMContentLoaded', function() { ... )
@@ -822,4 +1037,40 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 2. Cargar los datos iniciales
     loadUsers(); 
+
+    // =======================================================
+    // === LISTENERS para Categorías y Subcategorías ===
+    // =======================================================
+    
+    // 1. Botones de la sección "Apartados" (para abrir los modales)
+    const addCategoryBtn = document.querySelector('#apartados button.btn-success[onclick="showAddCategoryModal()"]');
+    if (addCategoryBtn) {
+        addCategoryBtn.onclick = showAddCategoryModal;
+    }
+
+    const addSubcategoryBtn = document.querySelector('#apartados button.btn-success[onclick="showAddSubcategoryModal()"]');
+    if (addSubcategoryBtn) {
+        addSubcategoryBtn.onclick = showAddSubcategoryModal;
+    }
+    
+    // 2. Botón de GUARDAR CATEGORÍA del modal
+    const saveCategoryBtn = document.getElementById('saveCategoryBtn');
+    if (saveCategoryBtn) {
+        saveCategoryBtn.addEventListener('click', manejarCreacionCategoria);
+    }
+
+    // 3. Botón de GUARDAR SUBCATEGORÍA del modal
+    const saveSubcategoryBtn = document.getElementById('saveSubcategoryBtn');
+    if (saveSubcategoryBtn) {
+        saveSubcategoryBtn.addEventListener('click', manejarCreacionSubcategoria);
+    }
+    
+    // ... (El resto de tu código DOMContentLoaded)
+
+    // 1. Asegurar que la sección de Inicio esté activa al cargar
+    switchSection('inicio'); 
+    
+    // 2. Cargar los datos iniciales
+    loadUsers(); 
 });
+
