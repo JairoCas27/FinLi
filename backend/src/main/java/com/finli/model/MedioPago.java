@@ -15,7 +15,7 @@ public class MedioPago {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_medio_pago") // 👈 Aquí está la corrección
+    @Column(name = "id_medio_pago")
     private Integer idMedioPago;
 
     @Column(name = "nombre_medio_pago", nullable = false, length = 100)

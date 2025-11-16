@@ -3,7 +3,6 @@ package com.finli.dto;
 import java.time.LocalDate;
 
 import com.finli.model.EstadoUsuario;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
