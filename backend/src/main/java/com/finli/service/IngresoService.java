@@ -13,6 +13,7 @@ import java.util.List;
 public class IngresoService {
 
     private final IngresoRepository repo;
+    private final MedioPagoService medioPagoService;
 
     public List<Ingreso> listarTodos() {
         return repo.findAll();
@@ -23,16 +24,22 @@ public class IngresoService {
     }
 
     public Ingreso crear(IngresoRequest dto) {
-        Ingreso ing = Ingreso.builder()
-                             .idUsuario(dto.getIdUsuario())
-                             .idMedioPago(dto.getIdMedioPago())
-                             .nombreIngreso(dto.getNombreIngreso())
-                             .montoIngreso(dto.getMontoIngreso())
-                             .descripcion(dto.getDescripcion())
-                             .fechaIngreso(dto.getFechaIngreso())
-                             .build();
-        return repo.save(ing);
-    }
+    Ingreso ing = Ingreso.builder()
+                         .idUsuario(dto.getIdUsuario())
+                         .idMedioPago(dto.getIdMedioPago())
+                         .nombreIngreso(dto.getNombreIngreso())
+                         .montoIngreso(dto.getMontoIngreso())
+                         .descripcion(dto.getDescripcion())
+                         .fechaIngreso(dto.getFechaIngreso())
+                         .build();
+
+    Ingreso guardado = repo.save(ing);
+
+    // ✅ Sumar saldo al medio de pago
+    medioPagoService.sumarSaldo(dto.getIdMedioPago(), dto.getMontoIngreso());
+
+    return guardado;
+}
 
     public void eliminar(Integer id) {
         repo.deleteById(id);

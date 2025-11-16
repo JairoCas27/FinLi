@@ -138,14 +138,64 @@ const subcategoriesMap = {
 document.addEventListener('DOMContentLoaded', function() {
     // Cargar datos desde localStorage
     loadDataFromLocalStorage();
-    loadPaymentMethodsFromLocalStorage();
+    
+
+     // ---- CARGAR DATOS DEL USUARIO LOGUEADO ----
+const loggedRaw = sessionStorage.getItem('loggedUser');
+if (loggedRaw) {
+  try {
+    const u = JSON.parse(loggedRaw);
+
+    // --- 1) Top-bar (bienvenida, avatar, nombre rápido) ---
+    const mainTitle    = document.getElementById('main-title');
+    const userName     = document.getElementById('user-name');
+    const userEmail    = document.getElementById('user-email');
+    const userInitials = document.getElementById('userInitials');
+    const avatarSm     = document.querySelector('.avatar-sm');
+
+    const fullName = `${u.nombre || ''} ${u.apellidoPaterno || ''} ${u.apellidoMaterno || ''}`.trim();
+    const FullName = u.nombre || 'Usuario';
+    window.USER_SHORT = u.nombre?.split(' ')[0] || 'Usuario';   // solo 1er nombre
+    window.USER_FULL  = u.nombre || 'Usuario'; 
+
+    if (mainTitle)    mainTitle.innerHTML   = `Bienvenido, <span class="text-gradient">${FullName}</span>`;
+    if (userName)     userName.textContent  = fullName;
+    if (userEmail)    userEmail.textContent = u.email || '';
+    if (userInitials) userInitials.textContent = (u.nombre?.[0] + (u.apellidoPaterno?.[0] || '')).toUpperCase();
+    if (avatarSm)     avatarSm.innerHTML = `<span>${(u.nombre?.[0] + (u.apellidoPaterno?.[0] || '')).toUpperCase()}</span>`;
+
+    // --- 2) Sincronizar objeto userProfile (para la sección “Mi Perfil”) ---
+    userProfile.name  = fullName;
+    userProfile.email = u.email || '';
+    userProfile.age   = u.edad || '';
+    userProfile.firstName = u.nombre || '';
+    userProfile.apellidoPaterno = u.apellidoPaterno || '';
+    userProfile.apellidoMaterno = u.apellidoMaterno || '';
+    userProfile.lastName  = `${u.apellidoPaterno || ''} ${u.apellidoMaterno || ''}`.trim();
+    saveProfileToLocalStorage();
+    updateProfileInApp();  // refresca la pantalla “Mi Perfil”
+
+    // --- 3) Mostrar todos los datos en consola ---
+console.table({
+  'Nombre(s)'      : u.nombre || '',
+  'Apellido Paterno': u.apellidoPaterno || '',
+  'Apellido Materno': u.apellidoMaterno || '',
+  'Edad'           : u.edad || '',
+  'Correo'         : u.email || ''
+});
+
+  } catch (e) {
+    console.warn('No se pudieron cargar los datos del usuario logueado', e);
+  }
+}
+
+    cargarMediosDePagoDelUsuario();
     loadTransfersFromLocalStorage();
     loadIncomeRecordsFromLocalStorage();
     loadCustomCategoriesFromLocalStorage();
     loadScheduledPaymentsFromLocalStorage();
     
     // INICIALIZAR MEDIOS DE PAGO POR DEFECTO  
-    initializeDefaultPaymentMethods();
     
     // Establecer fecha y hora actual
     const now = new Date();
@@ -353,7 +403,7 @@ function initializeNavigation() {
 
     const sectionData = {
         inicio: {
-            title: 'Bienvenido, <span class="text-gradient">Jairo</span>',
+            title: `Bienvenido, <span class="text-gradient">${window.USER_FULL}</span>`,
             subtitle: 'Panel de control personal'
         },
         ingresos: {
@@ -478,68 +528,74 @@ function setupIncomeEventListeners() {
 }
 
 // ---- AGREGAR MEDIO DE PAGO ----
-function addPaymentMethod() {
-    const name = document.getElementById('paymentMethodName').value.trim();
-    const amount = parseFloat(document.getElementById('initialAmount').value);
-    
-    if (!name) {
-        showNotification('Por favor ingresa un nombre para el medio de pago', 'error');
-        return;
-    }
-    
-    if (isNaN(amount) || amount < 0) {
-        showNotification('Por favor ingresa un monto válido', 'error');
-        return;
-    }
-    
-    // Verificar si ya existe un medio de pago con ese nombre
-    const existingMethod = paymentMethods.find(method => method.name.toLowerCase() === name.toLowerCase());
-    if (existingMethod) {
-        showNotification('Ya existe un medio de pago con ese nombre', 'error');
-        return;
-    }
-    
-    const paymentMethod = {
-        id: Date.now(),
-        name: name,
-        balance: amount,
-        initialAmount: amount
-    };
-    
-    paymentMethods.push(paymentMethod);
+async function addPaymentMethod() {
+  const name = document.getElementById('paymentMethodName').value.trim();
+  const amount = parseFloat(document.getElementById('initialAmount').value);
+
+  if (!name) return showNotification('Ingresa un nombre', 'error');
+  if (isNaN(amount) || amount < 0) return showNotification('Monto inválido', 'error');
+
+  const loggedRaw = sessionStorage.getItem('loggedUser');
+  if (!loggedRaw) return showNotification('No hay usuario logueado', 'error');
+  const usuario = JSON.parse(loggedRaw);
+
+  const payload = {
+    email: usuario.email,
+    nombreMedioPago: name,
+    montoInicial: 0
+  };
+
+  try {
+    const res = await fetch(`http://localhost:8080/api/medios-pago?email=${usuario.email}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) throw new Error("Error al guardar medio de pago");
+
+    const nuevo = await res.json();
+
+    // ✅ Crear ingreso inicial (para que el balance aumente)
+    const ingresoPayload = {
+  idUsuario: usuario.id,
+  idMedioPago: nuevo.idMedioPago,
+  nombreIngreso: 'Saldo inicial',
+  montoIngreso: amount,
+  descripcion: 'Saldo inicial',
+  fechaIngreso: new Date().toISOString().slice(0, 10)
+};
+
+await fetch('http://localhost:8080/api/ingresos', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(ingresoPayload)
+});
+    console.log("✅ Medio de pago guardado:", nuevo);
+
+    // Agregar a local
+    paymentMethods.push({
+      id: nuevo.idMedioPago,
+      name: nuevo.nombreMedioPago,
+      balance: nuevo.montoInicial,
+      initialAmount: nuevo.montoInicial
+    });
     savePaymentMethodsToLocalStorage();
     renderPaymentMethods();
-    updateAllPaymentMethodSelects(); 
+    updateAllPaymentMethodSelects();
     updatePaymentMethodsChart();
     updateTotalBalance();
 
-    // REGISTRAR AUTOMÁTICAMENTE COMO INGRESO SI HAY MONTO INICIAL
-    if (amount > 0) {
-        const incomeRecord = {
-            id: Date.now() + 1,
-            methodId: paymentMethod.id,
-            methodName: paymentMethod.name,
-            amount: amount,
-            description: 'Saldo inicial',
-            date: new Date().toISOString(),
-            formattedDate: formatDateTime(new Date().toISOString()),
-            type: 'saldo_inicial'
-        };
-        
-        incomeRecords.push(incomeRecord);
-        saveIncomeRecordsToLocalStorage();
-        syncIncomeTables();
-        
-        addNotification(`Saldo inicial registrado: S/. ${amount.toFixed(2)} en ${name}`, 'info');
-    }
-    
     // Limpiar formulario
     document.getElementById('paymentMethodName').value = '';
     document.getElementById('initialAmount').value = '';
-    
-    showNotification('Medio de pago agregado exitosamente', 'success');
-}
 
+    showNotification('Medio de pago agregado', 'success');
+  } catch (err) {
+    console.error("❌ Error guardando medio de pago:", err);
+    showNotification('No se pudo guardar el medio de pago', 'error');
+  }
+}
 // ---- RENDERIZAR MEDIOS DE PAGO ----
 function renderPaymentMethods() {
     const table = document.getElementById('paymentMethodsTable');
@@ -643,10 +699,11 @@ function getPaymentMethodLogo(methodName) {
 }
 
 // ---- ELIMINAR MEDIO DE PAGO ----
-function deletePaymentMethod(id) {
+async function deletePaymentMethod(id) {
     if (confirm('¿Estás seguro de que deseas eliminar este medio de pago? Se perderán todos los datos asociados.')) {
         paymentMethods = paymentMethods.filter(method => method.id !== id);
         savePaymentMethodsToLocalStorage();
+        await eliminarMedioDePagoDeBD(id); // ✅ nueva
         renderPaymentMethods();
         updatePaymentMethodsChart();
         updateTotalBalance();
@@ -654,7 +711,7 @@ function deletePaymentMethod(id) {
     }
 }
 
-function editPaymentMethod(id) {
+async function editPaymentMethod(id) {
     const method = paymentMethods.find(m => m.id === id);
     if (!method) return;
     
@@ -679,7 +736,7 @@ function editPaymentMethod(id) {
         modalBody,
         'Guardar Cambios',
         'secondary',
-        () => {
+        async () => {
             const newName = document.getElementById('editPaymentMethodName').value.trim();
             const newBalance = parseFloat(document.getElementById('editPaymentMethodBalance').value);
             
@@ -729,7 +786,8 @@ function editPaymentMethod(id) {
                 addNotification(`Ajuste de saldo en ${method.name}: S/. ${Math.abs(balanceDifference).toFixed(2)}`, 'info');
             }
             
-            savePaymentMethodsToLocalStorage();
+            savePaymentMethodsToLocalStorage(); // ✅ sigue existiendo
+            await actualizarMedioDePagoEnBD(method.id, method.name, method.balance);
             renderPaymentMethods();
             updateAllPaymentMethodSelects();
             updatePaymentMethodsChart();
@@ -1196,7 +1254,7 @@ function validateExpense(paymentMethodId, amount) {
 }
 
 // ---- INICIALIZAR MEDIOS DE PAGO POR DEFECTO ----
-function initializeDefaultPaymentMethods() {
+/*function initializeDefaultPaymentMethods() {
     if (paymentMethods.length === 0) {
         paymentMethods = [
             {
@@ -1249,8 +1307,9 @@ function initializeDefaultPaymentMethods() {
             }
         ];
         savePaymentMethodsToLocalStorage();
+        actualizarMedioDePagoEnBD(method.id, method.name, method.balance);
     }
-}
+}*/
 
 // ---- GESTIÓN DE CATEGORÍAS Y SUBCATEGORÍAS ----
 function initializeCategoryButtons() {
@@ -3726,22 +3785,27 @@ function initializeProfileEvents() {
     // Guardar cambios del perfil
     const profileForm = document.getElementById('profileForm');
     if (profileForm) {
-        profileForm.addEventListener('submit', function(e) {
+        profileForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+                console.log('🟢 Formulario enviado - submit disparado');
+
             // Validar formulario
             if (!validateProfileForm()) {
+                        console.log('🔴 validateProfileForm devolvió false');
+
                 return;
             }
-            
+                console.log('🟢 validateProfileForm pasó');
+
             // Obtener valores del formulario
             const firstName = document.getElementById('firstName').value.trim();
-            const lastName = document.getElementById('lastName').value.trim();
+            const apellidoPaterno = document.getElementById('apellidoPaterno').value.trim();
+            const apellidoMaterno = document.getElementById('apellidoMaterno').value.trim();
             const email = document.getElementById('userEmail').value.trim();
             const age = document.getElementById('userEdad').value;
             
             // Actualizar perfil
-            const fullName = `${firstName} ${lastName}`;
+            const fullName = `${firstName} ${apellidoPaterno} ${apellidoMaterno}`;
             updateUserProfile(fullName, email, age);
             
             // Actualizar avatar si hay uno temporal
@@ -3753,6 +3817,52 @@ function initializeProfileEvents() {
             // Guardar en localStorage
             saveProfileToLocalStorage();
             
+            // 🔐 Validar contraseña solo si se llenó algo
+            let passwordPayload = {};
+            const currentPwd = document.getElementById('currentPassword').value.trim();
+            const newPwd = document.getElementById('newPassword').value.trim();
+            const confirmPwd = document.getElementById('confirmPassword').value.trim();
+
+            if (currentPwd || newPwd || confirmPwd) {
+                if (!currentPwd) {
+                    alert('Debes ingresar tu contraseña actual');
+                    return;
+                }
+                if (newPwd !== confirmPwd) {
+                    alert('La nueva contraseña y su confirmación no coinciden');
+                    return;
+                }
+                if (newPwd.length < 6) {
+                    alert('La nueva contraseña debe tener al menos 6 caracteres');
+                    return;
+                }
+                passwordPayload = {
+                contrasenaActual: currentPwd,
+                contrasena: newPwd
+                };
+        }
+
+            // ✅ Enviar los cambios al backend
+            await actualizarPerfilEnBD({
+            nombre: firstName,
+            apellidoPaterno: apellidoPaterno,
+            apellidoMaterno: apellidoMaterno,
+            correo: email,
+            edad: parseInt(age), 
+            ...passwordPayload // 🔐 solo se agrega si se llenó
+            });
+
+            // ✅ Actualizar sessionStorage para que al recargar use los datos nuevos
+            const updatedUser = {
+                ...JSON.parse(sessionStorage.getItem('loggedUser')),
+                nombre: firstName,
+                apellidoPaterno: apellidoPaterno,
+                apellidoMaterno: apellidoMaterno,
+                email: email,
+                edad: parseInt(age)
+            };
+sessionStorage.setItem('loggedUser', JSON.stringify(updatedUser));
+
             // MOSTRAR NOTIFICACIÓN Y RECARGAR LA PÁGINA
             showNotification('Perfil actualizado correctamente', 'success');
             
@@ -3771,7 +3881,9 @@ function loadProfileFormData() {
     const userEdad = document.getElementById('userEdad');
     
     if (firstName) firstName.value = userProfile.firstName || 'Jairo';
-    if (lastName) lastName.value = userProfile.lastName || 'Castillo';
+    const apellidos = userProfile.lastName ? userProfile.lastName.split(' ') : ['', ''];
+    document.getElementById('apellidoPaterno').value = apellidos[0] || '';
+    document.getElementById('apellidoMaterno').value = apellidos[1] || '';
     if (userEmail) userEmail.value = userProfile.email || 'jairo@utp.edu.pe';
     if (userEdad) userEdad.value = userProfile.age || '20';
     
@@ -3839,12 +3951,12 @@ function validateProfileForm() {
     }
     
     // Validar apellido
-    const lastName = document.getElementById('lastName');
-    if (lastName && !lastName.value.trim()) {
-        markFieldInvalid('lastName', 'El apellido es obligatorio');
-        isValid = false;
-    } else if (lastName) {
-        markFieldValid('lastName');
+    const apellidoPaterno = document.getElementById('apellidoPaterno').value.trim();
+    const apellidoMaterno = document.getElementById('apellidoMaterno').value.trim();
+
+    if (!apellidoPaterno || !apellidoMaterno) {
+    alert('Ambos apellidos son obligatorios');
+    return false;
     }
     
     // Validar email
@@ -3915,7 +4027,9 @@ function updateUserProfile(name, email, age) {
     userProfile.email = email;
     userProfile.age = age;
     userProfile.firstName = name.split(' ')[0];
-    userProfile.lastName = name.split(' ').slice(1).join(' ');
+    userProfile.apellidoPaterno = apellidoPaterno;
+    userProfile.apellidoMaterno = apellidoMaterno;
+    userProfile.lastName = `${apellidoPaterno} ${apellidoMaterno}`;
     
     // Guardar en localStorage
     saveProfileToLocalStorage();
@@ -3926,6 +4040,8 @@ function updateUserProfile(name, email, age) {
 
 function updateProfileInApp() {
     // Actualizar barra superior
+    const fullName = `${userProfile.firstName} ${userProfile.apellidoPaterno} ${userProfile.apellidoMaterno}`;
+    document.getElementById('profileFullName').textContent = fullName;
     const userName = document.getElementById('user-name');
     const userEmail = document.getElementById('user-email');
     const userInitials = document.getElementById('userInitials');
@@ -3938,15 +4054,9 @@ function updateProfileInApp() {
     const userAvatar = document.querySelector('.avatar-sm');
     if (userAvatar) {
         if (userProfile.avatar) {
-            userAvatar.innerHTML = `
-                <img src="${userProfile.avatar}" alt="Avatar">
-                <i class="bi bi-piggy-bank-fill text-warning premium-icon-sm"></i>
-            `;
+            userAvatar.innerHTML = `<img src="${userProfile.avatar}" alt="Avatar">`;
         } else {
-            userAvatar.innerHTML = `
-                <span>${getInitials(userProfile.name)}</span>
-                <i class="bi bi-piggy-bank-fill text-warning premium-icon-sm"></i>
-            `;
+            userAvatar.innerHTML = `<span>${getInitials(userProfile.name)}</span>`;
         }
     }
     
@@ -3961,15 +4071,13 @@ function updateProfileInApp() {
     const profileAvatar = document.getElementById('profileAvatar');
     if (profileAvatar) {
         if (userProfile.avatar) {
-            profileAvatar.innerHTML = `
-                <img src="${userProfile.avatar}" alt="Avatar">
-                <i class="bi bi-piggy-bank-fill text-warning premium-icon-profile"></i>
-            `;
+            profileAvatar.innerHTML = `<img src="${userProfile.avatar}" alt="Avatar">`;
+            const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+            if (avatarPlaceholder) {
+                avatarPlaceholder.style.display = 'none';
+            }
         } else {
-            profileAvatar.innerHTML = `
-                <div id="avatarPlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:2rem;">${getInitials(userProfile.name)}</div>
-                <i class="bi bi-piggy-bank-fill text-warning premium-icon-profile"></i>
-            `;
+            profileAvatar.innerHTML = `<div id="avatarPlaceholder" style="width:100%;height:100%;background:linear-gradient(135deg,var(--verdeOs),var(--grisOs));display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:2rem;">${getInitials(userProfile.name)}</div>`;
         }
     }
     
@@ -5690,3 +5798,435 @@ function loadPremiumSettings() {
         }, 100);
     }
 }
+
+
+// funcion para cargar medios de pago
+async function cargarMediosDePagoDelUsuario() {
+  const loggedRaw = sessionStorage.getItem('loggedUser');
+  if (!loggedRaw) {
+    console.warn("⚠️ No hay usuario logueado");
+    return;
+  }
+
+  const usuario = JSON.parse(loggedRaw);
+  const email = usuario.email;
+
+  try {
+    const res = await fetch(`http://localhost:8080/api/medios-pago?email=${email}`);
+    if (!res.ok) throw new Error("Error al cargar medios de pago");
+    const medios = await res.json();
+
+    console.table("📥 Medios de pago cargados:", medios);
+
+    // Mapear a formato local
+    paymentMethods = medios.map(m => ({
+      id: m.idMedioPago,
+      name: m.nombreMedioPago,
+      balance: m.montoInicial,
+      initialAmount: m.montoInicial
+    }));
+
+    renderPaymentMethods();
+    updateAllPaymentMethodSelects();
+    updatePaymentMethodsChart();
+  } catch (err) {
+    console.error("❌ Error cargando medios de pago:", err);
+  }
+}
+
+// funcion para editar medio de pago
+async function actualizarMedioDePagoEnBD(id, nombre, monto) {
+  const loggedRaw = sessionStorage.getItem('loggedUser');
+  if (!loggedRaw) return;
+
+  const usuario = JSON.parse(loggedRaw);
+
+  const res = await fetch(`http://localhost:8080/api/medios-pago/${id}?email=${usuario.email}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      nombreMedioPago: nombre,
+      montoInicial: monto
+    })
+  });
+
+  if (!res.ok) {
+    showNotification('Error al actualizar en BD', 'error');
+    return;
+  }
+
+  showNotification('Medio de pago actualizado', 'success');
+}
+
+// funcion para eliminar medio de pago
+async function eliminarMedioDePagoDeBD(id) {
+  const loggedRaw = sessionStorage.getItem('loggedUser');
+  if (!loggedRaw) return;
+
+  const usuario = JSON.parse(loggedRaw);
+
+  const res = await fetch(`http://localhost:8080/api/medios-pago/${id}?email=${usuario.email}`, {
+    method: "DELETE"
+  });
+
+  if (!res.ok) {
+    showNotification('Error al eliminar en BD', 'error');
+    return;
+  }
+
+  showNotification('Medio de pago eliminado', 'success');
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const loggedRaw = sessionStorage.getItem('loggedUser');
+  if (loggedRaw) {
+    await actualizarMedioDePagoEnBD();
+  }
+});
+
+
+// ==== INTEGRACIÓN CON BACKEND: INGRESOS ====
+
+// 1. Guardar ingreso en BD
+async function guardarIngresoEnBD(incomeRecord) {
+    const usuario = JSON.parse(sessionStorage.getItem('loggedUser'));
+    if (!usuario || !usuario.id) {
+        console.error("No hay usuario logueado");
+        return;
+    }
+
+    const payload = {
+        idUsuario: usuario.id,
+        idMedioPago: incomeRecord.methodId,
+        nombreIngreso: incomeRecord.description || "Ingreso sin nombre",
+        montoIngreso: incomeRecord.amount,
+        descripcion: incomeRecord.description || "",
+        fechaIngreso: new Date().toISOString().slice(0, 10)
+    };
+
+    try {
+        const res = await fetch("http://localhost:8080/api/ingresos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error("Error al guardar ingreso");
+        const saved = await res.json();
+        console.log("✅ Ingreso guardado en BD:", saved);
+    } catch (err) {
+        console.error("❌ Error guardando ingreso:", err);
+    }
+}
+
+// 2. Cargar ingresos del usuario logueado
+async function cargarIngresosDesdeBD() {
+    const usuario = JSON.parse(sessionStorage.getItem('loggedUser'));
+    if (!usuario || !usuario.id) {
+        console.warn("No hay usuario logueado");
+        return;
+    }
+
+    try {
+        const res = await fetch(`http://localhost:8080/api/ingresos/usuario/${usuario.id}`);
+        if (!res.ok) throw new Error("Error al cargar ingresos");
+        const ingresosBD = await res.json();
+
+        console.table("📥 Ingresos obtenidos desde BD:", ingresosBD.map(i => ({
+            ID: i.idIngreso,
+            Nombre: i.nombreIngreso,
+            Monto: i.montoIngreso,
+            Fecha: i.fechaIngreso,
+            MedioPagoID: i.idMedioPago,
+            Descripción: i.descripcion
+        })));
+
+        // Mapear a formato local
+        incomeRecords = ingresosBD.map(i => ({
+            id: i.idIngreso,
+            methodId: i.idMedioPago,
+            methodName: obtenerNombreMedioPagoLocal(i.idMedioPago),
+            amount: parseFloat(i.montoIngreso),
+            description: i.descripcion || i.nombreIngreso,
+            date: i.fechaIngreso,
+            formattedDate: formatDateTime(i.fechaIngreso + "T00:00"),
+            type: 'ingreso'
+        }));
+
+        saveIncomeRecordsToLocalStorage();
+        renderIncomeRecords();
+        updateTotalIncome();
+        updateBalance();
+    } catch (err) {
+        console.error("❌ Error cargando ingresos:", err);
+    }
+}
+
+// 3. Helper: obtener nombre del medio de pago localmente
+function obtenerNombreMedioPagoLocal(idMedioPago) {
+    const metodo = paymentMethods.find(m => m.id === idMedioPago);
+    return metodo ? metodo.name : "Sin medio de pago";
+}
+
+// 4. Sobrescribir addIncome para que también guarde en BD
+const addIncomeOriginal = addIncome;
+addIncome = async function () {
+    // Llamar a la lógica original primero
+    addIncomeOriginal();
+
+    // Obtener el último ingreso añadido
+    const ultimo = incomeRecords[incomeRecords.length - 1];
+    if (ultimo) {
+        await guardarIngresoEnBD(ultimo);
+    }
+};
+
+
+// 5. Al cargar la página, si hay usuario logueado → cargar sus ingresos
+window.addEventListener('DOMContentLoaded', () => {
+    const loggedRaw = sessionStorage.getItem('loggedUser');
+    if (loggedRaw) {
+        cargarIngresosDesdeBD();
+    }
+});
+
+let categoriasBD = []; // aquí guardaremos las categorías reales
+
+async function cargarCategoriasDesdeBD() {
+  try {
+    const res = await fetch("http://localhost:8080/api/categorias");
+    if (!res.ok) throw new Error("Error al cargar categorías");
+    categoriasBD = await res.json();
+
+    console.table("📥 Categorías cargadas desde BD:", categoriasBD.map(c => ({
+      ID: c.idCategoria,
+      Nombre: c.nombreCategoria
+    })));
+  } catch (err) {
+    console.error("❌ Error cargando categorías:", err);
+  }
+}
+
+let subcategoriasBD = []; // aquí guardaremos las subcategorías reales
+
+async function cargarSubcategoriasDesdeBD() {
+  try {
+    const res = await fetch("http://localhost:8080/api/subcategorias");
+    if (!res.ok) throw new Error("Error al cargar subcategorías");
+    subcategoriasBD = await res.json();
+
+    console.table("📥 Subcategorías cargadas desde BD:", subcategoriasBD.map(s => ({
+      ID: s.idSubcategoria,
+      Nombre: s.nombreSubcategoria,
+      CategoriaID: s.categoria?.idCategoria
+    })));
+  } catch (err) {
+    console.error("❌ Error cargando subcategorías:", err);
+  }
+}
+
+function obtenerIdsPorNombres(nombreCategoria, nombreSubcategoria) {
+  const categoria = categoriasBD.find(c => c.nombreCategoria === nombreCategoria);
+  const subcategoria = subcategoriasBD.find(s => s.nombreSubcategoria === nombreSubcategoria);
+
+  if (!categoria) {
+    console.warn("❌ Categoría no encontrada:", nombreCategoria);
+    return { categoryId: null, subcategoryId: null };
+  }
+
+  if (!subcategoria) {
+    console.warn("❌ Subcategoría no encontrada:", nombreSubcategoria);
+    return { categoryId: categoria.idCategoria, subcategoryId: null };
+  }
+
+  return {
+    categoryId: categoria.idCategoria,
+    subcategoryId: subcategoria.idSubcategoria
+  };
+}
+
+function obtenerNombreCategoriaLocal(idCategoria) {
+  const cat = categoriasBD.find(c => c.idCategoria === idCategoria);
+  return cat ? cat.nombreCategoria : "Sin categoría";
+}
+
+function obtenerNombreSubcategoriaLocal(idSubcategoria) {
+  const sub = subcategoriasBD.find(s => s.idSubcategoria === idSubcategoria);
+  return sub ? sub.nombreSubcategoria : "Sin subcategoría";
+}
+
+async function guardarTransaccionEnBD(transaccion) {
+    console.log("🧪 guardarTransaccionEnBD fue llamada");
+  const usuario = JSON.parse(sessionStorage.getItem('loggedUser'));
+  if (!usuario || !usuario.id) {
+    console.warn("⚠️ No hay usuario logueado");
+    return;
+  }
+
+  const { categoryId, subcategoryId } = obtenerIdsPorNombres(
+    transaccion.category,
+    transaccion.subcategory
+  );
+
+  if (!categoryId || !subcategoryId) {
+    console.error("❌ Faltan IDs de categoría o subcategoría");
+    return;
+  }
+
+  const payload = {
+    nombreTransaccion: transaccion.description || "Sin descripción",
+    tipo: "GASTO",
+    monto: transaccion.amount,
+    fecha: new Date(transaccion.dateTime).toISOString(),
+    descripcionTransaccion: transaccion.description || "",
+    idUsuario: usuario.id,
+    idMedioPago: transaccion.paymentMethodId,
+    idCategoria: categoryId,
+    idSubcategoria: subcategoryId,
+    etiqueta: transaccion.description || "Sin etiqueta"
+  };
+
+  console.log("📤 Enviando transacción a BD:", JSON.stringify(payload, null, 2));
+
+  try {
+    const res = await fetch("http://localhost:8080/api/transacciones", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    console.log("📡 Respuesta del servidor:", res.status, res.statusText);
+
+    if (!res.ok) {
+  const texto = await res.text();
+  console.error("❌ Error al guardar transacción:", texto);
+  return;
+}
+
+const saved = await res.json();
+console.log("✅ Transacción guardada en BD:", saved);
+
+    console.log("✅ Transacción guardada en BD:", saved);
+  } catch (err) {
+    console.error("❌ Excepción guardando transacción:", err);
+  }
+}
+
+async function cargarTransaccionesDesdeBD() {
+  const usuario = JSON.parse(sessionStorage.getItem('loggedUser'));
+  if (!usuario || !usuario.id) {
+    console.warn("⚠️ No hay usuario logueado");
+    return;
+  }
+
+  try {
+    const res = await fetch(`http://localhost:8080/api/transacciones/usuario/${usuario.id}`);
+    if (!res.ok) throw new Error("Error al cargar transacciones");
+    const transaccionesBD = await res.json();
+    console.log("📄 Transacción cruda completa:", JSON.stringify(transaccionesBD[0], null, 2));
+    console.table("📥 Transacciones crudas desde BD:", transaccionesBD.map(t => ({
+  ID: t.idTransaccion,
+  Monto: t.monto,
+  CategoriaID: t.idCategoria,
+  SubcategoriaID: t.idSubcategoria,
+  MedioPagoID: t.idMedioPago
+})));
+
+    console.table("📥 Transacciones obtenidas desde BD:", transaccionesBD.map(t => ({
+      ID: t.idTransaccion,
+      Nombre: t.nombreTransaccion,
+      Monto: t.monto,
+      Fecha: t.fecha,
+      MedioPago: t.mediopago?.nombreMedioPago || "❌ Sin medio",
+      Categoria: t.categoria?.nombreCategoria || "❌ Sin cat.",
+      Subcategoria: t.subcategoria?.nombreSubcategoria || "❌ Sin subcat."
+    })));
+
+    // Mapear a formato local
+    transactions = transaccionesBD.map(t => ({
+      id: t.idTransaccion,
+      type: 'gasto',
+      amount: parseFloat(t.monto),
+      description: t.descripcionTransaccion || t.nombreTransaccion,
+      category: t.categoria || 'Sin categoría',
+subcategory: t.subcategoria || 'Sin subcategoría',
+paymentMethod: t.mediopago || 'Sin medio de pago',
+      paymentMethodId: t.idMedioPago,
+      image: t.imagen || null,
+      dateTime: t.fecha,
+      formattedDate: formatDateTime(t.fecha),
+      status: 'completado'
+    }));
+
+    saveTransactionsToLocalStorage();
+    renderTransactions();
+    updateBalance();
+  } catch (err) {
+    console.error("❌ Error cargando transacciones:", err);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const loggedRaw = sessionStorage.getItem('loggedUser');
+  if (loggedRaw) {
+    await cargarCategoriasDesdeBD();
+    await cargarSubcategoriasDesdeBD();
+    cargarTransaccionesDesdeBD();
+  }
+});
+
+console.log("🔄 Sobrescribiendo addTransaction...");
+
+const addTransactionOriginal = addTransaction;
+
+addTransaction = async function () {
+  console.log("🧪 addTransaction nuevo ejecutado");
+  addTransactionOriginal(); // guarda localmente
+
+  const ultimaTransaccion = transactions[transactions.length - 1];
+  console.log("🧾 Última transacción local:", ultimaTransaccion);
+
+  if (ultimaTransaccion) {
+    await guardarTransaccionEnBD(ultimaTransaccion);
+  } else {
+    console.warn("⚠️ No hay transacción para enviar");
+  }
+};
+
+console.log("✅ addTransaction fue sobrescrito");
+
+async function actualizarPerfilEnBD(datos) {
+    const usuario = JSON.parse(sessionStorage.getItem('loggedUser'));
+    if (!usuario?.id) return;
+
+    try {
+
+        if (!res.ok) {
+    const msg = await res.text();
+    console.error("❌ Respuesta del servidor:", msg);
+    alert("Error del servidor: " + msg);
+    return;
+}
+
+        const res = await fetch(`http://localhost:8080/api/usuarios/${usuario.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+
+        const textoRespuesta = await res.text();
+        console.log("📡 Código HTTP:", res.status);
+        console.log("📡 Respuesta del servidor:", textoRespuesta);
+
+        if (!res.ok) {
+            alert("Error del servidor: " + textoRespuesta);
+            return;
+        }
+
+        if (!res.ok) throw new Error('Error al actualizar');
+        console.log('✅ Perfil actualizado en BD');
+    } catch (err) {
+        console.error('❌ Error actualizando perfil:', err);
+        alert('No se pudo actualizar el perfil en el servidor');
+    }
+}
+

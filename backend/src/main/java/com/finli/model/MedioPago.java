@@ -28,6 +28,8 @@ public class MedioPago {
     private LocalDateTime fechaCreacion;
 
     @ManyToOne
-    @JoinColumn(name = "id_usuario", nullable = true)
+    @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;
+
+    
 }

@@ -71,6 +71,7 @@ public class Transaccion {
     @JoinColumn(name = "id_subcategoria", insertable = false, updatable = false)
     @JsonIgnore
     private Subcategoria subcategoria;
+    
 
     /* ---------- Validaciones personalizadas ---------- */
     @PrePersist

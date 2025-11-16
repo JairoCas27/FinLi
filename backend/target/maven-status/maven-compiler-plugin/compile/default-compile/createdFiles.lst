@@ -1,4 +1,5 @@
 com\finli\model\TipoSuscripcion$TipoSuscripcionBuilder.class
+com\finli\dto\MedioPagoRequest$MedioPagoRequestBuilder.class
 com\finli\model\Categoria$CategoriaBuilder.class
 com\finli\controller\CategoriaController.class
 com\finli\model\Ingreso.class
@@ -8,6 +9,7 @@ com\finli\dto\RegistroRequest$RegistroRequestBuilder.class
 com\finli\controller\SuscripcionController.class
 com\finli\model\FuenteCategoria$FuenteCategoriaBuilder.class
 com\finli\model\Ingreso$IngresoBuilder.class
+com\finli\dto\MedioPagoRequest.class
 com\finli\dto\UsuarioResponse.class
 com\finli\repository\IngresoRepository.class
 com\finli\model\PasswordResetToken$PasswordResetTokenBuilder.class
@@ -54,6 +56,7 @@ com\finli\service\AdministradorService.class
 com\finli\controller\AuthController.class
 com\finli\dto\SuscripcionResponse$SuscripcionResponseBuilder.class
 com\finli\model\MedioPago.class
+com\finli\service\MedioPagoService.class
 com\finli\model\Usuario.class
 com\finli\repository\UsuarioRepository.class
 com\finli\model\EstadoUsuario.class

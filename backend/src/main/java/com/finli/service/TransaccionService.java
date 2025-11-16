@@ -28,6 +28,7 @@ public class TransaccionService {
     private final CategoriaRepository categoriaRepo;
     private final SubcategoriaRepository subcategoriaRepo;
     private final MedioPagoRepository medioPagoRepo;
+    private final MedioPagoService medioPagoService;
 
     /* ---------- Crear transacción ---------- */
     public Transaccion crearTransaccion(TransaccionRequest dto) {
@@ -38,6 +39,9 @@ public class TransaccionService {
         Preconditions.checkNotNull(dto.getIdMedioPago(), "idMedioPago es obligatorio");
         Preconditions.checkNotNull(dto.getIdCategoria(), "idCategoria es obligatorio");
         Preconditions.checkNotNull(dto.getIdSubcategoria(), "idSubcategoria es obligatorio");
+
+        // ✅ Restar saldo ANTES de guardar la transacción
+        medioPagoService.restarSaldo(dto.getIdMedioPago(), dto.getMonto());
 
         Transaccion t = Transaccion.builder()
                 .nombreTransaccion(dto.getEtiqueta())
