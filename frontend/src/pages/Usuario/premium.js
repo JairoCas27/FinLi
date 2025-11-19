@@ -3412,8 +3412,9 @@ function saveEditedTransaction() {
     }
 }
 
-function confirmDeleteTransaction(id) {
+async function confirmDeleteTransaction(id) {
     if (confirm('¿Estás seguro de que deseas eliminar esta transacción?')) {
+        await eliminarTransaccionDesdeBD(id);
         deleteTransaction(id);
     }
 }
@@ -3843,7 +3844,7 @@ function initializeProfileEvents() {
         }
 
             // ✅ Enviar los cambios al backend
-            await actualizarPerfilEnBD({
+            await actualizarPerfilEnBD(datosActualizados={
             nombre: firstName,
             apellidoPaterno: apellidoPaterno,
             apellidoMaterno: apellidoMaterno,
@@ -4957,7 +4958,7 @@ function renderIncomeRecords() {
 }
 
 // ---- ELIMINAR REGISTRO DE INGRESO ----
-function deleteIncomeRecord(id) {
+async function deleteIncomeRecord(id) {
     const income = incomeRecords.find(inc => inc.id === id);
     if (!income) return;
     
@@ -4965,6 +4966,15 @@ function deleteIncomeRecord(id) {
         return;
     }
     
+    try {
+        await eliminarIngresoDesdeBD(id); // Usamos 'id' y llamamos al eliminar
+    } catch (error) {
+
+        // Si la BD falla, detenemos el proceso y no hacemos cambios locales.
+        console.error("No se pudo completar la eliminación en la BD. Abortando eliminación local.");
+        return;
+    }
+
     // Revertir el ingreso en el método de pago
     const method = paymentMethods.find(m => m.id === income.methodId);
     if (method) {
@@ -5800,7 +5810,7 @@ function loadPremiumSettings() {
 }
 
 
-// funcion para cargar medios de pago
+// funcion para cargar medios de pago desde BD
 async function cargarMediosDePagoDelUsuario() {
   const loggedRaw = sessionStorage.getItem('loggedUser');
   if (!loggedRaw) {
@@ -5851,7 +5861,6 @@ async function actualizarMedioDePagoEnBD(id, nombre, monto) {
   });
 
   if (!res.ok) {
-    showNotification('Error al actualizar en BD', 'error');
     return;
   }
 
@@ -6194,39 +6203,98 @@ addTransaction = async function () {
 
 console.log("✅ addTransaction fue sobrescrito");
 
-async function actualizarPerfilEnBD(datos) {
+async function actualizarPerfilEnBD(datosActualizados) {
     const usuario = JSON.parse(sessionStorage.getItem('loggedUser'));
     if (!usuario?.id) return;
 
     try {
-
-        if (!res.ok) {
-    const msg = await res.text();
-    console.error("❌ Respuesta del servidor:", msg);
-    alert("Error del servidor: " + msg);
-    return;
-}
-
+        // 1. Ejecutar el fetch y asignar el resultado a 'res'
         const res = await fetch(`http://localhost:8080/api/usuarios/${usuario.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datos)
+            body: JSON.stringify(datosActualizados)
         });
 
-        const textoRespuesta = await res.text();
-        console.log("📡 Código HTTP:", res.status);
-        console.log("📡 Respuesta del servidor:", textoRespuesta);
-
+        // 2. Ahora sí, verificar el estado de la respuesta (res.ok)
         if (!res.ok) {
-            alert("Error del servidor: " + textoRespuesta);
-            return;
+            // Si hay un error (por ejemplo, 400 Bad Request por contraseña incorrecta),
+            // intenta leer el mensaje de error del cuerpo de la respuesta.
+            const msg = await res.text();
+            alert(msg); // Esto debería mostrar el mensaje del backend
+            return; // Detener la ejecución
         }
 
-        if (!res.ok) throw new Error('Error al actualizar');
+        // Si la respuesta fue exitosa (res.ok es true)
         console.log('✅ Perfil actualizado en BD');
     } catch (err) {
         console.error('❌ Error actualizando perfil:', err);
-        alert('No se pudo actualizar el perfil en el servidor');
+        alert('No se pudo actualizar el perfil en el servidor. Revisa la consola para más detalles.');
     }
 }
 
+// ==== INTEGRACIÓN CON BACKEND: ELIMINAR INGRESOS Y TRANSACCIONES ====
+
+/**
+ * Elimina un ingreso de la base de datos usando su ID.
+ * @param {number} idIngreso El ID del ingreso a eliminar.
+ */
+async function eliminarIngresoDesdeBD(idIngreso) {
+    if (!idIngreso) {
+        console.error("❌ ID de ingreso no proporcionado para eliminación.");
+        return;
+    }
+
+    const url = `http://localhost:8080/api/ingresos/${idIngreso}`;
+    console.log(`📤 Eliminando ingreso en: ${url}`);
+
+    try {
+        const res = await fetch(url, {
+            method: "DELETE"
+        });
+
+        if (res.status === 204) { // 204 No Content es la respuesta esperada de DELETE
+            console.log(`✅ Ingreso con ID ${idIngreso} eliminado de la BD.`);
+            // Opcional: Recargar los datos después de la eliminación si la lógica local
+            // de la interfaz no se actualiza automáticamente.
+            // await cargarIngresosDesdeBD();
+        } else {
+            const errorText = await res.text();
+            throw new Error(`Error ${res.status} al eliminar ingreso: ${errorText}`);
+        }
+    } catch (err) {
+        console.error(`❌ Error eliminando ingreso con ID ${idIngreso}:`, err);
+        alert(`No se pudo eliminar el ingreso en el servidor: ${err.message}`);
+    }
+}
+
+/**
+ * Elimina una transacción de la base de datos usando su ID.
+ * @param {number} idTransaccion El ID de la transacción a eliminar.
+ */
+async function eliminarTransaccionDesdeBD(idTransaccion) {
+    if (!idTransaccion) {
+        console.error("❌ ID de transacción no proporcionado para eliminación.");
+        return;
+    }
+
+    const url = `http://localhost:8080/api/transacciones/${idTransaccion}`;
+    console.log(`📤 Eliminando transacción en: ${url}`);
+
+    try {
+        const res = await fetch(url, {
+            method: "DELETE"
+        });
+
+        if (res.status === 204) { // 204 No Content es la respuesta esperada de DELETE
+            console.log(`✅ Transacción con ID ${idTransaccion} eliminada de la BD.`);
+            // Opcional: Recargar los datos después de la eliminación
+            // await cargarTransaccionesDesdeBD();
+        } else {
+            const errorText = await res.text();
+            throw new Error(`Error ${res.status} al eliminar transacción: ${errorText}`);
+        }
+    } catch (err) {
+        console.error(`❌ Error eliminando transacción con ID ${idTransaccion}:`, err);
+        alert(`No se pudo eliminar la transacción en el servidor: ${err.message}`);
+    }
+}

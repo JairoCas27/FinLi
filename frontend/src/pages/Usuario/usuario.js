@@ -188,14 +188,14 @@ console.table({
   }
 }
 
-    loadPaymentMethodsFromLocalStorage();
+    cargarMediosDePagoDelUsuario();
     loadTransfersFromLocalStorage();
     loadIncomeRecordsFromLocalStorage();
     loadCustomCategoriesFromLocalStorage();
     loadScheduledPaymentsFromLocalStorage();
     
     // INICIALIZAR MEDIOS DE PAGO POR DEFECTO  
-    initializeDefaultPaymentMethods();
+
     
     // Establecer fecha y hora actual
     const now = new Date();
@@ -524,6 +524,10 @@ function setupIncomeEventListeners() {
 
 // ---- AGREGAR MEDIO DE PAGO ----
 function addPaymentMethod() {
+    showNotification('La funcionalidad de agregar medios de pago está disponible solo para usuarios premium', 'info');
+}
+
+/*function addPaymentMethod() {
     const name = document.getElementById('paymentMethodName').value.trim();
     const amount = parseFloat(document.getElementById('initialAmount').value);
     
@@ -583,7 +587,7 @@ function addPaymentMethod() {
     document.getElementById('initialAmount').value = '';
     
     showNotification('Medio de pago agregado exitosamente', 'success');
-}
+}*/
 
 // ---- RENDERIZAR MEDIOS DE PAGO ----
 function renderPaymentMethods() {
@@ -688,10 +692,11 @@ function getPaymentMethodLogo(methodName) {
 }
 
 // ---- ELIMINAR MEDIO DE PAGO ----
-function deletePaymentMethod(id) {
+async function deletePaymentMethod(id) {
     if (confirm('¿Estás seguro de que deseas eliminar este medio de pago? Se perderán todos los datos asociados.')) {
         paymentMethods = paymentMethods.filter(method => method.id !== id);
         savePaymentMethodsToLocalStorage();
+        await eliminarMedioDePagoDeBD(id); // ✅ nueva
         renderPaymentMethods();
         updatePaymentMethodsChart();
         updateTotalBalance();
@@ -724,7 +729,7 @@ function editPaymentMethod(id) {
         modalBody,
         'Guardar Cambios',
         'secondary',
-        () => {
+        async () => {
             const newName = document.getElementById('editPaymentMethodName').value.trim();
             const newBalance = parseFloat(document.getElementById('editPaymentMethodBalance').value);
             
@@ -775,6 +780,7 @@ function editPaymentMethod(id) {
             }
             
             savePaymentMethodsToLocalStorage();
+            await actualizarMedioDePagoEnBD(method.id, method.name, method.balance);
             renderPaymentMethods();
             updateAllPaymentMethodSelects();
             updatePaymentMethodsChart();
@@ -1239,7 +1245,7 @@ function validateExpense(paymentMethodId, amount) {
     return true;
 }
 
-// ---- INICIALIZAR MEDIOS DE PAGO POR DEFECTO ----
+/*// ---- INICIALIZAR MEDIOS DE PAGO POR DEFECTO ----
 function initializeDefaultPaymentMethods() {
     if (paymentMethods.length === 0) {
         paymentMethods = [
@@ -1294,7 +1300,7 @@ function initializeDefaultPaymentMethods() {
         ];
         savePaymentMethodsToLocalStorage();
     }
-}
+}*/
 
 // ---- GESTIÓN DE CATEGORÍAS Y SUBCATEGORÍAS ----
 function initializeCategoryButtons() {
@@ -3362,8 +3368,9 @@ function saveEditedTransaction() {
     }
 }
 
-function confirmDeleteTransaction(id) {
+async function confirmDeleteTransaction(id) {
     if (confirm('¿Estás seguro de que deseas eliminar esta transacción?')) {
+        await eliminarTransaccionDesdeBD(id);
         deleteTransaction(id);
     }
 }
@@ -3792,7 +3799,7 @@ function initializeProfileEvents() {
         }
 
             // ✅ Enviar los cambios al backend
-            await actualizarPerfilEnBD({
+            await actualizarPerfilEnBD(datosActualizados={
             nombre: firstName,
             apellidoPaterno: apellidoPaterno,
             apellidoMaterno: apellidoMaterno,
@@ -4468,7 +4475,7 @@ function renderIncomeRecords() {
 }
 
 // ---- ELIMINAR REGISTRO DE INGRESO ----
-function deleteIncomeRecord(id) {
+async function deleteIncomeRecord(id) {
     const income = incomeRecords.find(inc => inc.id === id);
     if (!income) return;
     
@@ -4476,6 +4483,15 @@ function deleteIncomeRecord(id) {
         return;
     }
     
+    try {
+        await eliminarIngresoDesdeBD(id); // Usamos 'id' y llamamos al eliminar
+    } catch (error) {
+
+        // Si la BD falla, detenemos el proceso y no hacemos cambios locales.
+        console.error("No se pudo completar la eliminación en la BD. Abortando eliminación local.");
+        return;
+    }
+
     // Revertir el ingreso en el método de pago
     const method = paymentMethods.find(m => m.id === income.methodId);
     if (method) {
@@ -4964,6 +4980,89 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
+// funcion para cargar medios de pago
+async function cargarMediosDePagoDelUsuario() {
+  const loggedRaw = sessionStorage.getItem('loggedUser');
+  if (!loggedRaw) {
+    console.warn("⚠️ No hay usuario logueado");
+    return;
+  }
+
+  const usuario = JSON.parse(loggedRaw);
+  const email = usuario.email;
+
+  try {
+    const res = await fetch(`http://localhost:8080/api/medios-pago?email=${email}`);
+    if (!res.ok) throw new Error("Error al cargar medios de pago");
+    const medios = await res.json();
+
+    console.table("📥 Medios de pago cargados:", medios);
+
+    // Mapear a formato local
+    paymentMethods = medios.map(m => ({
+      id: m.idMedioPago,
+      name: m.nombreMedioPago,
+      balance: m.montoInicial,
+      initialAmount: m.montoInicial
+    }));
+
+    renderPaymentMethods();
+    updateAllPaymentMethodSelects();
+    updatePaymentMethodsChart();
+  } catch (err) {
+    console.error("❌ Error cargando medios de pago:", err);
+  }
+}
+
+// funcion para editar medio de pago
+async function actualizarMedioDePagoEnBD(id, nombre, monto) {
+  const loggedRaw = sessionStorage.getItem('loggedUser');
+  if (!loggedRaw) return;
+
+  const usuario = JSON.parse(loggedRaw);
+
+  const res = await fetch(`http://localhost:8080/api/medios-pago/${id}?email=${usuario.email}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      nombreMedioPago: nombre,
+      montoInicial: monto
+    })
+  });
+
+  if (!res.ok) {
+    return;
+  }
+
+  showNotification('Medio de pago actualizado', 'success');
+}
+
+// funcion para eliminar medio de pago
+async function eliminarMedioDePagoDeBD(id) {
+  const loggedRaw = sessionStorage.getItem('loggedUser');
+  if (!loggedRaw) return;
+
+  const usuario = JSON.parse(loggedRaw);
+
+  const res = await fetch(`http://localhost:8080/api/medios-pago/${id}?email=${usuario.email}`, {
+    method: "DELETE"
+  });
+
+  if (!res.ok) {
+    showNotification('Error al eliminar en BD', 'error');
+    return;
+  }
+
+  showNotification('Medio de pago eliminado', 'success');
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const loggedRaw = sessionStorage.getItem('loggedUser');
+  if (loggedRaw) {
+    await actualizarMedioDePagoEnBD();
+  }
+});
+
 // ==== INTEGRACIÓN CON BACKEND: INGRESOS ====
 
 // 1. Guardar ingreso en BD
@@ -5273,28 +5372,98 @@ addTransaction = async function () {
 
 console.log("✅ addTransaction fue sobrescrito");
 
-async function actualizarPerfilEnBD(datos) {
+async function actualizarPerfilEnBD(datosActualizados) {
     const usuario = JSON.parse(sessionStorage.getItem('loggedUser'));
     if (!usuario?.id) return;
 
     try {
-
-        if (!res.ok) {
-        const msg = await res.text();
-        alert(msg); // "La contraseña actual es incorrecta"
-        return;
-    }
-
+        // 1. Ejecutar el fetch y asignar el resultado a 'res'
         const res = await fetch(`http://localhost:8080/api/usuarios/${usuario.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datos)
+            body: JSON.stringify(datosActualizados)
         });
 
-        if (!res.ok) throw new Error('Error al actualizar');
+        // 2. Ahora sí, verificar el estado de la respuesta (res.ok)
+        if (!res.ok) {
+            // Si hay un error (por ejemplo, 400 Bad Request por contraseña incorrecta),
+            // intenta leer el mensaje de error del cuerpo de la respuesta.
+            const msg = await res.text();
+            alert(msg); // Esto debería mostrar el mensaje del backend
+            return; // Detener la ejecución
+        }
+
+        // Si la respuesta fue exitosa (res.ok es true)
         console.log('✅ Perfil actualizado en BD');
     } catch (err) {
         console.error('❌ Error actualizando perfil:', err);
-        alert('No se pudo actualizar el perfil en el servidor');
+        alert('No se pudo actualizar el perfil en el servidor. Revisa la consola para más detalles.');
+    }
+}
+
+// ==== INTEGRACIÓN CON BACKEND: ELIMINAR INGRESOS Y TRANSACCIONES ====
+
+/**
+ * Elimina un ingreso de la base de datos usando su ID.
+ * @param {number} idIngreso El ID del ingreso a eliminar.
+ */
+async function eliminarIngresoDesdeBD(idIngreso) {
+    if (!idIngreso) {
+        console.error("❌ ID de ingreso no proporcionado para eliminación.");
+        return;
+    }
+
+    const url = `http://localhost:8080/api/ingresos/${idIngreso}`;
+    console.log(`📤 Eliminando ingreso en: ${url}`);
+
+    try {
+        const res = await fetch(url, {
+            method: "DELETE"
+        });
+
+        if (res.status === 204) { // 204 No Content es la respuesta esperada de DELETE
+            console.log(`✅ Ingreso con ID ${idIngreso} eliminado de la BD.`);
+            // Opcional: Recargar los datos después de la eliminación si la lógica local
+            // de la interfaz no se actualiza automáticamente.
+            // await cargarIngresosDesdeBD();
+        } else {
+            const errorText = await res.text();
+            throw new Error(`Error ${res.status} al eliminar ingreso: ${errorText}`);
+        }
+    } catch (err) {
+        console.error(`❌ Error eliminando ingreso con ID ${idIngreso}:`, err);
+        alert(`No se pudo eliminar el ingreso en el servidor: ${err.message}`);
+    }
+}
+
+/**
+ * Elimina una transacción de la base de datos usando su ID.
+ * @param {number} idTransaccion El ID de la transacción a eliminar.
+ */
+async function eliminarTransaccionDesdeBD(idTransaccion) {
+    if (!idTransaccion) {
+        console.error("❌ ID de transacción no proporcionado para eliminación.");
+        return;
+    }
+
+    const url = `http://localhost:8080/api/transacciones/${idTransaccion}`;
+    console.log(`📤 Eliminando transacción en: ${url}`);
+
+    try {
+        const res = await fetch(url, {
+            method: "DELETE"
+        });
+
+        if (res.status === 204) { // 204 No Content es la respuesta esperada de DELETE
+            console.log(`✅ Transacción con ID ${idTransaccion} eliminada de la BD.`);
+            // Opcional: Recargar los datos después de la eliminación
+            // await cargarTransaccionesDesdeBD();
+        } else {
+            const errorText = await res.text();
+            throw new Error(`Error ${res.status} al eliminar transacción: ${errorText}`);
+        }
+    } catch (err) {
+        console.error(`❌ Error eliminando transacción con ID ${idTransaccion}:`, err);
+        alert(`No se pudo eliminar la transacción en el servidor: ${err.message}`);
     }
 }
