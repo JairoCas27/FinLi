@@ -1,21 +1,24 @@
 package com.finli.service;
 
-import com.finli.dto.CategoriaDTO; // <-- NUEVO IMPORT
+import com.finli.dto.CategoriaDTO;
+import com.finli.dto.SubcategoriaDTO; // <-- IMPORTANTE: Nuevo DTO
 import com.finli.dto.PaginacionUsuarioResponse;
 import com.finli.dto.UserCreateDTO; 
 import com.finli.dto.UserDetailDTO; 
 import com.finli.dto.UsuarioResponse;
+import com.finli.model.Categoria; // <-- IMPORTANTE: Nuevo Modelo
 import com.finli.model.EstadoSuscripcion; 
 import com.finli.model.EstadoUsuario;
 import com.finli.model.Suscripcion; 
 import com.finli.model.TipoSuscripcion; 
 import com.finli.model.Usuario;
-import com.finli.repository.CategoriaRepository; // <-- NUEVO IMPORT
+import com.finli.repository.CategoriaRepository; 
 import com.finli.repository.EstadoSuscripcionRepository; 
 import com.finli.repository.EstadoUsuarioRepository;
 import com.finli.repository.SuscripcionRepository; 
 import com.finli.repository.TipoSuscripcionRepository; 
 import com.finli.repository.UsuarioRepository;
+import com.finli.repository.SubcategoriaRepository; // <-- NUEVO REPOSITORIO
 import lombok.RequiredArgsConstructor;
 import org.mindrot.jbcrypt.BCrypt; 
 import org.springframework.data.domain.Page;
@@ -42,15 +45,14 @@ public class AdministradorService {
     private final SuscripcionRepository suscripcionRepository;
     private final TipoSuscripcionRepository tipoSuscripcionRepository;
     private final EstadoSuscripcionRepository estadoSuscripcionRepository;
-    
-    // --- NUEVO REPOSITORIO PARA CATEGORÍAS ---
     private final CategoriaRepository categoriaRepository;
-    
+    private final SubcategoriaRepository subcategoriaRepository; // <-- NUEVO REPOSITORIO
+
     private final Integer ID_ESTADO_ACTIVO = 1; 
     private final Integer ID_ESTADO_INACTIVO = 2; 
 
     // ====================================================================================
-    // === GESTIÓN DE CATEGORÍAS (APARTADOS) - [NUEVO BLOQUE] ===
+    // === GESTIÓN DE CATEGORÍAS Y SUBCATEGORÍAS ===
     // ====================================================================================
 
     @Transactional(readOnly = true)
@@ -72,28 +74,53 @@ public class AdministradorService {
         }).collect(Collectors.toList());
     }
 
-    // Método auxiliar para definir la estética según el nombre
+    // --- NUEVO MÉTODO: LISTAR SUBCATEGORÍAS POR CATEGORÍA ---
+    @Transactional(readOnly = true)
+    public List<SubcategoriaDTO> obtenerSubcategoriasPorCategoria(Integer categoriaId) {
+        // 1. Buscar la entidad Categoria
+        Categoria categoria = categoriaRepository.findById(categoriaId)
+                .orElseThrow(() -> new RuntimeException("Categoría no encontrada con ID: " + categoriaId));
+        
+        // 2. Obtener la lista de Subcategorías
+        List<com.finli.model.Subcategoria> subcategorias = subcategoriaRepository.findByCategoria(categoria);
+        
+        // 3. Convertir a DTO y asignar estilos
+        return subcategorias.stream().map(sub -> {
+            SubcategoriaDTO dto = new SubcategoriaDTO();
+            dto.setId(sub.getIdSubcategoria());
+            dto.setLabel(sub.getNombreSubcategoria());
+            dto.setName(sub.getNombreSubcategoria().toLowerCase().replaceAll("\\s+", "_")); // Generamos el nombre técnico (name)
+            dto.setCategoriaId(categoriaId);
+            
+            // Asignar icono visual (Como no está en DB, lo asignamos por nombre)
+            asignarIconoSubcategoria(dto);
+            
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    // Método auxiliar para definir la estética de las Categorías
     private void asignarEstiloCategoria(CategoriaDTO dto) {
         String nombre = dto.getLabel().toLowerCase();
 
         if (nombre.contains("vivienda")) {
             dto.setIcon("bi-house");
-            dto.setColor("success"); // Verde
+            dto.setColor("success"); 
         } else if (nombre.contains("transporte")) {
             dto.setIcon("bi-car-front");
-            dto.setColor("primary"); // Azul
+            dto.setColor("primary"); 
         } else if (nombre.contains("alimentacion") || nombre.contains("alimentación")) {
             dto.setIcon("bi-cup-straw");
-            dto.setColor("warning"); // Amarillo
+            dto.setColor("warning"); 
         } else if (nombre.contains("salud") || nombre.contains("cuidado")) {
             dto.setIcon("bi-heart-pulse");
-            dto.setColor("danger"); // Rojo
+            dto.setColor("danger"); 
         } else if (nombre.contains("entretenimiento") || nombre.contains("ocio")) {
             dto.setIcon("bi-controller");
-            dto.setColor("info"); // Celeste
+            dto.setColor("info"); 
         } else if (nombre.contains("ropa")) {
             dto.setIcon("bi-bag");
-            dto.setColor("secondary"); // Gris
+            dto.setColor("secondary"); 
         } else if (nombre.contains("electrónica") || nombre.contains("electronica")) {
             dto.setIcon("bi-phone");
             dto.setColor("success");
@@ -104,15 +131,36 @@ public class AdministradorService {
             dto.setIcon("bi-book");
             dto.setColor("warning");
         } else {
-            // Default para categorías nuevas
             dto.setIcon("bi-tag");
             dto.setColor("secondary");
         }
     }
+    
+    // Método auxiliar para definir el icono de las Subcategorías
+    private void asignarIconoSubcategoria(SubcategoriaDTO dto) {
+        String nombre = dto.getLabel().toLowerCase();
+
+        if (nombre.contains("alquiler") || nombre.contains("hipoteca")) {
+            dto.setIcon("bi-building");
+        } else if (nombre.contains("seguro")) {
+            dto.setIcon("bi-shield-check");
+        } else if (nombre.contains("internet") || nombre.contains("telefono") || nombre.contains("servicios")) {
+            dto.setIcon("bi-wifi");
+        } else if (nombre.contains("gasolina") || nombre.contains("combustible") || nombre.contains("peaje")) {
+            dto.setIcon("bi-fuel-pump");
+        } else if (nombre.contains("mantenimiento") || nombre.contains("reparaciones")) {
+            dto.setIcon("bi-tools");
+        } else if (nombre.contains("gimnasio") || nombre.contains("deporte")) {
+            dto.setIcon("bi-person-running");
+        } else {
+            dto.setIcon("bi-tag"); // Default
+        }
+    }
 
     // ====================================================================================
-    // === CREAR USUARIO COMPLETO (CON SUSCRIPCIÓN) ===
+    // === MÉTODOS DE USUARIO (MANTENIDOS) ===
     // ====================================================================================
+    
     @Transactional
     public Usuario crearUsuarioConSuscripcion(UserCreateDTO dto) {
         
@@ -164,11 +212,6 @@ public class AdministradorService {
         return usuarioGuardado;
     }
 
-    // ====================================================================================
-    // === MÉTODOS PARA EDICIÓN (LECTURA Y ACTUALIZACIÓN) ===
-    // ====================================================================================
-
-    // 1. OBTENER DETALLE PARA EDITAR (GET)
     @Transactional(readOnly = true) 
     public UserDetailDTO obtenerUsuarioParaEditar(Integer id) {
         Usuario u = usuarioRepository.findById(id)
@@ -195,19 +238,16 @@ public class AdministradorService {
         );
     }
 
-    // 2. ACTUALIZAR USUARIO COMPLETO (PUT) - AHORA INCLUYE SUSCRIPCIÓN
     @Transactional
     public Usuario actualizarUsuarioDesdeAdmin(Integer id, UserCreateDTO dto) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Validar correo duplicado solo si lo cambió
         if (!usuario.getCorreo().equalsIgnoreCase(dto.getEmail()) && 
             usuarioRepository.existsByCorreo(dto.getEmail())) {
             throw new RuntimeException("El correo ya está en uso por otro usuario.");
         }
 
-        // Actualizar datos básicos
         usuario.setNombre(dto.getNombre());
         usuario.setApellidoPaterno(dto.getApellidoPaterno());
         usuario.setApellidoMaterno(dto.getApellidoMaterno());
@@ -215,7 +255,6 @@ public class AdministradorService {
         usuario.setCorreo(dto.getEmail());
         usuario.setRol(dto.getRol());
 
-        // LÓGICA DE CONTRASEÑA: Solo si escribe algo nuevo
         if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
             String hashPassword = BCrypt.hashpw(dto.getPassword(), BCrypt.gensalt());
             usuario.setContrasena(hashPassword);
@@ -223,7 +262,6 @@ public class AdministradorService {
         
         // --- ACTUALIZAR SUSCRIPCIÓN ---
         if (dto.getSubscriptionId() != null) {
-            // 1. Buscar suscripción activa actual
             Suscripcion subActiva = null;
             if (usuario.getSuscripciones() != null) {
                 subActiva = usuario.getSuscripciones().stream()
@@ -232,27 +270,22 @@ public class AdministradorService {
                     .orElse(null);
             }
 
-            // 2. Si no tiene suscripción activa o si el tipo cambió, actualizamos
             if (subActiva == null || !subActiva.getTipoSuscripcion().getIdTipoSuscripcion().equals(dto.getSubscriptionId())) {
                 
                 TipoSuscripcion nuevoTipo = tipoSuscripcionRepository.findById(dto.getSubscriptionId())
                         .orElseThrow(() -> new RuntimeException("Tipo de suscripción inválido"));
 
                 if (subActiva == null) {
-                    // Caso raro: crear nueva si no tenía
                     subActiva = new Suscripcion();
                     subActiva.setUsuario(usuario);
                     subActiva.setEstadoSuscripcion(estadoSuscripcionRepository.findById(1).orElseThrow());
                     subActiva.setFechaInicio(LocalDate.now());
                 } else {
-                    // Si ya tenía, actualizamos la fecha de inicio al día de hoy (reinicio de ciclo)
                     subActiva.setFechaInicio(LocalDate.now());
                 }
 
-                // Asignar nuevo tipo
                 subActiva.setTipoSuscripcion(nuevoTipo);
 
-                // Recalcular Fecha Fin
                 if (dto.getSubscriptionId() == 1) { // Mensual
                     subActiva.setFechaFin(LocalDate.now().plusMonths(1));
                 } else if (dto.getSubscriptionId() == 2) { // Anual
@@ -268,18 +301,9 @@ public class AdministradorService {
         return usuarioRepository.save(usuario);
     }
 
-    // ====================================================================================
-    // === MÉTODOS EXISTENTES (CONSULTAS, PAGINACIÓN, ETC.) ===
-    // ====================================================================================
-
     @Transactional(readOnly = true)
     public PaginacionUsuarioResponse getUsuariosPaginadosYFiltrados(int page, int limit, String status) {
-        Pageable pageable = PageRequest.of(
-            page - 1, 
-            limit, 
-            Sort.by(Sort.Direction.DESC, "id") 
-        );
-        
+        Pageable pageable = PageRequest.of(page - 1, limit, Sort.by(Sort.Direction.DESC, "id"));
         Page<Usuario> paginaUsuarios;
         
         if (status.equalsIgnoreCase("active")) {
@@ -294,10 +318,7 @@ public class AdministradorService {
                 .map(servicioAutenticacion::toResponse)
                 .collect(Collectors.toList());
 
-        return new PaginacionUsuarioResponse(
-                listaResponse, 
-                paginaUsuarios.getTotalElements() 
-        );
+        return new PaginacionUsuarioResponse(listaResponse, paginaUsuarios.getTotalElements());
     }
     
     public List<Usuario> obtenerListaDeUsuariosParaExportar() {
@@ -330,12 +351,8 @@ public class AdministradorService {
 
     public boolean eliminarUsuarioLogico(Integer id) {
         return usuarioRepository.findById(id).map(usuario -> {
-            EstadoUsuario estadoInactivo = EstadoUsuario.builder()
-                    .idEstado(ID_ESTADO_INACTIVO)
-                    .build();
-
+            EstadoUsuario estadoInactivo = EstadoUsuario.builder().idEstado(ID_ESTADO_INACTIVO).build();
             usuario.setEstadoUsuario(estadoInactivo);
-
             usuarioRepository.save(usuario);
             return true;
         }).orElse(false);

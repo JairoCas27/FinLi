@@ -2,9 +2,9 @@
 // VARIABLES GLOBALES
 // ==========================================
 
-// 1. IMPORTANTE: Quitamos 'let' de TODAS las variables globales para evitar conflictos (Error de 'already declared').
+// 1. IMPORTANTE: Quitamos 'let' para evitar conflictos si ya existen en principal.js.
 defaultCategories = []; 
-defaultSubcategories = {}; 
+defaultSubcategories = {}; // Objeto que contendrá: { '1': [sub1, sub2], '2': [sub3] }
 paymentMethods = []; 
 
 // Variables para edición (También quitamos 'let')
@@ -21,11 +21,10 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeApartados() {
-    // 1. Cargar Categorías desde el Backend (NUEVO)
-    fetchCategories();
+    // 1. Cargar Categorías (y Subcategorías) desde el Backend
+    fetchCategoriesAndSubcategories();
     
     // 2. Renderizar el resto (lógica local original intacta)
-    renderDefaultSubcategories();
     loadDefaultPaymentMethods();
     updateNotificationsDropdown();
     
@@ -40,30 +39,49 @@ function initializeApartados() {
     if(savePayBtn) savePayBtn.addEventListener('click', savePaymentMethod);
 }
 
-// --- NUEVA FUNCIÓN: TRAER CATEGORÍAS DEL SERVIDOR ---
-async function fetchCategories() {
+// --- NUEVA FUNCIÓN: TRAER CATEGORÍAS Y SUBCATEGORÍAS ---
+async function fetchCategoriesAndSubcategories() {
     try {
-        // Endpoint creado en AdminApartadosController
-        const response = await fetch('http://localhost:8080/api/admin/categories');
+        // Petición de Categorías
+        const catResponse = await fetch('http://localhost:8080/api/admin/categories');
         
-        if (!response.ok) {
+        if (!catResponse.ok) {
             throw new Error('Error al obtener categorías');
         }
 
-        // Guardamos los datos reales del backend
-        defaultCategories = await response.json();
-        console.log("Categorías cargadas:", defaultCategories.length);
+        defaultCategories = await catResponse.json();
         
-        // Renderizamos la lista visual con los datos reales
-        renderDefaultCategories();
+        // Petición de Subcategorías (Traer TODAS y agrupar)
+        // Usamos un endpoint que traiga todas las subcategorías del sistema para agruparlas.
+        // Como no hemos creado un endpoint /subcategories/all, llamaremos a cada categoría individualmente
+        // NOTA: Para producción, crear un endpoint /subcategories/all que devuelva {categoriaId: [sub1, sub2]} sería más eficiente.
         
-        // Intentamos renderizar subcategorías (para que si hay datos locales, se muestren)
-        renderDefaultSubcategories();
+        const allSubcategories = {};
+        
+        for (const category of defaultCategories) {
+            const subResponse = await fetch(`http://localhost:8080/api/admin/categories/${category.id}/subcategories`);
+            
+            if (subResponse.ok) {
+                const subs = await subResponse.json();
+                if (subs.length > 0) {
+                    allSubcategories[category.id] = subs;
+                }
+            } else {
+                console.warn(`No se encontraron subcategorías para ID: ${category.id}`);
+            }
+        }
+        
+        defaultSubcategories = allSubcategories;
+        console.log("Subcategorías agrupadas:", Object.keys(defaultSubcategories).length);
+
+        // Renderizamos ambas secciones
+        renderDefaultCategories(); 
+        renderDefaultSubcategories(); 
         
     } catch (error) {
-        console.error("Error:", error);
-        const container = document.getElementById('defaultCategoriesList');
-        if(container) container.innerHTML = '<div class="text-center text-danger p-3">Error de conexión con el servidor</div>';
+        console.error("Error al cargar apartados:", error);
+        const containerCat = document.getElementById('defaultCategoriesList');
+        if(containerCat) containerCat.innerHTML = '<div class="text-center text-danger p-3">Error de conexión con el servidor.</div>';
     }
 }
 
@@ -119,7 +137,7 @@ function renderDefaultCategories() {
 }
 
 // ==========================================
-// EL RESTO DE TU CÓDIGO ORIGINAL (INTACTO)
+// RENDERIZADO DE SUBCATEGORÍAS (ACTUALIZADO)
 // ==========================================
 
 function renderDefaultSubcategories() {
@@ -127,11 +145,16 @@ function renderDefaultSubcategories() {
     if (!container) return;
     
     let html = '<div class="manage-categories-container">';
+    let totalSubcategoriesRendered = 0;
     
     defaultCategories.forEach(category => {
+        // Las subcategorías se leen de la variable global 'defaultSubcategories'
         const subcategories = defaultSubcategories[category.id] || [];
         
         if (subcategories.length > 0) {
+            totalSubcategoriesRendered += subcategories.length;
+            
+            // Renderizar el encabezado (Vivienda 11 subcategorías)
             html += `
                 <div class="mb-4">
                     <div class="d-flex align-items-center mb-3">
@@ -142,7 +165,8 @@ function renderDefaultSubcategories() {
                     <div class="row g-2">
             `;
             
-            subcategories.forEach((subcategory, index) => {
+            // Renderizar las tarjetas de subcategoría
+            subcategories.forEach((subcategory) => {
                 html += `
                     <div class="col-md-6 col-lg-4">
                         <div class="subcategory-item d-flex justify-content-between align-items-center">
@@ -150,17 +174,18 @@ function renderDefaultSubcategories() {
                                 <i class="${subcategory.icon} me-2 text-muted"></i>
                                 <div>
                                     <div class="fw-medium">${subcategory.label}</div>
-                                    <small class="text-muted">${subcategory.name}</small>
+                                    <!-- Usamos el 'id' del backend para el 'name' técnico si no existe otro -->
+                                    <small class="text-muted">ID: ${subcategory.id}</small> 
                                 </div>
                             </div>
                             <div class="btn-group">
                                 <button class="btn btn-sm btn-outline-warning" 
-                                    onclick="editSubcategory('${category.id}', '${subcategory.name}')"
+                                    onclick="editSubcategory('${category.id}', '${subcategory.id}')" 
                                     title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </button>
                                 <button class="btn btn-sm btn-outline-danger" 
-                                    onclick="deleteSubcategory('${category.id}', '${subcategory.name}')"
+                                    onclick="deleteSubcategory('${category.id}', '${subcategory.id}')"
                                     title="Eliminar">
                                     <i class="bi bi-trash"></i>
                                 </button>
@@ -174,11 +199,12 @@ function renderDefaultSubcategories() {
         }
     });
     
-    if (Object.keys(defaultSubcategories).length === 0) {
-        html += `
+    // Si no hay ninguna subcategoría en total (incluyendo las que vienen del backend)
+    if (totalSubcategoriesRendered === 0) {
+        html = `
             <div class="text-center py-4">
                 <i class="bi bi-tags display-4 text-muted"></i>
-                <p class="text-muted mt-3">No hay subcategorías configuradas</p>
+                <p class="text-muted mt-3">No hay subcategorías configuradas o falló la carga.</p>
             </div>
         `;
     }
@@ -187,11 +213,32 @@ function renderDefaultSubcategories() {
     container.innerHTML = html;
 }
 
+// ==========================================
+// MEDIOS DE PAGO (PENDIENTE DE BACKEND)
+// ==========================================
+
 function loadDefaultPaymentMethods() {
     const container = document.getElementById('defaultPaymentMethodsList');
     if (!container) return; // Validación extra por si no existe el contenedor
 
     let html = '';
+    
+    // Si no hay medios de pago, mostramos solo el botón de agregar
+    if (paymentMethods.length === 0) {
+        container.innerHTML = `
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="payment-method-card d-flex align-items-center justify-content-center" 
+                        style="border: 2px dashed var(--accent); background: rgba(14, 164, 111, 0.05); cursor: pointer;" 
+                        onclick="showAddPaymentMethodModal()">
+                    <div class="text-center">
+                        <i class="bi bi-plus-circle display-6 text-success mb-2"></i>
+                        <h6 class="text-success">Agregar Medio de Pago</h6>
+                    </div>
+                </div>
+            </div>
+        `;
+        return;
+    }
     
     paymentMethods.forEach((method, index) => {
         html += `
@@ -236,6 +283,53 @@ function loadDefaultPaymentMethods() {
     container.innerHTML = html;
 }
 
+// ==========================================
+// LISTENERS Y MODALES
+// ==========================================
+
+function setupEventListeners() {
+    // Los listeners ya se agregaron en initializeApartados
+}
+
+// --- Funciones de Lógica (Tu código original) ---
+
+function showAddCategoryModal() {
+    const input = document.getElementById('categoryName');
+    if(input) input.value = '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
+    modal.show();
+}
+
+function saveCategory() {
+    console.log("Guardar categoría (pendiente de backend POST)");
+}
+
+function editCategory(id) {
+    console.log("Editar categoría ID:", id);
+}
+
+function deleteCategory(id) {
+    const category = defaultCategories.find(c => c.id === id);
+    if (!category) return;
+    
+    if (!confirm(`¿Estás seguro de que deseas eliminar la categoría "${category.label}"?\n\nEsta acción eliminará también todas sus subcategorías y no se puede deshacer.`)) {
+        return;
+    }
+    
+    // Lógica local para simulación
+    defaultCategories = defaultCategories.filter(c => c.id !== id);
+    delete defaultSubcategories[id];
+    
+    saveDefaultCategories();
+    saveDefaultSubcategories();
+    fetchCategoriesAndSubcategories(); // Usamos el fetch para recargar
+    
+    addActivity(`Categoría eliminada: ${category.label}`, 'system');
+    showNotification('Categoría eliminada exitosamente', 'success');
+}
+
+// Funciones de Subcategorías (Tus originales, ahora usando IDs numéricos)
 function showAddSubcategoryModal() {
     currentEditingSubcategoryId = null;
     document.getElementById('subcategoryModalLabel').textContent = 'Agregar Nueva Subcategoría';
@@ -259,11 +353,12 @@ function showAddSubcategoryModal() {
     modal.show();
 }
 
-function editSubcategory(categoryId, subcategoryName) {
-    const subcategory = defaultSubcategories[categoryId]?.find(s => s.name === subcategoryName);
+function editSubcategory(categoryId, subcategoryId) {
+    // Buscamos por ID (numérico)
+    const subcategory = defaultSubcategories[categoryId]?.find(s => s.id == subcategoryId);
     if (!subcategory) return;
     
-    currentEditingSubcategoryId = subcategoryName;
+    currentEditingSubcategoryId = subcategoryId;
     currentEditingCategoryId = categoryId;
     
     document.getElementById('subcategoryModalLabel').textContent = 'Editar Subcategoría';
@@ -280,7 +375,7 @@ function editSubcategory(categoryId, subcategoryName) {
         const option = document.createElement('option');
         option.value = category.id;
         option.textContent = category.label;
-        if (category.id === categoryId) {
+        if (category.id == categoryId) {
             option.selected = true;
         }
         parentCategorySelect.appendChild(option);
@@ -306,14 +401,14 @@ function saveSubcategory() {
     }
     
     if (currentEditingSubcategoryId) {
-        // Editar subcategoría existente
-        const subcategoryIndex = defaultSubcategories[currentEditingCategoryId]?.findIndex(s => s.name === currentEditingSubcategoryId);
+        // Lógica de Edición Local
+        const subcategoryIndex = defaultSubcategories[currentEditingCategoryId]?.findIndex(s => s.id == currentEditingSubcategoryId);
         if (subcategoryIndex !== -1) {
             defaultSubcategories[currentEditingCategoryId][subcategoryIndex].label = name;
             defaultSubcategories[currentEditingCategoryId][subcategoryIndex].icon = icon;
             
             // Si cambió la categoría padre, mover la subcategoría
-            if (currentEditingCategoryId !== parentCategoryId) {
+            if (currentEditingCategoryId != parentCategoryId) {
                 const subcategory = defaultSubcategories[currentEditingCategoryId][subcategoryIndex];
                 defaultSubcategories[currentEditingCategoryId].splice(subcategoryIndex, 1);
                 
@@ -324,8 +419,9 @@ function saveSubcategory() {
             }
         }
     } else {
-        // Agregar nueva subcategoría
+        // Lógica de Creación Local
         const newSubcategory = {
+            id: Date.now(), // ID temporal
             name: name.toLowerCase().replace(/\s+/g, '_'),
             label: name,
             icon: icon
@@ -351,15 +447,15 @@ function saveSubcategory() {
     currentEditingCategoryId = null;
 }
 
-function deleteSubcategory(categoryId, subcategoryName) {
-    const subcategory = defaultSubcategories[categoryId]?.find(s => s.name === subcategoryName);
+function deleteSubcategory(categoryId, subcategoryId) {
+    const subcategory = defaultSubcategories[categoryId]?.find(s => s.id == subcategoryId);
     if (!subcategory) return;
     
     if (!confirm(`¿Estás seguro de que deseas eliminar la subcategoría "${subcategory.label}"?\n\nEsta acción no se puede deshacer.`)) {
         return;
     }
     
-    defaultSubcategories[categoryId] = defaultSubcategories[categoryId].filter(s => s.name !== subcategoryName);
+    defaultSubcategories[categoryId] = defaultSubcategories[categoryId].filter(s => s.id != subcategoryId);
     
     saveDefaultSubcategories();
     renderDefaultSubcategories();
@@ -498,7 +594,23 @@ function editCategory(id) {
 }
 
 function deleteCategory(id) {
-    console.log("Eliminar categoría ID:", id);
+    const category = defaultCategories.find(c => c.id === id);
+    if (!category) return;
+    
+    if (!confirm(`¿Estás seguro de que deseas eliminar la categoría "${category.label}"?\n\nEsta acción eliminará también todas sus subcategorías y no se puede deshacer.`)) {
+        return;
+    }
+    
+    defaultCategories = defaultCategories.filter(c => c.id !== id);
+    delete defaultSubcategories[id];
+    
+    saveDefaultCategories();
+    saveDefaultSubcategories();
+    renderDefaultCategories();
+    renderDefaultSubcategories();
+    
+    addActivity(`Categoría eliminada: ${category.label}`, 'system');
+    showNotification('Categoría eliminada exitosamente', 'success');
 }
 
 // Funciones locales que tu código usa pero que no me pasaste definidas (por si acaso las incluyo como placeholders funcionales para que no de error)
