@@ -1,5 +1,6 @@
 package com.finli.service;
 
+import com.finli.dto.CategoriaDTO; // <-- NUEVO IMPORT
 import com.finli.dto.PaginacionUsuarioResponse;
 import com.finli.dto.UserCreateDTO; 
 import com.finli.dto.UserDetailDTO; 
@@ -9,6 +10,7 @@ import com.finli.model.EstadoUsuario;
 import com.finli.model.Suscripcion; 
 import com.finli.model.TipoSuscripcion; 
 import com.finli.model.Usuario;
+import com.finli.repository.CategoriaRepository; // <-- NUEVO IMPORT
 import com.finli.repository.EstadoSuscripcionRepository; 
 import com.finli.repository.EstadoUsuarioRepository;
 import com.finli.repository.SuscripcionRepository; 
@@ -41,11 +43,75 @@ public class AdministradorService {
     private final TipoSuscripcionRepository tipoSuscripcionRepository;
     private final EstadoSuscripcionRepository estadoSuscripcionRepository;
     
+    // --- NUEVO REPOSITORIO PARA CATEGORÍAS ---
+    private final CategoriaRepository categoriaRepository;
+    
     private final Integer ID_ESTADO_ACTIVO = 1; 
     private final Integer ID_ESTADO_INACTIVO = 2; 
 
     // ====================================================================================
-    // === CREAR USUARIO COMPLETO (CON SUSCRIPCIÓN)
+    // === GESTIÓN DE CATEGORÍAS (APARTADOS) - [NUEVO BLOQUE] ===
+    // ====================================================================================
+
+    @Transactional(readOnly = true)
+    public List<CategoriaDTO> listarCategoriasPredeterminadas() {
+        // 1. Obtenemos los datos crudos de la DB (id, nombre, cantidad)
+        List<CategoriaRepository.CategoriaProjection> proyecciones = categoriaRepository.obtenerCategoriasPredeterminadasConConteo();
+
+        // 2. Convertimos a DTO y asignamos estilos visuales
+        return proyecciones.stream().map(proj -> {
+            CategoriaDTO dto = new CategoriaDTO();
+            dto.setId(proj.getId());
+            dto.setLabel(proj.getNombre());
+            dto.setSubcategoriesCount(proj.getCantidadSubcategorias());
+            
+            // Asignar icono y color basado en el nombre (Lógica visual)
+            asignarEstiloCategoria(dto);
+            
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    // Método auxiliar para definir la estética según el nombre
+    private void asignarEstiloCategoria(CategoriaDTO dto) {
+        String nombre = dto.getLabel().toLowerCase();
+
+        if (nombre.contains("vivienda")) {
+            dto.setIcon("bi-house");
+            dto.setColor("success"); // Verde
+        } else if (nombre.contains("transporte")) {
+            dto.setIcon("bi-car-front");
+            dto.setColor("primary"); // Azul
+        } else if (nombre.contains("alimentacion") || nombre.contains("alimentación")) {
+            dto.setIcon("bi-cup-straw");
+            dto.setColor("warning"); // Amarillo
+        } else if (nombre.contains("salud") || nombre.contains("cuidado")) {
+            dto.setIcon("bi-heart-pulse");
+            dto.setColor("danger"); // Rojo
+        } else if (nombre.contains("entretenimiento") || nombre.contains("ocio")) {
+            dto.setIcon("bi-controller");
+            dto.setColor("info"); // Celeste
+        } else if (nombre.contains("ropa")) {
+            dto.setIcon("bi-bag");
+            dto.setColor("secondary"); // Gris
+        } else if (nombre.contains("electrónica") || nombre.contains("electronica")) {
+            dto.setIcon("bi-phone");
+            dto.setColor("success");
+        } else if (nombre.contains("hogar")) {
+            dto.setIcon("bi-lamp");
+            dto.setColor("primary");
+        } else if (nombre.contains("educación") || nombre.contains("educacion")) {
+            dto.setIcon("bi-book");
+            dto.setColor("warning");
+        } else {
+            // Default para categorías nuevas
+            dto.setIcon("bi-tag");
+            dto.setColor("secondary");
+        }
+    }
+
+    // ====================================================================================
+    // === CREAR USUARIO COMPLETO (CON SUSCRIPCIÓN) ===
     // ====================================================================================
     @Transactional
     public Usuario crearUsuarioConSuscripcion(UserCreateDTO dto) {
@@ -99,7 +165,7 @@ public class AdministradorService {
     }
 
     // ====================================================================================
-    // === MÉTODOS PARA EDICIÓN (LECTURA Y ACTUALIZACIÓN)
+    // === MÉTODOS PARA EDICIÓN (LECTURA Y ACTUALIZACIÓN) ===
     // ====================================================================================
 
     // 1. OBTENER DETALLE PARA EDITAR (GET)
@@ -155,7 +221,7 @@ public class AdministradorService {
             usuario.setContrasena(hashPassword);
         }
         
-        // --- NUEVA LÓGICA: ACTUALIZAR SUSCRIPCIÓN ---
+        // --- ACTUALIZAR SUSCRIPCIÓN ---
         if (dto.getSubscriptionId() != null) {
             // 1. Buscar suscripción activa actual
             Suscripcion subActiva = null;
@@ -228,7 +294,10 @@ public class AdministradorService {
                 .map(servicioAutenticacion::toResponse)
                 .collect(Collectors.toList());
 
-        return new PaginacionUsuarioResponse(listaResponse, paginaUsuarios.getTotalElements());
+        return new PaginacionUsuarioResponse(
+                listaResponse, 
+                paginaUsuarios.getTotalElements() 
+        );
     }
     
     public List<Usuario> obtenerListaDeUsuariosParaExportar() {

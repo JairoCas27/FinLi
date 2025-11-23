@@ -9,5 +9,10 @@ import java.util.List;
 
 @Repository
 public interface SubcategoriaRepository extends JpaRepository<Subcategoria, Integer> {
+    
+    // Método para encontrar todas las subcategorías de una categoría padre específica
     List<Subcategoria> findByCategoria(Categoria categoria);
+    
+    // Método para contar cuántas subcategorías tiene una categoría (útil para validaciones rápidas)
+    long countByCategoria(Categoria categoria);
 }
