@@ -5,7 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param; // <-- NUEVO: Importación necesaria para el filtro
+import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,19 +23,22 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
         String getApellido();
         String getEmail();
         String getSuscripcion();
+        String getEstado(); // <--- NUEVO: Captura "Activo", "Inactivo", etc.
     }
 
-    // --- MODIFICADO: Ahora acepta un parámetro :keyword para buscar por nombre o correo ---
+    // --- MODIFICADO: Agregamos la columna de estado y el JOIN correspondiente ---
     @Query(value = """
         SELECT 
             u.id AS id, 
             u.nombre AS nombre,
             u.apellido_Paterno AS apellido, 
             u.correo AS email,
-            COALESCE(ts.nombre_tiposuscripcion, 'Sin suscripción') AS suscripcion
+            COALESCE(ts.nombre_tiposuscripcion, 'Sin suscripción') AS suscripcion,
+            COALESCE(eu.nombre_estado, 'Desconocido') AS estado
         FROM usuarios u
         LEFT JOIN suscripciones s ON u.id = s.id_usuario AND s.id_estadosuscripcion = 1
         LEFT JOIN tiposuscripcion ts ON s.id_tiposuscripcion = ts.id_tiposuscripcion
+        LEFT JOIN estadousuario eu ON u.id_estadoUsuario = eu.id_estado
         WHERE 
             (:keyword IS NULL OR :keyword = '') OR 
             (LOWER(CONCAT(u.nombre, ' ', u.apellido_Paterno)) LIKE LOWER(CONCAT('%', :keyword, '%'))) OR 

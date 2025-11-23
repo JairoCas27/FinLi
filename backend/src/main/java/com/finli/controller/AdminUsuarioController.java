@@ -1,15 +1,20 @@
 package com.finli.controller;
 
 import com.finli.dto.UserAdminDTO;
+import com.finli.dto.UserCreateDTO;
+import com.finli.dto.UserDetailDTO;
+import com.finli.model.Usuario;
 import com.finli.repository.UsuarioRepository;
+import com.finli.service.AdministradorService;
+import com.finli.service.ExcelExportService; // <-- NUEVO
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders; // <-- NUEVO
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType; // <-- NUEVO
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam; // <-- IMPORTANTE: Nueva importación
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException; // <-- NUEVO
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,14 +26,18 @@ public class AdminUsuarioController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    @Autowired
+    private AdministradorService administradorService;
+
+    @Autowired
+    private ExcelExportService excelExportService; // <-- Inyectamos el servicio de Excel
+
+    // --- 1. LISTAR USUARIOS (GET) ---
     @GetMapping("/users")
-    // MODIFICADO: Ahora acepta un parámetro opcional "search" (ej: /api/admin/users?search=Juan)
     public ResponseEntity<List<UserAdminDTO>> listarUsuariosParaAdmin(@RequestParam(value = "search", required = false) String search) {
         
-        // 1. Llamamos al repositorio pasando el parámetro de búsqueda (puede ser null o texto)
         List<UsuarioRepository.UserAdminProjection> dbUsers = usuarioRepository.obtenerDatosAdmin(search);
 
-        // 2. Convertimos los resultados al DTO
         List<UserAdminDTO> response = dbUsers.stream().map(proj -> {
             String nombreCompleto = proj.getNombre() + " " + proj.getApellido();
             
@@ -38,10 +47,75 @@ public class AdminUsuarioController {
                 proj.getEmail(),
                 proj.getSuscripcion(),
                 "2024-01-01", // Fecha fija temporal
-                null          // Foto null
+                null,         // Foto null
+                proj.getEstado() 
             );
         }).collect(Collectors.toList());
 
         return ResponseEntity.ok(response);
+    }
+
+    // --- 2. CREAR USUARIO (POST) ---
+    @PostMapping("/users")
+    public ResponseEntity<?> crearUsuario(@RequestBody UserCreateDTO dto) {
+        try {
+            Usuario nuevoUsuario = administradorService.crearUsuarioConSuscripcion(dto);
+            return new ResponseEntity<>(nuevoUsuario, HttpStatus.CREATED);
+            
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error interno al crear el usuario.");
+        }
+    }
+
+    // --- 3. OBTENER DETALLE PARA EDITAR (GET /users/{id}) ---
+    @GetMapping("/users/{id}")
+    public ResponseEntity<?> obtenerUsuario(@PathVariable Integer id) {
+        try {
+            UserDetailDTO detalle = administradorService.obtenerUsuarioParaEditar(id);
+            return ResponseEntity.ok(detalle);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // --- 4. ACTUALIZAR USUARIO (PUT /users/{id}) ---
+    @PutMapping("/users/{id}")
+    public ResponseEntity<?> actualizarUsuario(@PathVariable Integer id, @RequestBody UserCreateDTO dto) {
+        try {
+            Usuario actualizado = administradorService.actualizarUsuarioDesdeAdmin(id, dto);
+            return ResponseEntity.ok(actualizado);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // --- 5. EXPORTAR EXCEL (GET /users/export/excel) [NUEVO] ---
+    @GetMapping("/users/export/excel")
+    public ResponseEntity<byte[]> exportarExcel() {
+        try {
+            // 1. Obtenemos la lista de usuarios (entidades completas)
+            List<Usuario> usuarios = administradorService.obtenerListaDeUsuariosParaExportar();
+
+            // 2. Generamos el archivo Excel en bytes
+            byte[] excelBytes = excelExportService.exportUsersToExcel(usuarios);
+
+            // 3. Preparamos los encabezados para la descarga
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+            
+            // Nombre del archivo dinámico con fecha/hora
+            String filename = "usuarios_finli_" + System.currentTimeMillis() + ".xlsx";
+            headers.setContentDispositionFormData("attachment", filename);
+            headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+
+            return new ResponseEntity<>(excelBytes, headers, HttpStatus.OK);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

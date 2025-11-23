@@ -6,6 +6,10 @@
 // Simplemente la reiniciamos para llenarla con datos reales.
 users = []; 
 
+// Variables para guardar temporalmente los IDs de acción
+let userToDeleteId = null;
+let userToEditId = null; // <--- IMPORTANTE: Para saber a quién estamos editando
+
 let currentPageUsuarios = 1;
 const usersPerPageUsuarios = 10;
 let searchUsersInput = '';
@@ -19,10 +23,11 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeUsuarios();
 });
 
-// Esta función ahora es ASÍNCRONA para esperar al Backend
+// Esta función carga los datos desde el Backend (Java)
 async function initializeUsuarios(searchTerm = '') {
     try {
         // 1. Construimos la URL con el parámetro de búsqueda si existe
+        // Endpoint creado en AdminUsuarioController
         let url = 'http://localhost:8080/api/admin/users';
         if (searchTerm) {
             url += `?search=${encodeURIComponent(searchTerm)}`;
@@ -37,7 +42,8 @@ async function initializeUsuarios(searchTerm = '') {
 
         // 3. Guardamos los datos reales en la variable global
         users = await response.json();
-        
+        console.log("Usuarios cargados:", users.length);
+
         // Limpiamos el input de búsqueda LOCAL para que renderUsers no filtre doble
         // (El filtrado ya lo hizo Java)
         searchUsersInput = ''; 
@@ -58,7 +64,7 @@ async function initializeUsuarios(searchTerm = '') {
     } catch (error) {
         console.error("Error cargando usuarios:", error);
         const tbody = document.getElementById('tbodyUsuarios');
-        if(tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error de conexión con el servidor</td></tr>';
+        if(tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error de conexión con el servidor</td></tr>';
     }
 }
 
@@ -67,7 +73,7 @@ async function initializeUsuarios(searchTerm = '') {
 // ==========================================
 
 function setupEventListeners() {
-    // 1. BUSCADOR: Conectado al Backend con "debounce" (espera a que termines de escribir)
+    // 1. BUSCADOR: Conectado al Backend con "debounce"
     const searchInput = document.getElementById('searchUsersInput');
     if(searchInput) {
         let timeoutId;
@@ -75,14 +81,14 @@ function setupEventListeners() {
             clearTimeout(timeoutId);
             const texto = e.target.value;
             
-            // Espera 300ms antes de llamar al servidor
+            // Espera 300ms antes de llamar al servidor para no saturarlo
             timeoutId = setTimeout(() => {
                 initializeUsuarios(texto);
             }, 300);
         });
     }
 
-    // 2. FILTRO SUSCRIPCIÓN: Local (Filtra sobre los resultados ya traídos)
+    // 2. FILTRO SUSCRIPCIÓN: Local
     const filterInput = document.getElementById('subscriptionFilter');
     if(filterInput) {
         filterInput.addEventListener('change', function(e) {
@@ -92,7 +98,7 @@ function setupEventListeners() {
         });
     }
     
-    // 3. BOTONES DE MODALES
+    // 3. BOTONES DE MODALES (Guardar, Actualizar, Confirmar Eliminar)
     const saveBtn = document.getElementById('saveUserBtn');
     if(saveBtn) saveBtn.addEventListener('click', saveUser);
 
@@ -140,18 +146,18 @@ function setupEventListeners() {
         });
     }
 
-    // 6. ACCIONES EN TABLA (Delegación)
+    // 6. ACCIONES EN TABLA (Delegación de eventos)
     document.addEventListener('click', function(e) {
+        // Click en Editar
         if (e.target.closest('.edit-user')) {
             const userId = parseInt(e.target.closest('.edit-user').getAttribute('data-id'));
-            // Asegúrate de que la función editUser esté definida (en este archivo o principal.js)
-            if (typeof editUser === 'function') editUser(userId);
+            editUser(userId);
         }
         
+        // Click en Eliminar
         if (e.target.closest('.delete-user')) {
             const userId = parseInt(e.target.closest('.delete-user').getAttribute('data-id'));
-            // Asegúrate de que la función deleteUser esté definida
-            if (typeof deleteUser === 'function') deleteUser(userId);
+            deleteUser(userId);
         }
     });
 
@@ -171,8 +177,7 @@ function setupEventListeners() {
 function renderUsers() {
     let filteredUsers = [...users];
     
-    // Nota: El filtro de texto principal ya lo hace el Backend en initializeUsuarios.
-    // Aquí solo aplicamos filtros locales adicionales si es necesario (como el searchUsersInput si quisieras filtrar localmente)
+    // Filtro local adicional si se requiere (el principal ya lo hizo Java)
     if (searchUsersInput) {
         filteredUsers = filteredUsers.filter(user => 
             user.name.toLowerCase().includes(searchUsersInput) || 
@@ -185,10 +190,10 @@ function renderUsers() {
         filteredUsers = filteredUsers.filter(user => user.subscriptionType === subscriptionFilterValue);
     }
     
-    // Ordenar por fecha (Nota: Si el backend envía fechas fijas, esto no cambiará el orden)
+    // Ordenar (Nota: Java envía fecha fija '2024-01-01' por ahora, así que el orden será por defecto)
     const sortedUsers = filteredUsers.sort((a, b) => new Date(b.registrationDate) - new Date(a.registrationDate));
     
-    // Paginación
+    // Paginación y Renderizado
     const tbodyUsuarios = document.getElementById('tbodyUsuarios');
     if(tbodyUsuarios) {
         tbodyUsuarios.innerHTML = '';
@@ -197,7 +202,8 @@ function renderUsers() {
         const usersForUsuarios = sortedUsers.slice(startIndexUsuarios, startIndexUsuarios + usersPerPageUsuarios);
         
         if (usersForUsuarios.length === 0) {
-            tbodyUsuarios.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No se encontraron usuarios</td></tr>';
+            // Nota: colspan="7" porque ahora tenemos una columna extra
+            tbodyUsuarios.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No se encontraron usuarios</td></tr>';
         } else {
             usersForUsuarios.forEach(user => {
                 tbodyUsuarios.appendChild(createUserRow(user, 'usuarios'));
@@ -217,15 +223,25 @@ function createUserRow(user, section = 'usuarios') {
     const colorIndex = (user.id || 0) % colors.length;
     const bgColor = colors[colorIndex];
     
+    // --- Lógica de colores para Suscripción ---
     const subscriptionBadgeClass = {
         'Sin suscripción': 'bg-light text-dark',
         'Mensual': 'bg-success text-white',
         'Anual': 'bg-warning text-dark',
         'De por vida': 'bg-info text-white'
     };
-    
-    // Si el tipo de suscripción no coincide con los anteriores, usa un default
     const badgeClass = subscriptionBadgeClass[user.subscriptionType] || 'bg-secondary text-white';
+
+    // --- NUEVO: Lógica de colores para el ESTADO ---
+    const statusBadgeClass = {
+        'Activo': 'bg-success',               // Verde
+        'Inactivo': 'bg-danger',              // Rojo
+        'Suspendido': 'bg-warning text-dark', // Amarillo
+        'Bloqueado': 'bg-dark text-white'     // Negro
+    };
+    // Obtenemos el estado que viene de Java (o 'Desconocido' si es null)
+    const userStatus = user.status || 'Desconocido';
+    const statusClass = statusBadgeClass[userStatus] || 'bg-secondary';
     
     tr.innerHTML = `
         <td><span class="badge bg-light text-dark">${user.id}</span></td>
@@ -245,6 +261,10 @@ function createUserRow(user, section = 'usuarios') {
         </td>
         <td>${user.email}</td>
         <td><span class="badge rounded-pill ${badgeClass}">${user.subscriptionType || 'Desconocido'}</span></td>
+        
+        <!-- NUEVA COLUMNA: ESTADO -->
+        <td><span class="badge ${statusClass}">${userStatus}</span></td>
+
         <td class="text-center">
             <div class="table-actions">
                 <button class="table-action-btn edit edit-user" data-id="${user.id}" title="Editar">
@@ -259,6 +279,244 @@ function createUserRow(user, section = 'usuarios') {
     
     return tr;
 }
+
+// ==========================================
+// LÓGICA DE ACCIONES (ELIMINAR, EDITAR, GUARDAR)
+// ==========================================
+
+// 1. ELIMINAR (Abrir Modal)
+function deleteUser(id) {
+    userToDeleteId = id;
+    
+    // Buscamos el usuario en el array local para mostrar su nombre
+    const user = users.find(u => u.id === id);
+    const nameToShow = user ? user.name : 'este usuario';
+    
+    const nameElement = document.getElementById('deleteUserName');
+    if(nameElement) nameElement.textContent = nameToShow;
+    
+    // Mostrar modal
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+    deleteModal.show();
+}
+
+// 2. CONFIRMAR ELIMINACIÓN (Llamada al Backend)
+async function confirmDeleteUser() {
+    if (!userToDeleteId) return;
+
+    const btn = document.getElementById('confirmDeleteBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Eliminando...';
+    btn.disabled = true;
+
+    try {
+        // Llamada al endpoint existente: DELETE /api/admin/usuarios/{id}
+        const response = await fetch(`http://localhost:8080/api/admin/usuarios/${userToDeleteId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok || response.status === 204) {
+            // Éxito: Cerrar modal
+            const modalEl = document.getElementById('deleteUserModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            modalInstance.hide();
+
+            // Recargar la tabla para que desaparezca el usuario (o cambie de estado)
+            await initializeUsuarios(); 
+            
+        } else {
+            alert("Error al intentar eliminar el usuario (Status: " + response.status + ")");
+        }
+
+    } catch (error) {
+        console.error("Error eliminando usuario:", error);
+        alert("Error de conexión con el servidor.");
+    } finally {
+        // Restaurar botón
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        userToDeleteId = null;
+    }
+}
+
+// 3. EDITAR (CARGAR DATOS EN EL MODAL)
+async function editUser(id) {
+    userToEditId = id; // Guardamos el ID para usarlo al guardar cambios
+
+    try {
+        // Llamada al backend para obtener el detalle separado
+        // Endpoint: GET /api/admin/users/{id}
+        const response = await fetch(`http://localhost:8080/api/admin/users/${id}`);
+        
+        if (!response.ok) {
+            throw new Error('No se pudo obtener la información del usuario');
+        }
+
+        const user = await response.json();
+
+        // Llenar el formulario con los datos recibidos del DTO (UserDetailDTO)
+        document.getElementById('editUserNombre').value = user.nombre || '';
+        document.getElementById('editUserApellidoPaterno').value = user.apellidoPaterno || '';
+        document.getElementById('editUserApellidoMaterno').value = user.apellidoMaterno || '';
+        document.getElementById('editUserEdad').value = user.edad || '';
+        document.getElementById('editUserEmail').value = user.email || '';
+        
+        // Seleccionar ROL (si existe en el select, sino default 'usuario')
+        const rolSelect = document.getElementById('editUserRol');
+        if (rolSelect) rolSelect.value = user.rol || 'usuario';
+
+        // Seleccionar SUSCRIPCIÓN (si existe en el select, sino default 4)
+        const subSelect = document.getElementById('editUserSubscriptionType');
+        if (subSelect) subSelect.value = user.subscriptionId || 4;
+        
+        // Limpiar el campo de contraseña (para que esté vacío por seguridad)
+        const passField = document.getElementById('editUserPassword');
+        if(passField) passField.value = '';
+
+        // Mostrar modal
+        const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+        editModal.show();
+
+    } catch (error) {
+        console.error("Error cargando usuario para editar:", error);
+        alert("Error al cargar los datos del usuario.");
+    }
+}
+
+// 4. GUARDAR NUEVO USUARIO (Lógica Real)
+async function saveUser() {
+    const btn = document.getElementById('saveUserBtn');
+    
+    // 1. Capturar datos del formulario HTML
+    const userData = {
+        nombre: document.getElementById('userNombre').value,
+        apellidoPaterno: document.getElementById('userApellidoPaterno').value,
+        apellidoMaterno: document.getElementById('userApellidoMaterno').value,
+        edad: parseInt(document.getElementById('userEdad').value),
+        email: document.getElementById('userEmail').value,
+        password: document.getElementById('userPassword').value,
+        rol: document.getElementById('userRol').value,
+        subscriptionId: parseInt(document.getElementById('userSubscriptionType').value)
+    };
+
+    // Validaciones básicas
+    if (!userData.nombre || !userData.email || !userData.password) {
+        alert("Por favor completa los campos obligatorios.");
+        return;
+    }
+
+    // Cambiar estado del botón (Feedback visual)
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+    btn.disabled = true;
+
+    try {
+        // 2. Enviar datos al Backend (POST)
+        const response = await fetch('http://localhost:8080/api/admin/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userData)
+        });
+
+        // 3. Manejar la respuesta
+        if (response.ok) {
+            // Éxito: Cerrar modal, limpiar formulario y recargar tabla
+            const modalEl = document.getElementById('addUserModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            modalInstance.hide();
+            
+            document.getElementById('addUserForm').reset(); // Limpiar campos
+            
+            // Limpiar foto previa si existe
+            const preview = document.getElementById('addPhotoPreview');
+            if(preview) {
+                preview.src = '';
+                preview.style.display = 'none';
+            }
+
+            alert("Usuario creado exitosamente.");
+            await initializeUsuarios(); // Recargar la tabla para ver al nuevo usuario
+
+        } else {
+            // Error del servidor (ej: correo duplicado)
+            const errorMsg = await response.text();
+            alert("Error al guardar: " + errorMsg);
+        }
+
+    } catch (error) {
+        console.error("Error guardando usuario:", error);
+        alert("Error de conexión con el servidor.");
+    } finally {
+        // Restaurar botón
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+// 5. ACTUALIZAR USUARIO (PUT)
+async function updateUser() {
+    if (!userToEditId) return;
+
+    const btn = document.getElementById('updateUserBtn');
+    
+    // Capturar datos del formulario de EDICIÓN
+    const userData = {
+        nombre: document.getElementById('editUserNombre').value,
+        apellidoPaterno: document.getElementById('editUserApellidoPaterno').value,
+        apellidoMaterno: document.getElementById('editUserApellidoMaterno').value,
+        edad: parseInt(document.getElementById('editUserEdad').value),
+        email: document.getElementById('editUserEmail').value,
+        password: document.getElementById('editUserPassword').value, // Puede ir vacío
+        rol: document.getElementById('editUserRol').value,
+        subscriptionId: parseInt(document.getElementById('editUserSubscriptionType').value)
+    };
+
+    if (!userData.nombre || !userData.email) {
+        alert("Nombre y correo son obligatorios.");
+        return;
+    }
+
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Actualizando...';
+    btn.disabled = true;
+
+    try {
+        // Petición PUT al backend
+        // Endpoint: PUT /api/admin/users/{id}
+        const response = await fetch(`http://localhost:8080/api/admin/users/${userToEditId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData)
+        });
+
+        if (response.ok) {
+            const modalEl = document.getElementById('editUserModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            modalInstance.hide();
+
+            alert("Usuario actualizado correctamente.");
+            await initializeUsuarios(); // Recargar tabla para ver los cambios
+
+        } else {
+            const errorMsg = await response.text();
+            alert("Error al actualizar: " + errorMsg);
+        }
+
+    } catch (error) {
+        console.error("Error actualizando usuario:", error);
+        alert("Error de conexión con el servidor.");
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        userToEditId = null;
+    }
+}
+
 
 // ==========================================
 // PAGINACIÓN Y EXTRAS
@@ -320,11 +578,7 @@ function changePageUsuarios(page) {
 function updateNotificationsDropdown() {
     const badge = document.getElementById('notificationBadge');
     const dropdownContent = document.getElementById('activitiesDropdownContent');
-    
-    if (!badge || !dropdownContent) return;
-
-    // Asegúrate de que la variable 'activities' exista (probablemente en principal.js)
-    if (typeof activities === 'undefined') return;
+    if (!badge || !dropdownContent || typeof activities === 'undefined') return;
 
     const recentActivities = activities.slice(0, 5);
     const unreadCount = recentActivities.filter(act => !act.read).length;
@@ -333,54 +587,55 @@ function updateNotificationsDropdown() {
     badge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
 
     let dropdownHTML = '';
-
     if (recentActivities.length === 0) {
         dropdownHTML = `<li><span class="dropdown-item text-muted text-center small">No hay actividades recientes</span></li>`;
     } else {
         recentActivities.forEach(activity => {
-            // Funciones auxiliares (getActivityIcon, getTimeAgo) deben estar en principal.js
             const icon = typeof getActivityIcon === 'function' ? getActivityIcon(activity.type) : 'bi-bell';
             const timeAgo = typeof getTimeAgo === 'function' ? getTimeAgo(activity.timestamp) : '';
-
-            dropdownHTML += `
-                <li class="notification-item ${activity.read ? 'read' : 'unread'}">
-                    <a class="dropdown-item ${activity.read ? '' : 'fw-bold'}" href="actividades.html">
-                        <div class="d-flex align-items-start">
-                            <i class="bi ${icon} me-2"></i>
-                            <div class="flex-grow-1">
-                                <div class="small">${activity.message}</div>
-                                <div class="text-muted small">${timeAgo}</div>
-                            </div>
-                            ${!activity.read ? '<span class="badge bg-success rounded-pill ms-2" style="font-size: 0.6em;">●</span>' : ''}
-                        </div>
-                    </a>
-                </li>
-            `;
+            dropdownHTML += `<li class="notification-item ${activity.read ? 'read' : 'unread'}"><a class="dropdown-item" href="actividades.html"><div class="d-flex align-items-start"><i class="bi ${icon} me-2"></i><div><div class="small">${activity.message}</div><div class="text-muted small">${timeAgo}</div></div></div></a></li>`;
         });
     }
-
     dropdownContent.innerHTML = dropdownHTML;
 }
 
-function exportUsersToCSV(filename) {
-    let csv = 'ID,Nombre,Email,Tipo Suscripción,Fecha Registro\n';
-    
-    users.forEach(user => {
-        csv += `"${user.id}","${user.name}","${user.email}","${user.subscriptionType}","${user.registrationDate}"\n`;
-    });
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', filename);
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    
-    // Asegúrate de que showNotification esté definida
-    if(typeof showNotification === 'function') {
-        showNotification('Datos exportados exitosamente', 'success');
-    }
+// 7. EXPORTAR (AHORA LLAMA AL BACKEND PARA DESCARGAR EL EXCEL)
+function exportUsersToCSV(filename) { // Mantenemos el nombre de la función para no romper el listener, aunque descargue Excel
+    const exportBtn = document.getElementById('exportBtnUsuarios');
+    const originalText = exportBtn.innerHTML;
+    exportBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Exportando...';
+    exportBtn.disabled = true;
+
+    // Llamada al endpoint del Backend
+    fetch('http://localhost:8080/api/admin/users/export/excel')
+        .then(response => {
+            if (response.ok) {
+                return response.blob();
+            }
+            throw new Error('Error al exportar');
+        })
+        .then(blob => {
+            // Crear link invisible para descargar
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            // Nombre del archivo (puede venir del header o ponemos uno nosotros)
+            a.download = 'reporte_usuarios_finli.xlsx'; 
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            if(typeof showNotification === 'function') {
+                showNotification('Excel descargado exitosamente', 'success');
+            }
+        })
+        .catch(error => {
+            console.error('Error exportando:', error);
+            alert('Hubo un error al generar el Excel.');
+        })
+        .finally(() => {
+            exportBtn.innerHTML = originalText;
+            exportBtn.disabled = false;
+        });
 }

@@ -28,7 +28,10 @@ html, body {
 }
 
 .sidebar {
-    width: 270px;
+    width: 280px;       /* 1. Aumentamos un poco el ancho (de 270 a 280) */
+    min-width: 280px;   /* 2. OBLIGATORIO: Impide que el navegador la haga más pequeña */
+    flex-shrink: 0;     /* 3. CRÍTICO: Le dice al Flexbox "No me aplastes, empuja lo demás" */
+    
     background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
@@ -41,6 +44,7 @@ html, body {
     overflow: auto;
     border: 1px solid rgba(255,255,255,0.5);
     transition: all 0.3s ease;
+    z-index: 100; /* Aseguramos que quede por encima si algo se mueve */
 }
 
 .sidebar:hover {
@@ -132,6 +136,7 @@ html, body {
 
 .main {
     flex: 1;
+    min-width: 0; 
     padding: 1.75rem;
     border-radius: 20px;
     background: rgba(255,255,255,0.7);
@@ -140,6 +145,7 @@ html, body {
     box-shadow: var(--card-shadow);
     border: 1px solid rgba(255,255,255,0.4);
     transition: all 0.3s ease;
+    overflow-x: hidden; 
 }
 
 .main:hover {
@@ -743,8 +749,10 @@ html, body {
 /* Mejoras visuales para tablas */
 .table-responsive {
     border-radius: 14px;
-    overflow: hidden;
+    overflow-x: auto; 
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) rgba(0,0,0,0.05);
 }
 
 .table thead th:first-child {

@@ -9,9 +9,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserAdminDTO {
     private Integer id;
-    private String name;             // El JS espera "name"
-    private String email;            // El JS espera "email"
-    private String subscriptionType; // El JS espera "subscriptionType"
-    private String registrationDate; // El JS espera "registrationDate"
-    private String photo;            // El JS espera "photo"
+    private String name;             
+    private String email;            
+    private String subscriptionType; 
+    private String registrationDate; 
+    private String photo;            
+    
+    // --- NUEVO CAMPO ---
+    private String status; // Aquí guardaremos "Activo" o "Inactivo"
 }

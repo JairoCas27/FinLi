@@ -39,6 +39,10 @@ public class Usuario {
     @Column(nullable = false)
     private Integer edad;
 
+    // --- NUEVO CAMPO AGREGADO (Soluciona el error setRol) ---
+    @Column(nullable = false, length = 20)
+    private String rol; 
+    // --------------------------------------------------------
 
     @OneToMany(mappedBy = "usuario", 
     fetch = FetchType.LAZY, 

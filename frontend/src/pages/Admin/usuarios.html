@@ -123,6 +123,7 @@
                                     <th>Nombres</th>
                                     <th>Correo electrónico</th>
                                     <th>Tipo de Suscripción</th>
+                                    <th>Estado</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>
                             </thead>
@@ -146,7 +147,7 @@
     </div>
 
     <!-- Modals para usuarios -->
-    <!-- Add User Modal -->
+    <!-- Add User Modal (ACTUALIZADO CON TODOS LOS CAMPOS) -->
     <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -156,6 +157,7 @@
                 </div>
                 <div class="modal-body">
                     <form id="addUserForm">
+                        <!-- FOTO (Opcional) -->
                         <div class="photo-preview-container">
                             <img id="addPhotoPreview" class="photo-preview" alt="Vista previa de la foto">
                         </div>
@@ -163,31 +165,61 @@
                             <label for="userPhoto" class="form-label">Foto de perfil</label>
                             <input type="file" class="form-control" id="userPhoto" accept="image/*">
                         </div>
+
+                        <!-- DATOS PERSONALES -->
                         <div class="mb-3">
-                            <label for="userName" class="form-label">Nombre completo</label>
-                            <input type="text" class="form-control" id="userName" required>
+                            <label for="userNombre" class="form-label">Nombres</label>
+                            <input type="text" class="form-control" id="userNombre" placeholder="Ej: Juan Carlos" required>
                         </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="userApellidoPaterno" class="form-label">Apellido Paterno</label>
+                                <input type="text" class="form-control" id="userApellidoPaterno" placeholder="Ej: Pérez" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="userApellidoMaterno" class="form-label">Apellido Materno</label>
+                                <input type="text" class="form-control" id="userApellidoMaterno" placeholder="Ej: Gómez" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="userEdad" class="form-label">Edad</label>
+                            <input type="number" class="form-control" id="userEdad" min="18" max="100" required>
+                        </div>
+
+                        <!-- CREDENCIALES -->
                         <div class="mb-3">
                             <label for="userEmail" class="form-label">Correo electrónico</label>
-                            <input type="email" class="form-control" id="userEmail" required>
+                            <input type="email" class="form-control" id="userEmail" placeholder="nombre@ejemplo.com" required>
                         </div>
-                        <div class="mb-3">
-                            <label for="userSubscriptionType" class="form-label">Tipo de Suscripción</label>
-                            <select class="form-select" id="userSubscriptionType" required>
-                                <option value="Sin suscripción">Sin suscripción</option>
-                                <option value="Mensual">Mensual</option>
-                                <option value="Anual">Anual</option>
-                                <option value="De por vida">De por vida</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="userRegistrationDate" class="form-label">Fecha de Registro</label>
-                            <input type="date" class="form-control" id="userRegistrationDate" required>
-                        </div>
+                        
                         <div class="mb-3">
                             <label for="userPassword" class="form-label">Contraseña</label>
                             <input type="password" class="form-control" id="userPassword" required>
                         </div>
+
+                        <!-- CONFIGURACIÓN -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="userRol" class="form-label">Rol</label>
+                                <select class="form-select" id="userRol" required>
+                                    <option value="usuario" selected>Usuario</option>
+                                    <option value="admin">Administrador</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="userSubscriptionType" class="form-label">Suscripción Inicial</label>
+                                <!-- Usamos los IDs de tu base de datos como value -->
+                                <select class="form-select" id="userSubscriptionType" required>
+                                    <option value="4">Gratuito</option>
+                                    <option value="1">Mensual</option>
+                                    <option value="2">Anual</option>
+                                    <option value="3">De por vida</option>
+                                </select>
+                            </div>
+                        </div>
+
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -198,7 +230,7 @@
         </div>
     </div>
 
-    <!-- Edit User Modal -->
+    <!-- Edit User Modal (ACTUALIZADO) -->
     <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -208,6 +240,7 @@
                 </div>
                 <div class="modal-body">
                     <form id="editUserForm">
+                        <!-- FOTO -->
                         <div class="photo-preview-container">
                             <img id="editPhotoPreview" class="photo-preview" alt="Vista previa de la foto">
                         </div>
@@ -215,26 +248,59 @@
                             <label for="editUserPhoto" class="form-label">Foto de perfil</label>
                             <input type="file" class="form-control" id="editUserPhoto" accept="image/*">
                         </div>
+
+                        <!-- DATOS PERSONALES -->
                         <div class="mb-3">
-                            <label for="editUserName" class="form-label">Nombre completo</label>
-                            <input type="text" class="form-control" id="editUserName" required>
+                            <label for="editUserNombre" class="form-label">Nombres</label>
+                            <input type="text" class="form-control" id="editUserNombre" required>
                         </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editUserApellidoPaterno" class="form-label">Apellido Paterno</label>
+                                <input type="text" class="form-control" id="editUserApellidoPaterno" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editUserApellidoMaterno" class="form-label">Apellido Materno</label>
+                                <input type="text" class="form-control" id="editUserApellidoMaterno" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editUserEdad" class="form-label">Edad</label>
+                            <input type="number" class="form-control" id="editUserEdad" min="18" max="100" required>
+                        </div>
+
+                        <!-- CREDENCIALES -->
                         <div class="mb-3">
                             <label for="editUserEmail" class="form-label">Correo electrónico</label>
                             <input type="email" class="form-control" id="editUserEmail" required>
                         </div>
+                        
                         <div class="mb-3">
-                            <label for="editUserSubscriptionType" class="form-label">Tipo de Suscripción</label>
-                            <select class="form-select" id="editUserSubscriptionType" required>
-                                <option value="Sin suscripción">Sin suscripción</option>
-                                <option value="Mensual">Mensual</option>
-                                <option value="Anual">Anual</option>
-                                <option value="De por vida">De por vida</option>
-                            </select>
+                            <label for="editUserPassword" class="form-label">Nueva Contraseña</label>
+                            <input type="password" class="form-control" id="editUserPassword" placeholder="Dejar en blanco para mantener la actual">
+                            <div class="form-text small text-muted">Solo escribe aquí si deseas cambiarla.</div>
                         </div>
-                        <div class="mb-3">
-                            <label for="editUserRegistrationDate" class="form-label">Fecha de Registro</label>
-                            <input type="date" class="form-control" id="editUserRegistrationDate" required>
+
+                        <!-- CONFIGURACIÓN -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editUserRol" class="form-label">Rol</label>
+                                <select class="form-select" id="editUserRol" required>
+                                    <option value="usuario">Usuario</option>
+                                    <option value="admin">Administrador</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editUserSubscriptionType" class="form-label">Suscripción</label>
+                                <select class="form-select" id="editUserSubscriptionType" required>
+                                    <option value="4">Gratuito</option>
+                                    <option value="1">Mensual</option>
+                                    <option value="2">Anual</option>
+                                    <option value="3">De por vida</option>
+                                </select>
+                            </div>
                         </div>
                     </form>
                 </div>
