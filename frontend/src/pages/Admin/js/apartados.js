@@ -25,7 +25,7 @@ function initializeApartados() {
     fetchCategoriesAndSubcategories();
     
     // 2. Renderizar el resto (lógica local original intacta)
-    loadDefaultPaymentMethods();
+    fetchDefaultPaymentMethods();
     updateNotificationsDropdown();
     
     // Event listeners para gestión de categorías
@@ -82,6 +82,29 @@ async function fetchCategoriesAndSubcategories() {
         console.error("Error al cargar apartados:", error);
         const containerCat = document.getElementById('defaultCategoriesList');
         if(containerCat) containerCat.innerHTML = '<div class="text-center text-danger p-3">Error de conexión con el servidor.</div>';
+    }
+}
+
+// --- NUEVA FUNCIÓN: TRAER MEDIOS DE PAGO DESDE BACKEND ---
+async function fetchDefaultPaymentMethods() {
+    try {
+        // Endpoint: /api/admin/payment-methods
+        const response = await fetch('http://localhost:8080/api/admin/payment-methods');
+        
+        if (!response.ok) {
+            throw new Error('Error al obtener medios de pago');
+        }
+
+        // Guardamos los datos del backend (DTO: id, name, logo)
+        paymentMethods = await response.json();
+        
+        // Renderizamos las tarjetas
+        renderDefaultPaymentMethods();
+        
+    } catch (error) {
+        console.error("Error:", error);
+        const containerPay = document.getElementById('defaultPaymentMethodsList');
+        if(containerPay) containerPay.innerHTML = '<div class="text-center text-danger p-3">Error de conexión con el servidor.</div>';
     }
 }
 
@@ -213,60 +236,48 @@ function renderDefaultSubcategories() {
     container.innerHTML = html;
 }
 
-// ==========================================
-// MEDIOS DE PAGO (PENDIENTE DE BACKEND)
+/// ==========================================
+// RENDERIZADO DE MEDIOS DE PAGO (ACTUALIZADO)
 // ==========================================
 
-function loadDefaultPaymentMethods() {
+function renderDefaultPaymentMethods() {
     const container = document.getElementById('defaultPaymentMethodsList');
-    if (!container) return; // Validación extra por si no existe el contenedor
+    if (!container) return;
 
     let html = '';
     
-    // Si no hay medios de pago, mostramos solo el botón de agregar
-    if (paymentMethods.length === 0) {
-        container.innerHTML = `
-            <div class="col-md-6 col-lg-3 mb-4">
-                <div class="payment-method-card d-flex align-items-center justify-content-center" 
-                        style="border: 2px dashed var(--accent); background: rgba(14, 164, 111, 0.05); cursor: pointer;" 
-                        onclick="showAddPaymentMethodModal()">
-                    <div class="text-center">
-                        <i class="bi bi-plus-circle display-6 text-success mb-2"></i>
-                        <h6 class="text-success">Agregar Medio de Pago</h6>
-                    </div>
-                </div>
-            </div>
-        `;
-        return;
-    }
+    // Verificamos si hay métodos de pago cargados
+    let hasMethods = paymentMethods && paymentMethods.length > 0;
     
-    paymentMethods.forEach((method, index) => {
-        html += `
-            <div class="col-md-6 col-lg-3 mb-4">
-                <div class="payment-method-card">
-                    ${method.logo ? `
-                        <img src="${method.logo}" alt="${method.name}" class="payment-method-logo" 
-                                onerror="this.src='/frontend/public/img/Tipos/default.png'; this.onerror=null;">
-                    ` : `
+    if (hasMethods) {
+        paymentMethods.forEach((method, index) => {
+            // Usamos el 'logo' (clase bi-) que ahora viene del backend (MedioPagoDTO.logo)
+            const iconClass = method.logo || 'bi-credit-card'; 
+
+            html += `
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <div class="payment-method-card">
+                        
                         <div class="payment-method-icon">
-                            <i class="bi bi-credit-card"></i>
+                            <i class="bi ${iconClass}"></i>
                         </div>
-                    `}
-                    <h6 class="mb-2">${method.name}</h6>
-                    <div class="d-flex justify-content-center gap-2 mt-3">
-                        <button class="btn btn-sm btn-outline-warning" onclick="editPaymentMethod(${index})" title="Editar">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deletePaymentMethod(${index})" title="Eliminar">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                        
+                        <h6 class="mb-2">${method.name}</h6>
+                        <div class="d-flex justify-content-center gap-2 mt-3">
+                            <button class="btn btn-sm btn-outline-warning" onclick="editPaymentMethod(${index})" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deletePaymentMethod(${index})" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `;
-    });
-    
-    // Agregar botón para nuevo medio de pago
+            `;
+        });
+    }
+
+    // Agregamos el botón de nuevo medio de pago (se muestra siempre o después de los listados)
     html += `
         <div class="col-md-6 col-lg-3 mb-4">
             <div class="payment-method-card d-flex align-items-center justify-content-center" 
@@ -281,6 +292,13 @@ function loadDefaultPaymentMethods() {
     `;
     
     container.innerHTML = html;
+}
+
+// La función loadDefaultPaymentMethods original ahora es solo un wrapper o ya no se usa, pero la actualizo para que no haga doble trabajo.
+function loadDefaultPaymentMethods() {
+    // Ya no es necesario que esta función haga nada, pues initializeApartados llama a fetchDefaultPaymentMethods()
+    // Si otras partes del código la llaman, simplemente renderizamos lo que se haya cargado.
+    renderDefaultPaymentMethods();
 }
 
 // ==========================================
@@ -488,37 +506,36 @@ function editPaymentMethod(index) {
     modal.show();
 }
 
-function savePaymentMethod() {
+async function savePaymentMethod() {
     const name = document.getElementById('paymentMethodName').value.trim();
     const logo = document.getElementById('paymentMethodLogo').value.trim();
-    
+
     if (!name) {
         showNotification('Por favor ingresa un nombre para el medio de pago', 'error');
         return;
     }
-    
-    if (currentEditingPaymentMethod !== null) {
-        // Editar medio de pago existente
-        paymentMethods[currentEditingPaymentMethod].name = name;
-        if (logo) {
-            paymentMethods[currentEditingPaymentMethod].logo = logo;
-        }
-    } else {
-        // Agregar nuevo medio de pago
-        paymentMethods.push({
-            name: name,
-            logo: logo || null
+
+    const payload = { name, logo };
+
+    try {
+        const response = await fetch('http://localhost:8080/api/admin/payment-methods', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
+
+        if (!response.ok) throw new Error('Error al guardar');
+
+        // Recargamos la lista
+        await fetchDefaultPaymentMethods();
+
+        showNotification('Medio de pago creado exitosamente', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('paymentMethodModal')).hide();
+
+    } catch (e) {
+        console.error(e);
+        showNotification('No se pudo crear el medio de pago', 'error');
     }
-    
-    savePaymentMethods();
-    loadDefaultPaymentMethods();
-    
-    showNotification(`Medio de pago ${currentEditingPaymentMethod !== null ? 'actualizado' : 'creado'} exitosamente`, 'success');
-    
-    const modal = bootstrap.Modal.getInstance(document.getElementById('paymentMethodModal'));
-    modal.hide();
-    currentEditingPaymentMethod = null;
 }
 
 function deletePaymentMethod(index) {

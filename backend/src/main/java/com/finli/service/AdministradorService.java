@@ -1,24 +1,27 @@
 package com.finli.service;
 
 import com.finli.dto.CategoriaDTO;
-import com.finli.dto.SubcategoriaDTO; // <-- IMPORTANTE: Nuevo DTO
+import com.finli.dto.SubcategoriaDTO; 
 import com.finli.dto.PaginacionUsuarioResponse;
 import com.finli.dto.UserCreateDTO; 
 import com.finli.dto.UserDetailDTO; 
 import com.finli.dto.UsuarioResponse;
-import com.finli.model.Categoria; // <-- IMPORTANTE: Nuevo Modelo
+import com.finli.dto.MedioPagoDTO; 
+import com.finli.model.Categoria; 
 import com.finli.model.EstadoSuscripcion; 
 import com.finli.model.EstadoUsuario;
+import com.finli.model.MedioPago; 
 import com.finli.model.Suscripcion; 
 import com.finli.model.TipoSuscripcion; 
 import com.finli.model.Usuario;
 import com.finli.repository.CategoriaRepository; 
 import com.finli.repository.EstadoSuscripcionRepository; 
 import com.finli.repository.EstadoUsuarioRepository;
+import com.finli.repository.MedioPagoRepository; 
 import com.finli.repository.SuscripcionRepository; 
 import com.finli.repository.TipoSuscripcionRepository; 
 import com.finli.repository.UsuarioRepository;
-import com.finli.repository.SubcategoriaRepository; // <-- NUEVO REPOSITORIO
+import com.finli.repository.SubcategoriaRepository; 
 import lombok.RequiredArgsConstructor;
 import org.mindrot.jbcrypt.BCrypt; 
 import org.springframework.data.domain.Page;
@@ -28,7 +31,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate; 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -46,55 +50,65 @@ public class AdministradorService {
     private final TipoSuscripcionRepository tipoSuscripcionRepository;
     private final EstadoSuscripcionRepository estadoSuscripcionRepository;
     private final CategoriaRepository categoriaRepository;
-    private final SubcategoriaRepository subcategoriaRepository; // <-- NUEVO REPOSITORIO
-
+    private final SubcategoriaRepository subcategoriaRepository; 
+    private final MedioPagoRepository medioPagoRepository; // <-- AHORA INYECTADO
+    
     private final Integer ID_ESTADO_ACTIVO = 1; 
     private final Integer ID_ESTADO_INACTIVO = 2; 
 
     // ====================================================================================
-    // === GESTIÓN DE CATEGORÍAS Y SUBCATEGORÍAS ===
+    // === GESTIÓN DE CATEGORÍAS, SUBCATEGORÍAS y MEDIOS DE PAGO ===
     // ====================================================================================
 
     @Transactional(readOnly = true)
     public List<CategoriaDTO> listarCategoriasPredeterminadas() {
-        // 1. Obtenemos los datos crudos de la DB (id, nombre, cantidad)
         List<CategoriaRepository.CategoriaProjection> proyecciones = categoriaRepository.obtenerCategoriasPredeterminadasConConteo();
 
-        // 2. Convertimos a DTO y asignamos estilos visuales
         return proyecciones.stream().map(proj -> {
             CategoriaDTO dto = new CategoriaDTO();
             dto.setId(proj.getId());
             dto.setLabel(proj.getNombre());
             dto.setSubcategoriesCount(proj.getCantidadSubcategorias());
             
-            // Asignar icono y color basado en el nombre (Lógica visual)
             asignarEstiloCategoria(dto);
             
             return dto;
         }).collect(Collectors.toList());
     }
 
-    // --- NUEVO MÉTODO: LISTAR SUBCATEGORÍAS POR CATEGORÍA ---
     @Transactional(readOnly = true)
     public List<SubcategoriaDTO> obtenerSubcategoriasPorCategoria(Integer categoriaId) {
-        // 1. Buscar la entidad Categoria
         Categoria categoria = categoriaRepository.findById(categoriaId)
                 .orElseThrow(() -> new RuntimeException("Categoría no encontrada con ID: " + categoriaId));
         
-        // 2. Obtener la lista de Subcategorías
         List<com.finli.model.Subcategoria> subcategorias = subcategoriaRepository.findByCategoria(categoria);
         
-        // 3. Convertir a DTO y asignar estilos
         return subcategorias.stream().map(sub -> {
             SubcategoriaDTO dto = new SubcategoriaDTO();
             dto.setId(sub.getIdSubcategoria());
             dto.setLabel(sub.getNombreSubcategoria());
-            dto.setName(sub.getNombreSubcategoria().toLowerCase().replaceAll("\\s+", "_")); // Generamos el nombre técnico (name)
+            dto.setName(sub.getNombreSubcategoria().toLowerCase().replaceAll("\\s+", "_")); 
             dto.setCategoriaId(categoriaId);
             
-            // Asignar icono visual (Como no está en DB, lo asignamos por nombre)
             asignarIconoSubcategoria(dto);
             
+            return dto;
+        }).collect(Collectors.toList());
+    }
+    // --- NUEVO MÉTODO: LISTAR MEDIOS DE PAGO PREDETERMINADOS ---
+    @Transactional(readOnly = true)
+    public List<MedioPagoDTO> loadDefaultPaymentMethods() {
+        // Filtramos por Usuario=NULL, ya que son los predeterminados del sistema
+        List<MedioPago> mediosPago = medioPagoRepository.findByUsuario(null);
+        
+        return mediosPago.stream().map(mp -> {
+            MedioPagoDTO dto = new MedioPagoDTO();
+            dto.setId(mp.getIdMedioPago());
+            dto.setName(mp.getNombreMedioPago());
+            
+            // Asignar el icono o logo (lógica visual)
+            asignarLogoMedioPago(dto);
+
             return dto;
         }).collect(Collectors.toList());
     }
@@ -156,7 +170,31 @@ public class AdministradorService {
             dto.setIcon("bi-tag"); // Default
         }
     }
+    
+    // --- NUEVO: Método auxiliar para definir el icono del Medio de Pago ---
+    private void asignarLogoMedioPago(MedioPagoDTO dto) {
+        String nombre = dto.getName().toLowerCase();
 
+        if (nombre.contains("efectivo")) {
+            dto.setLogo("bi-cash-coin");
+        } else if (nombre.contains("yape")) {
+            dto.setLogo("bi-qr-code");
+        } else if (nombre.contains("plin")) {
+            dto.setLogo("bi-phone");
+        } else if (nombre.contains("paypal")) {
+            dto.setLogo("bi-paypal");
+        } else if (nombre.contains("bcp")) {
+            dto.setLogo("bi-bank");
+        } else if (nombre.contains("bbva")) {
+            dto.setLogo("bi-credit-card-2-front");
+        } else if (nombre.contains("crédito") || nombre.contains("credito")) {
+            dto.setLogo("bi-credit-card");
+        } else if (nombre.contains("débito") || nombre.contains("debito")) {
+            dto.setLogo("bi-credit-card-fill");
+        } else {
+            dto.setLogo("bi-currency-exchange");
+        }
+    }
     // ====================================================================================
     // === MÉTODOS DE USUARIO (MANTENIDOS) ===
     // ====================================================================================
@@ -300,7 +338,6 @@ public class AdministradorService {
         
         return usuarioRepository.save(usuario);
     }
-
     @Transactional(readOnly = true)
     public PaginacionUsuarioResponse getUsuariosPaginadosYFiltrados(int page, int limit, String status) {
         Pageable pageable = PageRequest.of(page - 1, limit, Sort.by(Sort.Direction.DESC, "id"));
@@ -357,4 +394,20 @@ public class AdministradorService {
             return true;
         }).orElse(false);
     }
+
+    @Transactional
+public MedioPagoDTO crearMedioPagoPredeterminado(MedioPagoDTO dto) {
+    // Guardamos como predeterminado (usuario = null)
+    MedioPago mp = MedioPago.builder()
+            .nombreMedioPago(dto.getName())
+            .montoInicial(0.0)          // valor inicial 0 para el sistema
+            .fechaCreacion(LocalDateTime.now())
+            .usuario(null)               // predeterminado
+            .build();
+
+    mp = medioPagoRepository.save(mp);
+
+    // Devolvemos el DTO con el id asignado
+    return new MedioPagoDTO(mp.getIdMedioPago(), dto.getName(), dto.getLogo());
+}
 }

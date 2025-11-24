@@ -1,13 +1,17 @@
 package com.finli.controller;
 
 import com.finli.dto.CategoriaDTO;
-import com.finli.dto.SubcategoriaDTO; // <-- IMPORTANTE: Nuevo DTO
+import com.finli.dto.SubcategoriaDTO; 
+import com.finli.dto.MedioPagoDTO; 
 import com.finli.service.AdministradorService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable; // <-- IMPORTANTE: Necesario para el ID
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -42,4 +46,19 @@ public class AdminApartadosController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    // --- 3. LISTAR MEDIOS DE PAGO PREDETERMINADOS (GET) ---
+    // Endpoint: /api/admin/payment-methods
+    @GetMapping("/payment-methods")
+    public ResponseEntity<List<MedioPagoDTO>> listarMediosPagoPredeterminados() {
+        // Llama al nuevo método del servicio que filtra por usuario=null y asigna íconos
+        List<MedioPagoDTO> medios = administradorService.loadDefaultPaymentMethods();
+        return ResponseEntity.ok(medios);
+    }
+
+    @PostMapping("/payment-methods")
+public ResponseEntity<MedioPagoDTO> crearMedioPago(@RequestBody MedioPagoDTO dto) {
+    MedioPagoDTO creado = administradorService.crearMedioPagoPredeterminado(dto);
+    return ResponseEntity.status(HttpStatus.CREATED).body(creado);
+}
 }
