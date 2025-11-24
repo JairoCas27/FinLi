@@ -3,9 +3,9 @@
 // ==========================================
 
 // 1. IMPORTANTE: Quitamos 'let' para evitar conflictos si ya existen en principal.js.
-defaultCategories = []; 
+defaultCategories = [];
 defaultSubcategories = {}; // Objeto que contendrá: { '1': [sub1, sub2], '2': [sub3] }
-paymentMethods = []; 
+paymentMethods = [];
 
 // Variables para edición (También quitamos 'let')
 currentEditingCategoryId = null; // Corregido
@@ -16,27 +16,27 @@ currentEditingPaymentMethod = null; // Corregido
 // INICIALIZACIÓN
 // ==========================================
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     initializeApartados();
 });
 
 function initializeApartados() {
     // 1. Cargar Categorías (y Subcategorías) desde el Backend
     fetchCategoriesAndSubcategories();
-    
+
     // 2. Renderizar el resto (lógica local original intacta)
     fetchDefaultPaymentMethods();
     updateNotificationsDropdown();
-    
+
     // Event listeners para gestión de categorías
     const saveCatBtn = document.getElementById('saveCategoryBtn');
-    if(saveCatBtn) saveCatBtn.addEventListener('click', saveCategory);
+    if (saveCatBtn) saveCatBtn.addEventListener('click', saveCategory);
 
     const saveSubcatBtn = document.getElementById('saveSubcategoryBtn');
-    if(saveSubcatBtn) saveSubcatBtn.addEventListener('click', saveSubcategory);
+    if (saveSubcatBtn) saveSubcatBtn.addEventListener('click', saveSubcategory);
 
     const savePayBtn = document.getElementById('savePaymentMethodBtn');
-    if(savePayBtn) savePayBtn.addEventListener('click', savePaymentMethod);
+    if (savePayBtn) savePayBtn.addEventListener('click', savePaymentMethod);
 }
 
 // --- NUEVA FUNCIÓN: TRAER CATEGORÍAS Y SUBCATEGORÍAS ---
@@ -44,23 +44,23 @@ async function fetchCategoriesAndSubcategories() {
     try {
         // Petición de Categorías
         const catResponse = await fetch('http://localhost:8080/api/admin/categories');
-        
+
         if (!catResponse.ok) {
             throw new Error('Error al obtener categorías');
         }
 
         defaultCategories = await catResponse.json();
-        
+
         // Petición de Subcategorías (Traer TODAS y agrupar)
         // Usamos un endpoint que traiga todas las subcategorías del sistema para agruparlas.
         // Como no hemos creado un endpoint /subcategories/all, llamaremos a cada categoría individualmente
         // NOTA: Para producción, crear un endpoint /subcategories/all que devuelva {categoriaId: [sub1, sub2]} sería más eficiente.
-        
+
         const allSubcategories = {};
-        
+
         for (const category of defaultCategories) {
             const subResponse = await fetch(`http://localhost:8080/api/admin/categories/${category.id}/subcategories`);
-            
+
             if (subResponse.ok) {
                 const subs = await subResponse.json();
                 if (subs.length > 0) {
@@ -70,18 +70,18 @@ async function fetchCategoriesAndSubcategories() {
                 console.warn(`No se encontraron subcategorías para ID: ${category.id}`);
             }
         }
-        
+
         defaultSubcategories = allSubcategories;
         console.log("Subcategorías agrupadas:", Object.keys(defaultSubcategories).length);
 
         // Renderizamos ambas secciones
-        renderDefaultCategories(); 
-        renderDefaultSubcategories(); 
-        
+        renderDefaultCategories();
+        renderDefaultSubcategories();
+
     } catch (error) {
         console.error("Error al cargar apartados:", error);
         const containerCat = document.getElementById('defaultCategoriesList');
-        if(containerCat) containerCat.innerHTML = '<div class="text-center text-danger p-3">Error de conexión con el servidor.</div>';
+        if (containerCat) containerCat.innerHTML = '<div class="text-center text-danger p-3">Error de conexión con el servidor.</div>';
     }
 }
 
@@ -90,21 +90,21 @@ async function fetchDefaultPaymentMethods() {
     try {
         // Endpoint: /api/admin/payment-methods
         const response = await fetch('http://localhost:8080/api/admin/payment-methods');
-        
+
         if (!response.ok) {
             throw new Error('Error al obtener medios de pago');
         }
 
         // Guardamos los datos del backend (DTO: id, name, logo)
         paymentMethods = await response.json();
-        
+
         // Renderizamos las tarjetas
         renderDefaultPaymentMethods();
-        
+
     } catch (error) {
         console.error("Error:", error);
         const containerPay = document.getElementById('defaultPaymentMethodsList');
-        if(containerPay) containerPay.innerHTML = '<div class="text-center text-danger p-3">Error de conexión con el servidor.</div>';
+        if (containerPay) containerPay.innerHTML = '<div class="text-center text-danger p-3">Error de conexión con el servidor.</div>';
     }
 }
 
@@ -127,13 +127,11 @@ function renderDefaultCategories() {
         `;
     } else {
         defaultCategories.forEach(category => {
-            // CAMBIO: Usamos el conteo que viene del Backend
             const subcategoriesCount = category.subcategoriesCount || 0;
             
             html += `
                 <div class="list-group-item d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
-                        <!-- Icono y Color vienen del Backend -->
                         <i class="${category.icon} text-${category.color} me-3 fs-5"></i>
                         <div>
                             <strong class="d-block">${category.label}</strong>
@@ -146,9 +144,16 @@ function renderDefaultCategories() {
                             <button class="btn btn-sm btn-outline-warning" onclick="editCategory('${category.id}')" title="Editar categoría">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteCategory('${category.id}')" title="Eliminar categoría">
-                                <i class="bi bi-trash"></i>
-                            </button>
+                            ${subcategoriesCount === 0 
+                                ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteCategory('${category.id}')" title="Eliminar categoría">
+                                       <i class="bi bi-trash"></i>
+                                   </button>`
+                                : `<button class="btn btn-sm btn-outline-secondary" 
+                                              onclick="showNotification('Primero elimina todas sus subcategorías','warning')" 
+                                              disabled>
+                                       <i class="bi bi-trash"></i>
+                                   </button>`
+                            }
                         </div>
                     </div>
                 </div>
@@ -166,17 +171,17 @@ function renderDefaultCategories() {
 function renderDefaultSubcategories() {
     const container = document.getElementById('defaultSubcategoriesList');
     if (!container) return;
-    
+
     let html = '<div class="manage-categories-container">';
     let totalSubcategoriesRendered = 0;
-    
+
     defaultCategories.forEach(category => {
         // Las subcategorías se leen de la variable global 'defaultSubcategories'
         const subcategories = defaultSubcategories[category.id] || [];
-        
+
         if (subcategories.length > 0) {
             totalSubcategoriesRendered += subcategories.length;
-            
+
             // Renderizar el encabezado (Vivienda 11 subcategorías)
             html += `
                 <div class="mb-4">
@@ -187,7 +192,7 @@ function renderDefaultSubcategories() {
                     </div>
                     <div class="row g-2">
             `;
-            
+
             // Renderizar las tarjetas de subcategoría
             subcategories.forEach((subcategory) => {
                 html += `
@@ -217,11 +222,11 @@ function renderDefaultSubcategories() {
                     </div>
                 `;
             });
-            
+
             html += `</div></div>`;
         }
     });
-    
+
     // Si no hay ninguna subcategoría en total (incluyendo las que vienen del backend)
     if (totalSubcategoriesRendered === 0) {
         html = `
@@ -231,7 +236,7 @@ function renderDefaultSubcategories() {
             </div>
         `;
     }
-    
+
     html += '</div>';
     container.innerHTML = html;
 }
@@ -245,14 +250,14 @@ function renderDefaultPaymentMethods() {
     if (!container) return;
 
     let html = '';
-    
+
     // Verificamos si hay métodos de pago cargados
     let hasMethods = paymentMethods && paymentMethods.length > 0;
-    
+
     if (hasMethods) {
         paymentMethods.forEach((method, index) => {
             // Usamos el 'logo' (clase bi-) que ahora viene del backend (MedioPagoDTO.logo)
-            const iconClass = method.logo || 'bi-credit-card'; 
+            const iconClass = method.logo || 'bi-credit-card';
 
             html += `
                 <div class="col-md-6 col-lg-3 mb-4">
@@ -290,7 +295,7 @@ function renderDefaultPaymentMethods() {
             </div>
         </div>
     `;
-    
+
     container.innerHTML = html;
 }
 
@@ -313,8 +318,8 @@ function setupEventListeners() {
 
 function showAddCategoryModal() {
     const input = document.getElementById('categoryName');
-    if(input) input.value = '';
-    
+    if (input) input.value = '';
+
     const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
     modal.show();
 }
@@ -330,19 +335,19 @@ function editCategory(id) {
 function deleteCategory(id) {
     const category = defaultCategories.find(c => c.id === id);
     if (!category) return;
-    
+
     if (!confirm(`¿Estás seguro de que deseas eliminar la categoría "${category.label}"?\n\nEsta acción eliminará también todas sus subcategorías y no se puede deshacer.`)) {
         return;
     }
-    
+
     // Lógica local para simulación
     defaultCategories = defaultCategories.filter(c => c.id !== id);
     delete defaultSubcategories[id];
-    
+
     saveDefaultCategories();
     saveDefaultSubcategories();
     fetchCategoriesAndSubcategories(); // Usamos el fetch para recargar
-    
+
     addActivity(`Categoría eliminada: ${category.label}`, 'system');
     showNotification('Categoría eliminada exitosamente', 'success');
 }
@@ -355,18 +360,18 @@ function showAddSubcategoryModal() {
     document.getElementById('subcategoryIcon').value = 'bi-tag';
     document.getElementById('saveSubcategoryBtn').textContent = 'Crear Subcategoría';
     document.getElementById('saveSubcategoryBtn').className = 'btn btn-success';
-    
+
     // Cargar categorías padre
     const parentCategorySelect = document.getElementById('parentCategory');
     parentCategorySelect.innerHTML = '';
-    
+
     defaultCategories.forEach(category => {
         const option = document.createElement('option');
         option.value = category.id;
         option.textContent = category.label;
         parentCategorySelect.appendChild(option);
     });
-    
+
     const modal = new bootstrap.Modal(document.getElementById('subcategoryModal'));
     modal.show();
 }
@@ -375,20 +380,20 @@ function editSubcategory(categoryId, subcategoryId) {
     // Buscamos por ID (numérico)
     const subcategory = defaultSubcategories[categoryId]?.find(s => s.id == subcategoryId);
     if (!subcategory) return;
-    
+
     currentEditingSubcategoryId = subcategoryId;
     currentEditingCategoryId = categoryId;
-    
+
     document.getElementById('subcategoryModalLabel').textContent = 'Editar Subcategoría';
     document.getElementById('subcategoryName').value = subcategory.label;
     document.getElementById('subcategoryIcon').value = subcategory.icon;
     document.getElementById('saveSubcategoryBtn').textContent = 'Actualizar Subcategoría';
     document.getElementById('saveSubcategoryBtn').className = 'btn btn-warning';
-    
+
     // Cargar categorías padre
     const parentCategorySelect = document.getElementById('parentCategory');
     parentCategorySelect.innerHTML = '';
-    
+
     defaultCategories.forEach(category => {
         const option = document.createElement('option');
         option.value = category.id;
@@ -398,88 +403,80 @@ function editSubcategory(categoryId, subcategoryId) {
         }
         parentCategorySelect.appendChild(option);
     });
-    
+
     const modal = new bootstrap.Modal(document.getElementById('subcategoryModal'));
     modal.show();
 }
 
-function saveSubcategory() {
+async function saveSubcategory() {
     const name = document.getElementById('subcategoryName').value.trim();
     const icon = document.getElementById('subcategoryIcon').value;
     const parentCategoryId = document.getElementById('parentCategory').value;
-    
-    if (!name) {
-        showNotification('Por favor ingresa un nombre para la subcategoría', 'error');
+
+    if (!name || !parentCategoryId) {
+        showNotification('Nombre y categoría padre son obligatorios', 'error');
         return;
     }
-    
-    if (!parentCategoryId) {
-        showNotification('Por favor selecciona una categoría padre', 'error');
-        return;
-    }
-    
-    if (currentEditingSubcategoryId) {
-        // Lógica de Edición Local
-        const subcategoryIndex = defaultSubcategories[currentEditingCategoryId]?.findIndex(s => s.id == currentEditingSubcategoryId);
-        if (subcategoryIndex !== -1) {
-            defaultSubcategories[currentEditingCategoryId][subcategoryIndex].label = name;
-            defaultSubcategories[currentEditingCategoryId][subcategoryIndex].icon = icon;
-            
-            // Si cambió la categoría padre, mover la subcategoría
-            if (currentEditingCategoryId != parentCategoryId) {
-                const subcategory = defaultSubcategories[currentEditingCategoryId][subcategoryIndex];
-                defaultSubcategories[currentEditingCategoryId].splice(subcategoryIndex, 1);
-                
-                if (!defaultSubcategories[parentCategoryId]) {
-                    defaultSubcategories[parentCategoryId] = [];
-                }
-                defaultSubcategories[parentCategoryId].push(subcategory);
-            }
+
+    // Payload con icono opcional
+    const payload = {
+        label: name,
+        categoriaId: parseInt(parentCategoryId),
+        icon: icon || null // si no eligió, mandamos null
+    };
+
+    const url = currentEditingSubcategoryId
+        ? `http://localhost:8080/api/admin/subcategories/${currentEditingSubcategoryId}`
+        : 'http://localhost:8080/api/admin/subcategories';
+
+    const method = currentEditingSubcategoryId ? 'PUT' : 'POST';
+
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const msg = await response.text();
+            throw new Error(msg || 'Error al guardar');
         }
-    } else {
-        // Lógica de Creación Local
-        const newSubcategory = {
-            id: Date.now(), // ID temporal
-            name: name.toLowerCase().replace(/\s+/g, '_'),
-            label: name,
-            icon: icon
-        };
-        
-        if (!defaultSubcategories[parentCategoryId]) {
-            defaultSubcategories[parentCategoryId] = [];
-        }
-        
-        defaultSubcategories[parentCategoryId].push(newSubcategory);
+
+        // Recargar subcategorías (antigua o nueva categoría)
+        await fetchCategoriesAndSubcategories();
+        bootstrap.Modal.getInstance(document.getElementById('subcategoryModal')).hide();
+        showNotification(`Subcategoría ${method === 'PUT' ? 'actualizada' : 'creada'} exitosamente`, 'success');
+
+    } catch (e) {
+        console.error(e);
+        showNotification(`No se pudo guardar: ${e.message}`, 'error');
     }
-    
-    saveDefaultSubcategories();
-    renderDefaultSubcategories();
-    
-    addActivity(`Subcategoría ${currentEditingSubcategoryId ? 'actualizada' : 'creada'}: ${name}`, 'system');
-    
-    showNotification(`Subcategoría ${currentEditingSubcategoryId ? 'actualizada' : 'creada'} exitosamente`, 'success');
-    
-    const modal = bootstrap.Modal.getInstance(document.getElementById('subcategoryModal'));
-    modal.hide();
-    currentEditingSubcategoryId = null;
-    currentEditingCategoryId = null;
 }
 
-function deleteSubcategory(categoryId, subcategoryId) {
+async function deleteSubcategory(categoryId, subcategoryId) {
     const subcategory = defaultSubcategories[categoryId]?.find(s => s.id == subcategoryId);
     if (!subcategory) return;
-    
-    if (!confirm(`¿Estás seguro de que deseas eliminar la subcategoría "${subcategory.label}"?\n\nEsta acción no se puede deshacer.`)) {
-        return;
+
+    if (!confirm(`¿Estás seguro de que deseas eliminar la subcategoría "${subcategory.label}"?`)) return;
+
+    try {
+        const response = await fetch(`http://localhost:8080/api/admin/subcategories/${subcategoryId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) throw new Error('Error al eliminar');
+
+        // Quitar del array local y recargar vista
+        defaultSubcategories[categoryId] = defaultSubcategories[categoryId].filter(s => s.id != subcategoryId);
+        renderDefaultSubcategories();
+
+        showNotification('Subcategoría eliminada exitosamente', 'success');
+
+    } catch (e) {
+        console.error(e);
+        showNotification('No se pudo eliminar la subcategoría', 'error');
     }
-    
-    defaultSubcategories[categoryId] = defaultSubcategories[categoryId].filter(s => s.id != subcategoryId);
-    
-    saveDefaultSubcategories();
-    renderDefaultSubcategories();
-    
-    addActivity(`Subcategoría eliminada: ${subcategory.label}`, 'system');
-    showNotification('Subcategoría eliminada exitosamente', 'success');
 }
 
 function showAddPaymentMethodModal() {
@@ -488,20 +485,19 @@ function showAddPaymentMethodModal() {
     document.getElementById('paymentMethodName').value = '';
     document.getElementById('paymentMethodLogo').value = '';
     document.getElementById('savePaymentMethodBtn').textContent = 'Crear Medio de Pago';
-    
+
     const modal = new bootstrap.Modal(document.getElementById('paymentMethodModal'));
     modal.show();
 }
 
 function editPaymentMethod(index) {
     const method = paymentMethods[index];
-    currentEditingPaymentMethod = index;
-    
+    currentEditingPaymentMethod = method.id;   // <-- importante
     document.getElementById('paymentMethodModalLabel').textContent = 'Editar Medio de Pago';
     document.getElementById('paymentMethodName').value = method.name;
     document.getElementById('paymentMethodLogo').value = method.logo || '';
     document.getElementById('savePaymentMethodBtn').textContent = 'Actualizar Medio de Pago';
-    
+
     const modal = new bootstrap.Modal(document.getElementById('paymentMethodModal'));
     modal.show();
 }
@@ -511,55 +507,69 @@ async function savePaymentMethod() {
     const logo = document.getElementById('paymentMethodLogo').value.trim();
 
     if (!name) {
-        showNotification('Por favor ingresa un nombre para el medio de pago', 'error');
+        showNotification('Por favor ingresa un nombre', 'error');
         return;
     }
 
     const payload = { name, logo };
 
+    const url = currentEditingPaymentMethod !== null
+        ? `http://localhost:8080/api/admin/payment-methods/${currentEditingPaymentMethod}`
+        : 'http://localhost:8080/api/admin/payment-methods';
+
+    const method = currentEditingPaymentMethod !== null ? 'PUT' : 'POST';
+
     try {
-        const response = await fetch('http://localhost:8080/api/admin/payment-methods', {
-            method: 'POST',
+        const response = await fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
         if (!response.ok) throw new Error('Error al guardar');
 
-        // Recargamos la lista
-        await fetchDefaultPaymentMethods();
-
-        showNotification('Medio de pago creado exitosamente', 'success');
+        await fetchDefaultPaymentMethods(); // recargar lista
+        showNotification(`Medio de pago ${method === 'PUT' ? 'actualizado' : 'creado'} exitosamente`, 'success');
         bootstrap.Modal.getInstance(document.getElementById('paymentMethodModal')).hide();
 
     } catch (e) {
         console.error(e);
-        showNotification('No se pudo crear el medio de pago', 'error');
+        showNotification('No se pudo guardar el medio de pago', 'error');
     }
 }
 
-function deletePaymentMethod(index) {
+async function deletePaymentMethod(index) {
     const method = paymentMethods[index];
-    if (!confirm(`¿Estás seguro de que deseas eliminar el medio de pago "${method.name}"?`)) {
-        return;
+    if (!confirm(`¿Estás seguro de que deseas eliminar "${method.name}"?`)) return;
+
+    try {
+        const response = await fetch(`http://localhost:8080/api/admin/payment-methods/${method.id}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) throw new Error('Error al eliminar');
+
+        // Quitar del array local y recargar vista
+        paymentMethods.splice(index, 1);
+        renderDefaultPaymentMethods();
+
+        showNotification('Medio de pago eliminado exitosamente', 'success');
+
+    } catch (e) {
+        console.error(e);
+        showNotification('No se pudo eliminar el medio de pago', 'error');
     }
-    
-    paymentMethods.splice(index, 1);
-    savePaymentMethods();
-    loadDefaultPaymentMethods();
-    
-    showNotification(`Medio de pago "${method.name}" eliminado exitosamente`, 'success');
 }
 
 function updateNotificationsDropdown() {
     const badge = document.getElementById('notificationBadge');
     const dropdownContent = document.getElementById('activitiesDropdownContent');
-    
+
     if (!badge || !dropdownContent) return;
 
     const recentActivities = typeof activities !== 'undefined' ? activities.slice(0, 5) : [];
     const unreadCount = recentActivities.filter(act => !act.read).length;
-    
+
     badge.textContent = unreadCount > 0 ? unreadCount : '';
     badge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
 
@@ -596,38 +606,103 @@ function updateNotificationsDropdown() {
 
 function showAddCategoryModal() {
     const input = document.getElementById('categoryName');
-    if(input) input.value = '';
-    
+    if (input) input.value = '';
+
     const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
     modal.show();
 }
 
-function saveCategory() {
-    console.log("Guardar categoría (pendiente de backend POST)");
+async function saveCategory() {
+    const name = document.getElementById('categoryName').value.trim();
+    const icon = document.getElementById('categoryIcon').value;
+
+    if (!name) {
+        showNotification('Por favor ingresa un nombre de categoría', 'error');
+        return;
+    }
+
+    const payload = { label: name, icon: icon }; // campos que espera tu DTO
+
+    try {
+        const url = currentEditingCategoryId
+            ? `http://localhost:8080/api/admin/categories/${currentEditingCategoryId}`
+            : 'http://localhost:8080/api/admin/categories';
+
+        const method = currentEditingCategoryId ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error('Error al guardar');
+
+        // Recargar lista y cerrar modal
+        await fetchCategoriesAndSubcategories();
+        bootstrap.Modal.getInstance(document.getElementById('categoryModal')).hide();
+        showNotification(`Categoría ${method === 'PUT' ? 'actualizada' : 'creada'} exitosamente`, 'success');
+
+    } catch (e) {
+        console.error(e);
+        showNotification('No se pudo guardar la categoría', 'error');
+    }
 }
 
 function editCategory(id) {
-    console.log("Editar categoría ID:", id);
-}
+    console.log('editCategory clickeado con id=', id);
 
-function deleteCategory(id) {
-    const category = defaultCategories.find(c => c.id === id);
-    if (!category) return;
-    
-    if (!confirm(`¿Estás seguro de que deseas eliminar la categoría "${category.label}"?\n\nEsta acción eliminará también todas sus subcategorías y no se puede deshacer.`)) {
+    // Buscar la categoría en el array que ya tienes cargado
+    const cat = defaultCategories.find(c => c.id == id);
+    if (!cat) {
+        console.error('Categoría no encontrada en array defaultCategories');
         return;
     }
-    
-    defaultCategories = defaultCategories.filter(c => c.id !== id);
-    delete defaultSubcategories[id];
-    
-    saveDefaultCategories();
-    saveDefaultSubcategories();
-    renderDefaultCategories();
-    renderDefaultSubcategories();
-    
-    addActivity(`Categoría eliminada: ${category.label}`, 'system');
-    showNotification('Categoría eliminada exitosamente', 'success');
+
+    // Rellenar el MODAL DE CATEGORÍAS
+    document.getElementById('categoryModalLabel').textContent = 'Editar Categoría';
+    document.getElementById('categoryName').value = cat.label;
+    document.getElementById('categoryIcon').value = cat.icon || 'bi-tag';
+    document.getElementById('saveCategoryBtn').textContent = 'Actualizar Categoría';
+
+    // Guardar ID para saber que estamos editando
+    currentEditingCategoryId = id;
+
+    // Abrir el modal
+    const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
+    modal.show();
+}
+
+async function deleteCategory(id) {
+    const category = defaultCategories.find(c => c.id == id);
+    if (!category) return;
+
+    // 1. Verificar que NO tenga subcategorías
+    const subs = defaultSubcategories[id] || [];
+    if (subs.length > 0) {
+        showNotification('Primero elimina todas las subcategorías de esta categoría', 'warning');
+        return;
+    }
+
+    // 2. Confirmar eliminación
+    if (!confirm(`¿Estás seguro de que deseas eliminar la categoría "${category.label}"?`)) return;
+
+    // 3. Llamar al backend
+    try {
+        const response = await fetch(`http://localhost:8080/api/admin/categories/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) throw new Error('Error al eliminar');
+
+        // Recargar lista
+        await fetchCategoriesAndSubcategories();
+        showNotification('Categoría eliminada exitosamente', 'success');
+
+    } catch (e) {
+        console.error(e);
+        showNotification('No se pudo eliminar la categoría', 'error');
+    }
 }
 
 // Funciones locales que tu código usa pero que no me pasaste definidas (por si acaso las incluyo como placeholders funcionales para que no de error)
@@ -644,10 +719,12 @@ function addActivity(msg, type) {
     console.log("Actividad:", msg);
 }
 function showNotification(msg, type) {
-    // Si existe una función global, la usamos, sino alert
-    if(typeof window.showNotification === 'function') {
+    // Si existe una función global, la usamos
+    if (typeof window.showNotification === 'function' && window.showNotification !== showNotification) {
         window.showNotification(msg, type);
     } else {
-        console.log("Notificación:", msg);
+        // Fallback: mostramos en consola o con un alert simple
+        console.log(`[${type?.toUpperCase() || 'INFO'}] ${msg}`);
+        // (opcional) alert(`${type}: ${msg}`);
     }
 }

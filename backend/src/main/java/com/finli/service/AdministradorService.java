@@ -10,7 +10,8 @@ import com.finli.dto.MedioPagoDTO;
 import com.finli.model.Categoria; 
 import com.finli.model.EstadoSuscripcion; 
 import com.finli.model.EstadoUsuario;
-import com.finli.model.MedioPago; 
+import com.finli.model.MedioPago;
+import com.finli.model.Subcategoria;
 import com.finli.model.Suscripcion; 
 import com.finli.model.TipoSuscripcion; 
 import com.finli.model.Usuario;
@@ -30,6 +31,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,6 +39,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdministradorService {
@@ -198,6 +201,8 @@ public class AdministradorService {
     // ====================================================================================
     // === MÉTODOS DE USUARIO (MANTENIDOS) ===
     // ====================================================================================
+
+    
     
     @Transactional
     public Usuario crearUsuarioConSuscripcion(UserCreateDTO dto) {
@@ -410,4 +415,156 @@ public MedioPagoDTO crearMedioPagoPredeterminado(MedioPagoDTO dto) {
     // Devolvemos el DTO con el id asignado
     return new MedioPagoDTO(mp.getIdMedioPago(), dto.getName(), dto.getLogo());
 }
+
+@Transactional
+public MedioPagoDTO actualizarMedioPagoPredeterminado(Integer id, MedioPagoDTO dto) {
+    // 1) LOG: qué ID y qué DTO llegan realmente
+    log.warn("🔍 PUT /payment-methods/{}  body={}", id, dto);
+
+    // 2) Buscar el registro
+    MedioPago mp = medioPagoRepository.findByIdSinJoin(id)
+        .orElseThrow(() -> new RuntimeException("Medio de pago no encontrado"));
+
+    // 3) Segunda validación: solo predeterminados
+    if (mp.getUsuario() != null) {
+        throw new RuntimeException("No se puede editar un medio de pago de usuario");
+    }
+
+    // 4) Actualizar únicamente el nombre
+    mp.setNombreMedioPago(dto.getName());
+    MedioPago guardado = medioPagoRepository.save(mp);
+
+    // 5) Devolver DTO (logo se devuelve sin persistir por ahora)
+    return new MedioPagoDTO(guardado.getIdMedioPago(),
+                            guardado.getNombreMedioPago(),
+                            dto.getLogo());
+}
+
+@Transactional
+public void eliminarMedioPagoPredeterminado(Integer id) {
+    // 1. Verificar que exista y sea predeterminado
+    MedioPago mp = medioPagoRepository.findByIdSinJoin(id)
+            .orElseThrow(() -> new RuntimeException("Medio de pago no encontrado"));
+
+    if (mp.getUsuario() != null) {
+        throw new RuntimeException("No se puede eliminar un medio de pago de usuario");
+    }
+
+    // 2. Eliminación física
+    medioPagoRepository.delete(mp);
+}
+
+@Transactional
+public CategoriaDTO actualizarCategoriaPredeterminada(Integer id, CategoriaDTO dto) {
+    Categoria cat = categoriaRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
+
+    if (cat.getUsuario() != null) {
+        throw new RuntimeException("No se puede editar una categoría de usuario");
+    }
+
+    // 1. Nombre
+    cat.setNombreCategoria(dto.getLabel());
+
+    // 2. Icono y color (si los guardas en la BD; si no, solo visuales)
+    //    Si NO hay columnas icon/color, comenta estas líneas
+    // cat.setIcon(dto.getIcon());
+    // cat.setColor(dto.getColor());
+
+    Categoria guardada = categoriaRepository.save(cat);
+
+    // 3. Recalcular cantidad de subcategorías (opcional)
+    Long count = subcategoriaRepository.countByCategoria(guardada);
+
+    return new CategoriaDTO(
+            guardada.getIdCategoria(),
+            guardada.getNombreCategoria(),
+            dto.getIcon(),      // o null si solo es visual
+            dto.getColor(),     // o null
+            count);
+}
+
+@Transactional
+public void eliminarCategoriaPredeterminada(Integer id) {
+    Categoria cat = categoriaRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
+
+    if (cat.getUsuario() != null) {
+        throw new RuntimeException("No se puede eliminar una categoría de usuario");
+    }
+
+    // Eliminación física (subcategorías deben tener ON DELETE CASCADE)
+    categoriaRepository.delete(cat);
+}
+@Transactional
+public void eliminarSubcategoriaPredeterminada(Integer id) {
+    Subcategoria sub = subcategoriaRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Subcategoría no encontrada"));
+
+    // Solo predeterminadas (sin usuario)
+    if (sub.getUsuario() != null) {
+        throw new RuntimeException("No se puede eliminar una subcategoría de usuario");
+    }
+
+    subcategoriaRepository.delete(sub);
+}
+
+/* ---------- EDITAR SUBCATEGORÍA (PUT) ---------- */
+@Transactional
+public SubcategoriaDTO actualizarSubcategoriaPredeterminada(Integer id, SubcategoriaDTO dto) {
+    Subcategoria sub = subcategoriaRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Subcategoría no encontrada"));
+
+    if (sub.getUsuario() != null) {
+        throw new RuntimeException("No se puede editar una subcategoría de usuario");
+    }
+
+    // 1. Nombre legible
+    sub.setNombreSubcategoria(dto.getLabel());
+
+    // 2. Cambiar categoría padre (si se envió)
+    if (dto.getCategoriaId() != null && !dto.getCategoriaId().equals(sub.getCategoria().getIdCategoria())) {
+        Categoria nueva = categoriaRepository.findById(dto.getCategoriaId())
+                .orElseThrow(() -> new RuntimeException("Categoría destino no encontrada"));
+        sub.setCategoria(nueva);
+    }
+
+    // 3. Guardar
+    Subcategoria guardada = subcategoriaRepository.save(sub);
+
+    // 4. Devolver DTO (usamos los campos que tienes)
+    return new SubcategoriaDTO(
+            guardada.getIdSubcategoria(),
+            guardada.getNombreSubcategoria().toLowerCase().replaceAll("\\s+", "_"), // name técnico
+            guardada.getNombreSubcategoria(),                                       // label legible
+            dto.getIcon(),                                                          // icono que mandó front
+            guardada.getCategoria().getIdCategoria()                                // categoría padre
+    );
+}
+
+@Transactional
+public SubcategoriaDTO crearSubcategoriaPredeterminada(SubcategoriaDTO dto) {
+    // 1. Validar categoría padre
+    Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
+            .orElseThrow(() -> new RuntimeException("Categoría padre no encontrada"));
+
+    // 2. Crear subcategoría (sin usuario = predeterminada)
+    Subcategoria nueva = Subcategoria.builder()
+            .nombreSubcategoria(dto.getLabel())
+            .categoria(categoria)
+            .usuario(null) // predeterminada
+            .build();
+
+    Subcategoria guardada = subcategoriaRepository.save(nueva);
+
+    // 3. Devolver DTO
+    return new SubcategoriaDTO(
+            guardada.getIdSubcategoria(),
+            guardada.getNombreSubcategoria().toLowerCase().replaceAll("\\s+", "_"),
+            guardada.getNombreSubcategoria(),
+            dto.getIcon(), // opcional
+            guardada.getCategoria().getIdCategoria()
+    );
+}
+
 }
