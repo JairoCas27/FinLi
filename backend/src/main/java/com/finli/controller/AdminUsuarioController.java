@@ -3,6 +3,7 @@ package com.finli.controller;
 import com.finli.dto.UserAdminDTO;
 import com.finli.dto.UserCreateDTO;
 import com.finli.dto.UserDetailDTO;
+import com.finli.dto.UserHomeDTO;
 import com.finli.model.Usuario;
 import com.finli.repository.UsuarioRepository;
 import com.finli.service.AdministradorService;
@@ -34,22 +35,22 @@ public class AdminUsuarioController {
 
     // --- 1. LISTAR USUARIOS (GET) ---
     @GetMapping("/users")
-    public ResponseEntity<List<UserAdminDTO>> listarUsuariosParaAdmin(@RequestParam(value = "search", required = false) String search) {
-        
+    public ResponseEntity<List<UserAdminDTO>> listarUsuariosParaAdmin(
+            @RequestParam(value = "search", required = false) String search) {
+
         List<UsuarioRepository.UserAdminProjection> dbUsers = usuarioRepository.obtenerDatosAdmin(search);
 
         List<UserAdminDTO> response = dbUsers.stream().map(proj -> {
             String nombreCompleto = proj.getNombre() + " " + proj.getApellido();
-            
+
             return new UserAdminDTO(
-                proj.getId(),
-                nombreCompleto,
-                proj.getEmail(),
-                proj.getSuscripcion(),
-                "2024-01-01", // Fecha fija temporal
-                null,         // Foto null
-                proj.getEstado() 
-            );
+                    proj.getId(),
+                    nombreCompleto,
+                    proj.getEmail(),
+                    proj.getSuscripcion(),
+                    "2024-01-01", // Fecha fija temporal
+                    null, // Foto null
+                    proj.getEstado());
         }).collect(Collectors.toList());
 
         return ResponseEntity.ok(response);
@@ -61,7 +62,7 @@ public class AdminUsuarioController {
         try {
             Usuario nuevoUsuario = administradorService.crearUsuarioConSuscripcion(dto);
             return new ResponseEntity<>(nuevoUsuario, HttpStatus.CREATED);
-            
+
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
@@ -104,8 +105,9 @@ public class AdminUsuarioController {
 
             // 3. Preparamos los encabezados para la descarga
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
-            
+            headers.setContentType(
+                    MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+
             // Nombre del archivo dinámico con fecha/hora
             String filename = "usuarios_finli_" + System.currentTimeMillis() + ".xlsx";
             headers.setContentDispositionFormData("attachment", filename);
@@ -118,4 +120,21 @@ public class AdminUsuarioController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
+   @GetMapping("/users/latest")
+public ResponseEntity<List<UserHomeDTO>> getLatestUsersForHome() {
+    List<Object[]> rows = usuarioRepository.findLatestUsersForHomeRaw();
+    List<UserHomeDTO> dto = rows.stream()
+        .map(r -> new UserHomeDTO(
+            (Integer) r[0],
+            (String) r[1],
+            (String) r[2],
+            (String) r[3],
+            (String) r[4],
+            r[5].toString(),
+            (String) r[6]
+        ))
+        .collect(Collectors.toList());
+    return ResponseEntity.ok(dto);
+}
 }

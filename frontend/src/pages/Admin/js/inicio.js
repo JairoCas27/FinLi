@@ -6,8 +6,112 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeInicio();
 });
 
-function initializeInicio() {
-    renderUsersInicio();
+// Cargar los 3 usuarios más recientes (dashboard)
+async function loadLatestUsersForHome() {
+    try {
+        const res = await fetch('http://localhost:8080/api/admin/users/latest');
+        if (!res.ok) throw new Error('Error obteniendo usuarios');
+        const latest = await res.json();
+
+        // Adaptamos al formato que ya espera tu tabla
+        users = latest.map(u => ({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            subscriptionType: u.subscriptionType,
+            photo: u.photo,
+            registrationDate: u.registrationDate,
+            status: u.status
+        }));
+
+        renderUsersInicio(); // tu función ya existente
+    } catch (err) {
+        console.error(err);
+        document.getElementById('tbodyInicio').innerHTML =
+            '<tr><td colspan="6" class="text-center text-danger">Error al cargar usuarios</td></tr>';
+    }
+}
+
+// 3. EDITAR (CARGAR DATOS EN EL MODAL)
+async function editUser(id) {
+    userToEditId = id; // Guardamos el ID para usarlo al guardar cambios
+
+    try {
+        // Llamada al backend para obtener el detalle separado
+        // Endpoint: GET /api/admin/users/{id}
+        const response = await fetch(`http://localhost:8080/api/admin/users/${id}`);
+        
+        if (!response.ok) {
+            throw new Error('No se pudo obtener la información del usuario');
+        }
+
+        const user = await response.json();
+
+        // Llenar el formulario con los datos recibidos del DTO (UserDetailDTO)
+        document.getElementById('editUserNombre').value = user.nombre || '';
+        document.getElementById('editUserApellidoPaterno').value = user.apellidoPaterno || '';
+        document.getElementById('editUserApellidoMaterno').value = user.apellidoMaterno || '';
+        document.getElementById('editUserEdad').value = user.edad || '';
+        document.getElementById('editUserEmail').value = user.email || '';
+        
+        // Seleccionar ROL (si existe en el select, sino default 'usuario')
+        const rolSelect = document.getElementById('editUserRol');
+        if (rolSelect) rolSelect.value = user.rol || 'usuario';
+
+        // Seleccionar SUSCRIPCIÓN (si existe en el select, sino default 4)
+        const subSelect = document.getElementById('editUserSubscriptionType');
+        if (subSelect) subSelect.value = user.subscriptionId || 4;
+        
+        // Limpiar el campo de contraseña (para que esté vacío por seguridad)
+        const passField = document.getElementById('editUserPassword');
+        if(passField) passField.value = '';
+
+        // Mostrar modal
+        const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+        editModal.show();
+
+    } catch (error) {
+        console.error("Error cargando usuario para editar:", error);
+        alert("Error al cargar los datos del usuario.");
+    }
+}
+
+// ===== EDITAR USUARIO (desde inicio.html) =====
+async function editUser(id) {
+    userToEditId = id; // usas la misma variable global que usuarios.js
+
+    try {
+        const response = await fetch(`http://localhost:8080/api/admin/users/${id}`);
+        if (!response.ok) throw new Error('No se pudo obtener la información del usuario');
+        const user = await response.json();
+
+        // Llenar el formulario con los datos recibidos del DTO (UserDetailDTO)
+        document.getElementById('editUserNombre').value = user.nombre || '';
+        document.getElementById('editUserApellidoPaterno').value = user.apellidoPaterno || '';
+        document.getElementById('editUserApellidoMaterno').value = user.apellidoMaterno || '';
+        document.getElementById('editUserEdad').value = user.edad || '';
+        document.getElementById('editUserEmail').value = user.email || '';
+
+        const rolSelect = document.getElementById('editUserRol');
+        if (rolSelect) rolSelect.value = user.rol || 'usuario';
+
+        const subSelect = document.getElementById('editUserSubscriptionType');
+        if (subSelect) subSelect.value = user.subscriptionId || 4;
+
+        const passField = document.getElementById('editUserPassword');
+        if (passField) passField.value = '';
+
+        const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+        editModal.show();
+
+    } catch (error) {
+        console.error("Error cargando usuario para editar:", error);
+        alert("Error al cargar los datos del usuario.");
+    }
+}
+
+async function initializeInicio() {
+    await loadLatestUsersForHome(); // ✅ carga real
     initializeChartsInicio();
     updateNotificationsDropdown();
     updateRecentActivities();
@@ -61,6 +165,7 @@ function initializeInicio() {
         exportUsersToCSV('usuarios_inicio.csv');
     });
 }
+
 
 function renderUsersInicio() {
     const sortedUsers = [...users].sort((a, b) => new Date(b.registrationDate) - new Date(a.registrationDate));
@@ -309,4 +414,133 @@ function exportUsersToCSV(filename) {
     document.body.removeChild(a);
     
     showNotification('Datos exportados exitosamente', 'success');
+}
+
+// ===== FUNCIONES DE GUARDAR / ACTUALIZAR / ELIMINAR (para inicio.html) =====
+
+// Guardar nuevo usuario
+async function saveUser() {
+    const btn = document.getElementById('saveUserBtn');
+    const userData = {
+        nombre: document.getElementById('userNombre').value,
+        apellidoPaterno: document.getElementById('userApellidoPaterno').value,
+        apellidoMaterno: document.getElementById('userApellidoMaterno').value,
+        edad: parseInt(document.getElementById('userEdad').value),
+        email: document.getElementById('userEmail').value,
+        password: document.getElementById('userPassword').value,
+        rol: document.getElementById('userRol').value,
+        subscriptionId: parseInt(document.getElementById('userSubscriptionType').value)
+    };
+
+    if (!userData.nombre || !userData.email || !userData.password) {
+        alert("Por favor completa los campos obligatorios.");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+
+    try {
+        const res = await fetch('http://localhost:8080/api/admin/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData)
+        });
+
+        if (res.ok) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addUserModal'));
+            modal.hide();
+            document.getElementById('addUserForm').reset();
+            showNotification('Usuario creado exitosamente', 'success');
+            await loadLatestUsersForHome(); // recarga tabla
+        } else {
+            const msg = await res.text();
+            alert("Error: " + msg);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Error de conexión.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Guardar Usuario';
+    }
+}
+
+// Actualizar usuario
+async function updateUser() {
+    if (!userToEditId) return;
+    const btn = document.getElementById('updateUserBtn');
+    const userData = {
+        nombre: document.getElementById('editUserNombre').value,
+        apellidoPaterno: document.getElementById('editUserApellidoPaterno').value,
+        apellidoMaterno: document.getElementById('editUserApellidoMaterno').value,
+        edad: parseInt(document.getElementById('editUserEdad').value),
+        email: document.getElementById('editUserEmail').value,
+        password: document.getElementById('editUserPassword').value,
+        rol: document.getElementById('editUserRol').value,
+        subscriptionId: parseInt(document.getElementById('editUserSubscriptionType').value)
+    };
+
+    if (!userData.nombre || !userData.email) {
+        alert("Nombre y correo son obligatorios.");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Actualizando...';
+
+    try {
+        const res = await fetch(`http://localhost:8080/api/admin/users/${userToEditId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData)
+        });
+
+        if (res.ok) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+            modal.hide();
+            showNotification('Usuario actualizado correctamente', 'success');
+            await loadLatestUsersForHome(); // recarga tabla
+        } else {
+            const msg = await res.text();
+            alert("Error: " + msg);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Error de conexión.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Actualizar Usuario';
+        userToEditId = null;
+    }
+}
+
+// Eliminar usuario
+async function confirmDeleteUser() {
+    if (!userToDeleteId) return;
+    const btn = document.getElementById('confirmDeleteBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Eliminando...';
+
+    try {
+        const res = await fetch(`http://localhost:8080/api/admin/users/${userToDeleteId}`, {
+            method: 'DELETE'
+        });
+
+        if (res.ok) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteUserModal'));
+            modal.hide();
+            showNotification('Usuario eliminado', 'success');
+            await loadLatestUsersForHome(); // recarga tabla
+        } else {
+            alert("Error al eliminar");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Error de conexión.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Eliminar Usuario';
+        userToDeleteId = null;
+    }
 }

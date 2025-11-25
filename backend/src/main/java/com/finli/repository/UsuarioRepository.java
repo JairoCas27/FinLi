@@ -1,5 +1,6 @@
 package com.finli.repository;
 
+import com.finli.dto.UserHomeDTO;
 import com.finli.model.Usuario;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,4 +46,22 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
             (LOWER(u.correo) LIKE LOWER(CONCAT('%', :keyword, '%')))
         """, nativeQuery = true)
     List<UserAdminProjection> obtenerDatosAdmin(@Param("keyword") String keyword);
+
+ // Nuevo: 3 usuarios más recientes (devuelve Object[], luego mapeamos)
+@Query(value = """
+    SELECT u.id,
+           CONCAT(u.nombre, ' ', u.apellido_Paterno),
+           u.correo,
+           COALESCE(ts.nombre_tiposuscripcion, 'Sin suscripción'),
+           COALESCE(eu.nombre_estado, 'Desconocido'),
+           DATE(u.fecha_registro),
+           u.foto
+    FROM usuarios u
+    LEFT JOIN suscripciones s ON u.id = s.id_usuario AND s.id_estadosuscripcion = 1
+    LEFT JOIN tiposuscripcion ts ON s.id_tiposuscripcion = ts.id_tiposuscripcion
+    LEFT JOIN estadousuario eu ON u.id_estadoUsuario = eu.id_estado
+    ORDER BY u.fecha_registro DESC
+    LIMIT 3
+    """, nativeQuery = true)
+List<Object[]> findLatestUsersForHomeRaw();
 }

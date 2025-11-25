@@ -1,5 +1,6 @@
 package com.finli.model;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -41,20 +42,20 @@ public class Usuario {
 
     // --- NUEVO CAMPO AGREGADO (Soluciona el error setRol) ---
     @Column(nullable = false, length = 20)
-    private String rol; 
+    private String rol;
+
+    @Column(name = "fecha_registro", nullable = false)
+    private LocalDate fechaRegistro;
+
+    @Column(name = "foto", length = 500)
+    private String foto;
     // --------------------------------------------------------
 
-    @OneToMany(mappedBy = "usuario", 
-    fetch = FetchType.LAZY, 
-    cascade = CascadeType.ALL, 
-    orphanRemoval = true)
-    @JsonIgnore  // <-- importante para evitar el loop infinito al serializar
+    @OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore // <-- importante para evitar el loop infinito al serializar
     private List<Ingreso> ingresos;
 
-    @OneToMany(mappedBy = "usuario", 
-    fetch = FetchType.LAZY, 
-    cascade = CascadeType.ALL, 
-    orphanRemoval = true)
+    @OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Transaccion> transacciones;
 
@@ -62,9 +63,8 @@ public class Usuario {
     @JsonIgnore
     private List<Suscripcion> suscripciones;
 
-
-    @ManyToOne(fetch = FetchType.LAZY) 
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_estadoUsuario", nullable = false)
-    @JsonIgnore 
+    @JsonIgnore
     private EstadoUsuario estadoUsuario;
 }
