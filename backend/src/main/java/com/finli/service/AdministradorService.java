@@ -10,6 +10,7 @@ import com.finli.dto.MedioPagoDTO;
 import com.finli.model.Categoria; 
 import com.finli.model.EstadoSuscripcion; 
 import com.finli.model.EstadoUsuario;
+import com.finli.model.FuenteCategoria;
 import com.finli.model.MedioPago;
 import com.finli.model.Subcategoria;
 import com.finli.model.Suscripcion; 
@@ -18,13 +19,15 @@ import com.finli.model.Usuario;
 import com.finli.repository.CategoriaRepository; 
 import com.finli.repository.EstadoSuscripcionRepository; 
 import com.finli.repository.EstadoUsuarioRepository;
+import com.finli.repository.FuenteCategoriaRepository;
 import com.finli.repository.MedioPagoRepository; 
 import com.finli.repository.SuscripcionRepository; 
 import com.finli.repository.TipoSuscripcionRepository; 
 import com.finli.repository.UsuarioRepository;
 import com.finli.repository.SubcategoriaRepository; 
 import lombok.RequiredArgsConstructor;
-import org.mindrot.jbcrypt.BCrypt; 
+import org.mindrot.jbcrypt.BCrypt;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +41,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 
 @Slf4j
 @Service
@@ -58,7 +62,10 @@ public class AdministradorService {
     
     private final Integer ID_ESTADO_ACTIVO = 1; 
     private final Integer ID_ESTADO_INACTIVO = 2; 
-
+    
+    // ⬇️⬇️  AGREGAMOS ESTA LÍNEA  ⬇️⬇️
+    @Autowired
+    private final FuenteCategoriaRepository fuenteCategoriaRepository; // ✅ nombre real
     // ====================================================================================
     // === GESTIÓN DE CATEGORÍAS, SUBCATEGORÍAS y MEDIOS DE PAGO ===
     // ====================================================================================
@@ -564,6 +571,39 @@ public SubcategoriaDTO crearSubcategoriaPredeterminada(SubcategoriaDTO dto) {
             guardada.getNombreSubcategoria(),
             dto.getIcon(), // opcional
             guardada.getCategoria().getIdCategoria()
+    );
+}
+
+@Transactional
+public CategoriaDTO crearCategoriaPredeterminada(CategoriaDTO dto) {
+    // 1. Validar que no exista el nombre (opcional)
+    if (categoriaRepository.existsByNombreCategoriaAndUsuarioIsNull(dto.getLabel())) {
+        throw new RuntimeException("Ya existe una categoría predeterminada con ese nombre");
+    }
+
+    // 2. Obtener fuente predeterminada (id = 1)
+    FuenteCategoria fuente = fuenteCategoriaRepository.findById(1)
+        .orElseThrow(() -> new RuntimeException("Fuente predeterminada no encontrada"));
+
+    // 3. Crear categoría (sin usuario = predeterminada)
+Categoria nueva = Categoria.builder()
+        .nombreCategoria(dto.getLabel())
+        .fuente(fuente)         // ← nombre real del campo
+        .usuario(null)          // predeterminada
+        .build();
+
+    Categoria guardada = categoriaRepository.save(nueva);
+
+    // 4. Contar subcategorías (0 al crear)
+    Long count = subcategoriaRepository.countByCategoria(guardada);
+
+    // 5. Devolver DTO
+    return new CategoriaDTO(
+            guardada.getIdCategoria(),
+            guardada.getNombreCategoria(),
+            dto.getIcon(),      // visual
+            dto.getColor(),     // visual
+            count
     );
 }
 

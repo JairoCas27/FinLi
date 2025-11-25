@@ -118,4 +118,11 @@ public ResponseEntity<SubcategoriaDTO> crearSubcategoria(@RequestBody Subcategor
     SubcategoriaDTO creada = administradorService.crearSubcategoriaPredeterminada(dto);
     return ResponseEntity.status(HttpStatus.CREATED).body(creada);
 }
+
+@PostMapping("/categories")
+public ResponseEntity<CategoriaDTO> crearCategoria(@RequestBody CategoriaDTO dto) {
+    CategoriaDTO creada = administradorService.crearCategoriaPredeterminada(dto);
+    return ResponseEntity.status(HttpStatus.CREATED).body(creada);
+}
+
 }

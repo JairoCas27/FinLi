@@ -34,4 +34,6 @@ public interface CategoriaRepository extends JpaRepository<Categoria, Integer> {
         GROUP BY c.id_categoria, c.nombre_categoria
         """, nativeQuery = true)
     List<CategoriaProjection> obtenerCategoriasPredeterminadasConConteo();
+
+    boolean existsByNombreCategoriaAndUsuarioIsNull(String nombre);
 }

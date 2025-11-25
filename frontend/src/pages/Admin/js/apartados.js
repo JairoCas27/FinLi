@@ -606,69 +606,82 @@ function updateNotificationsDropdown() {
 
 function showAddCategoryModal() {
     const input = document.getElementById('categoryName');
-    if (input) input.value = '';
+    if(input) input.value = '';
+
+    // ⬇️⬇️  AGREGAMOS ESTO  ⬇️⬇️
+    currentEditingCategoryId = null; // ← resetear ID al crear
 
     const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
     modal.show();
 }
 
 async function saveCategory() {
+    console.log('saveCategory ejecutándose. currentEditingCategoryId =', currentEditingCategoryId);
+
     const name = document.getElementById('categoryName').value.trim();
     const icon = document.getElementById('categoryIcon').value;
+    const fuenteId = 1;
 
     if (!name) {
         showNotification('Por favor ingresa un nombre de categoría', 'error');
         return;
     }
 
-    const payload = { label: name, icon: icon }; // campos que espera tu DTO
+    const payload = {
+        label: name,
+        icon: icon,
+        fuenteId: fuenteId
+    };
+
+    const url = currentEditingCategoryId
+        ? `http://localhost:8080/api/admin/categories/${currentEditingCategoryId}`
+        : 'http://localhost:8080/api/admin/categories';
+
+    const method = currentEditingCategoryId ? 'PUT' : 'POST';
+
+    console.log('URL que se llamará:', url);
+    console.log('Método:', method);
 
     try {
-        const url = currentEditingCategoryId
-            ? `http://localhost:8080/api/admin/categories/${currentEditingCategoryId}`
-            : 'http://localhost:8080/api/admin/categories';
-
-        const method = currentEditingCategoryId ? 'PUT' : 'POST';
-
         const response = await fetch(url, {
             method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
-        if (!response.ok) throw new Error('Error al guardar');
+        if (!response.ok) {
+            const msg = await response.text();
+            throw new Error(msg || 'Error al guardar');
+        }
 
-        // Recargar lista y cerrar modal
         await fetchCategoriesAndSubcategories();
         bootstrap.Modal.getInstance(document.getElementById('categoryModal')).hide();
         showNotification(`Categoría ${method === 'PUT' ? 'actualizada' : 'creada'} exitosamente`, 'success');
 
     } catch (e) {
         console.error(e);
-        showNotification('No se pudo guardar la categoría', 'error');
+        showNotification(`No se pudo guardar: ${e.message}`, 'error');
     }
 }
 
 function editCategory(id) {
     console.log('editCategory clickeado con id=', id);
 
-    // Buscar la categoría en el array que ya tienes cargado
     const cat = defaultCategories.find(c => c.id == id);
-    if (!cat) {
-        console.error('Categoría no encontrada en array defaultCategories');
-        return;
+    if (!cat) { 
+        console.error('Categoría no encontrada en array defaultCategories'); 
+        return; 
     }
 
-    // Rellenar el MODAL DE CATEGORÍAS
+    currentEditingCategoryId = id; // ← guardamos ID
+    console.log('currentEditingCategoryId ahora vale:', currentEditingCategoryId);
+
+    // Rellenar modal
     document.getElementById('categoryModalLabel').textContent = 'Editar Categoría';
     document.getElementById('categoryName').value = cat.label;
     document.getElementById('categoryIcon').value = cat.icon || 'bi-tag';
     document.getElementById('saveCategoryBtn').textContent = 'Actualizar Categoría';
 
-    // Guardar ID para saber que estamos editando
-    currentEditingCategoryId = id;
-
-    // Abrir el modal
     const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
     modal.show();
 }
