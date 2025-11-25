@@ -6,10 +6,12 @@ C:\Users\manue\FinLi\backend\src\main\java\com\finli\controller\CategoriaControl
 C:\Users\manue\FinLi\backend\src\main\java\com\finli\controller\FuenteCategoriaController.java
 C:\Users\manue\FinLi\backend\src\main\java\com\finli\controller\IngresoController.java
 C:\Users\manue\FinLi\backend\src\main\java\com\finli\controller\MedioPagoController.java
+C:\Users\manue\FinLi\backend\src\main\java\com\finli\controller\PagosController.java
 C:\Users\manue\FinLi\backend\src\main\java\com\finli\controller\SubcategoriaController.java
 C:\Users\manue\FinLi\backend\src\main\java\com\finli\controller\SuscripcionController.java
 C:\Users\manue\FinLi\backend\src\main\java\com\finli\controller\TransaccionController.java
 C:\Users\manue\FinLi\backend\src\main\java\com\finli\controller\UsuarioController.java
+C:\Users\manue\FinLi\backend\src\main\java\com\finli\dto\CompraRequest.java
 C:\Users\manue\FinLi\backend\src\main\java\com\finli\dto\IngresoRequest.java
 C:\Users\manue\FinLi\backend\src\main\java\com\finli\dto\LoginRequest.java
 C:\Users\manue\FinLi\backend\src\main\java\com\finli\dto\MedioPagoRequest.java
@@ -54,6 +56,7 @@ C:\Users\manue\FinLi\backend\src\main\java\com\finli\service\ExcelExportService.
 C:\Users\manue\FinLi\backend\src\main\java\com\finli\service\FuenteCategoriaService.java
 C:\Users\manue\FinLi\backend\src\main\java\com\finli\service\IngresoService.java
 C:\Users\manue\FinLi\backend\src\main\java\com\finli\service\MedioPagoService.java
+C:\Users\manue\FinLi\backend\src\main\java\com\finli\service\PdfService.java
 C:\Users\manue\FinLi\backend\src\main\java\com\finli\service\ServicioAutenticacion.java
 C:\Users\manue\FinLi\backend\src\main\java\com\finli\service\SubcategoriaService.java
 C:\Users\manue\FinLi\backend\src\main\java\com\finli\service\SuscripcionService.java

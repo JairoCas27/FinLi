@@ -63,4 +63,6 @@ public class Usuario {
     @JoinColumn(name = "id_estadoUsuario", nullable = false)
     @JsonIgnore 
     private EstadoUsuario estadoUsuario;
+
+    
 }

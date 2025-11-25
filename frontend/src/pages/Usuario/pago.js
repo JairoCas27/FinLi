@@ -113,10 +113,10 @@ function setupEventListeners() {
     });
 
     // Envío del formulario
-    paymentForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        processPayment();
-    });
+paymentForm.addEventListener('submit', function(e) {
+    e.preventDefault(); // ✅ Prevenir recarga
+    processPayment();   // Ejecutar el pago
+});
 
     // Enlace de volver
     backLink.addEventListener('click', function(e) {
@@ -248,55 +248,92 @@ function processPayment() {
     return;
   }
 
-  const planMap = {
-    mensual: 1,
-    anual: 2,
-    vitalicio: 3
-  };
+  const emailInput = document.getElementById("email").value;
+  const cardNumberInput = document.getElementById("cardNumber").value.replace(/\s/g, "");
+  const cardLast4 = cardNumberInput.slice(-4);
 
-  const idTipoSuscripcion = planMap[selectedPlan];
+  // 🟦 MAPEO QUE TU BACKEND RECONOCE
+  const planName =
+    selectedPlan === "mensual" ? "Mensual" :
+    selectedPlan === "anual" ? "Anual" :
+    "De por vida";
 
-  const formData = new URLSearchParams();
-  formData.append("idUsuario", loggedUser.id);
-  formData.append("idTipoSuscripcion", idTipoSuscripcion);
 
-  // Mostrar pantalla de carga
-  loadingOverlay.classList.add('active');
+    // Mostrar overlay de carga inmediatamente
+    loadingOverlay.innerHTML = `
+        <div class="spinner"></div>
+        <h3>Procesando tu pago</h3>
+        <p>Esto puede tomar unos segundos...</p>
+    `;
+    loadingOverlay.classList.add('active');
 
+  console.log("📦 Tipo de suscripción enviada:", planName);
+
+  
+
+  // 1️⃣ Primero actualizar la suscripción
   fetch("http://localhost:8080/api/suscripciones/cambiar", {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: formData
-  })
-    .then(res => res.json())
-    .then(data => {
-      console.log("✅ Suscripción actualizada:", data);
-
-      // Actualizar sessionStorage
-      loggedUser.tipoSuscripcion = selectedPlan === "vitalicio" ? "De por vida" : selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1);
-      loggedUser.estadoSuscripcion = "Activa";
-      loggedUser.fechaFinSuscripcion = data.fechaFin || null;
-      sessionStorage.setItem("loggedUser", JSON.stringify(loggedUser));
-
-      // Ocultar carga y mostrar éxito
-      loadingOverlay.classList.remove('active');
-      showSuccessMessage();
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      idUsuario: loggedUser.id,
+      idTipoSuscripcion:
+        selectedPlan === "mensual" ? 1 :
+        selectedPlan === "anual" ? 2 : 3
     })
-    .catch(err => {
-      console.error("❌ Error al actualizar suscripción:", err);
-      loadingOverlay.classList.remove('active');
-      alert("Ocurrió un error al procesar tu suscripción.");
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log("✅ Suscripción actualizada:", data);
+
+    // Guardar en sesión
+    loggedUser.tipoSuscripcion = planName;
+    loggedUser.estadoSuscripcion = "Activa";
+    loggedUser.fechaFinSuscripcion = data.fechaFin || null;
+
+    sessionStorage.setItem("loggedUser", JSON.stringify(loggedUser));
+    console.log("📧 Email que se enviará:", emailInput);
+
+    // 2️⃣ Enviar a la ruta principal /pagos/confirmar
+    return fetch("http://localhost:8080/api/pagos/confirmar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        idUsuario: loggedUser.id,
+
+        // ✔ Estas son EXACTAMENTE las keys que tu backend exige
+        correoUsuario: loggedUser.correo,
+        nombreTipoSuscripcion: planName,
+        cardNumber: cardNumberInput,
+        email: emailInput
+      })
     });
+
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log("📄 Recibo enviado:", data);
+    showSuccessMessage();
+  })
+  .catch(err => {
+    console.error("❌ Error final:", err);
+  
+    alert("Ocurrió un error al procesar tu pago.");
+    loadingOverlay.classList.remove('active');
+  });
+
 }
+
+
 
 // Mostrar mensaje de éxito
 function showSuccessMessage() {
     const email = document.getElementById('email').value;
     const plan = plans[selectedPlan];
-    
-    loadingOverlay.innerHTML = `
+
+
+    // Ahora sí agregamos el mensaje sin destruir el overlay
+    const successHTML = `
         <div class="success-message">
             <div class="success-icon">
                 <i class="bi bi-check-lg"></i>
@@ -323,12 +360,14 @@ function showSuccessMessage() {
             </button>
         </div>
     `;
-    
+
+    // Reemplazamos SOLO el contenido del overlay por el success message
+    loadingOverlay.innerHTML = successHTML;
+
     loadingOverlay.classList.add('active');
-    
-    // Configurar botón de ir al dashboard
+
+    // Listener del botón
     document.getElementById('go-to-dashboard').addEventListener('click', function() {
-        alert('¡Redirigiendo al dashboard de FinLi Premium!');
         window.location.replace('premium.html');
     });
 }
