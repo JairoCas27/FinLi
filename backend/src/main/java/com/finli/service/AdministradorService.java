@@ -1,30 +1,30 @@
 package com.finli.service;
 
 import com.finli.dto.CategoriaDTO;
-import com.finli.dto.SubcategoriaDTO; 
+import com.finli.dto.SubcategoriaDTO;
 import com.finli.dto.PaginacionUsuarioResponse;
-import com.finli.dto.UserCreateDTO; 
-import com.finli.dto.UserDetailDTO; 
+import com.finli.dto.UserCreateDTO;
+import com.finli.dto.UserDetailDTO;
 import com.finli.dto.UsuarioResponse;
-import com.finli.dto.MedioPagoDTO; 
-import com.finli.model.Categoria; 
-import com.finli.model.EstadoSuscripcion; 
+import com.finli.dto.MedioPagoDTO;
+import com.finli.model.Categoria;
+import com.finli.model.EstadoSuscripcion;
 import com.finli.model.EstadoUsuario;
 import com.finli.model.FuenteCategoria;
 import com.finli.model.MedioPago;
 import com.finli.model.Subcategoria;
-import com.finli.model.Suscripcion; 
-import com.finli.model.TipoSuscripcion; 
+import com.finli.model.Suscripcion;
+import com.finli.model.TipoSuscripcion;
 import com.finli.model.Usuario;
-import com.finli.repository.CategoriaRepository; 
-import com.finli.repository.EstadoSuscripcionRepository; 
+import com.finli.repository.CategoriaRepository;
+import com.finli.repository.EstadoSuscripcionRepository;
 import com.finli.repository.EstadoUsuarioRepository;
 import com.finli.repository.FuenteCategoriaRepository;
-import com.finli.repository.MedioPagoRepository; 
-import com.finli.repository.SuscripcionRepository; 
-import com.finli.repository.TipoSuscripcionRepository; 
+import com.finli.repository.MedioPagoRepository;
+import com.finli.repository.SuscripcionRepository;
+import com.finli.repository.TipoSuscripcionRepository;
 import com.finli.repository.UsuarioRepository;
-import com.finli.repository.SubcategoriaRepository; 
+import com.finli.repository.SubcategoriaRepository;
 import lombok.RequiredArgsConstructor;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -51,19 +50,19 @@ public class AdministradorService {
     private final UsuarioRepository usuarioRepository;
     private final ServicioAutenticacion servicioAutenticacion;
     private final EstadoUsuarioRepository estadoUsuarioRepository;
-    
+
     // --- REPOSITORIOS INYECTADOS ---
     private final SuscripcionRepository suscripcionRepository;
     private final TipoSuscripcionRepository tipoSuscripcionRepository;
     private final EstadoSuscripcionRepository estadoSuscripcionRepository;
     private final CategoriaRepository categoriaRepository;
-    private final SubcategoriaRepository subcategoriaRepository; 
+    private final SubcategoriaRepository subcategoriaRepository;
     private final MedioPagoRepository medioPagoRepository; // <-- AHORA INYECTADO
-    
-    private final Integer ID_ESTADO_ACTIVO = 1; 
-    private final Integer ID_ESTADO_INACTIVO = 2; 
-    
-    // ⬇️⬇️  AGREGAMOS ESTA LÍNEA  ⬇️⬇️
+
+    private final Integer ID_ESTADO_ACTIVO = 1;
+    private final Integer ID_ESTADO_INACTIVO = 2;
+
+    // ⬇️⬇️ AGREGAMOS ESTA LÍNEA ⬇️⬇️
     @Autowired
     private final FuenteCategoriaRepository fuenteCategoriaRepository; // ✅ nombre real
     // ====================================================================================
@@ -72,16 +71,17 @@ public class AdministradorService {
 
     @Transactional(readOnly = true)
     public List<CategoriaDTO> listarCategoriasPredeterminadas() {
-        List<CategoriaRepository.CategoriaProjection> proyecciones = categoriaRepository.obtenerCategoriasPredeterminadasConConteo();
+        List<CategoriaRepository.CategoriaProjection> proyecciones = categoriaRepository
+                .obtenerCategoriasPredeterminadasConConteo();
 
         return proyecciones.stream().map(proj -> {
             CategoriaDTO dto = new CategoriaDTO();
             dto.setId(proj.getId());
             dto.setLabel(proj.getNombre());
             dto.setSubcategoriesCount(proj.getCantidadSubcategorias());
-            
+
             asignarEstiloCategoria(dto);
-            
+
             return dto;
         }).collect(Collectors.toList());
     }
@@ -90,32 +90,33 @@ public class AdministradorService {
     public List<SubcategoriaDTO> obtenerSubcategoriasPorCategoria(Integer categoriaId) {
         Categoria categoria = categoriaRepository.findById(categoriaId)
                 .orElseThrow(() -> new RuntimeException("Categoría no encontrada con ID: " + categoriaId));
-        
+
         List<com.finli.model.Subcategoria> subcategorias = subcategoriaRepository.findByCategoria(categoria);
-        
+
         return subcategorias.stream().map(sub -> {
             SubcategoriaDTO dto = new SubcategoriaDTO();
             dto.setId(sub.getIdSubcategoria());
             dto.setLabel(sub.getNombreSubcategoria());
-            dto.setName(sub.getNombreSubcategoria().toLowerCase().replaceAll("\\s+", "_")); 
+            dto.setName(sub.getNombreSubcategoria().toLowerCase().replaceAll("\\s+", "_"));
             dto.setCategoriaId(categoriaId);
-            
+
             asignarIconoSubcategoria(dto);
-            
+
             return dto;
         }).collect(Collectors.toList());
     }
+
     // --- NUEVO MÉTODO: LISTAR MEDIOS DE PAGO PREDETERMINADOS ---
     @Transactional(readOnly = true)
     public List<MedioPagoDTO> loadDefaultPaymentMethods() {
         // Filtramos por Usuario=NULL, ya que son los predeterminados del sistema
         List<MedioPago> mediosPago = medioPagoRepository.findByUsuario(null);
-        
+
         return mediosPago.stream().map(mp -> {
             MedioPagoDTO dto = new MedioPagoDTO();
             dto.setId(mp.getIdMedioPago());
             dto.setName(mp.getNombreMedioPago());
-            
+
             // Asignar el icono o logo (lógica visual)
             asignarLogoMedioPago(dto);
 
@@ -129,22 +130,22 @@ public class AdministradorService {
 
         if (nombre.contains("vivienda")) {
             dto.setIcon("bi-house");
-            dto.setColor("success"); 
+            dto.setColor("success");
         } else if (nombre.contains("transporte")) {
             dto.setIcon("bi-car-front");
-            dto.setColor("primary"); 
+            dto.setColor("primary");
         } else if (nombre.contains("alimentacion") || nombre.contains("alimentación")) {
             dto.setIcon("bi-cup-straw");
-            dto.setColor("warning"); 
+            dto.setColor("warning");
         } else if (nombre.contains("salud") || nombre.contains("cuidado")) {
             dto.setIcon("bi-heart-pulse");
-            dto.setColor("danger"); 
+            dto.setColor("danger");
         } else if (nombre.contains("entretenimiento") || nombre.contains("ocio")) {
             dto.setIcon("bi-controller");
-            dto.setColor("info"); 
+            dto.setColor("info");
         } else if (nombre.contains("ropa")) {
             dto.setIcon("bi-bag");
-            dto.setColor("secondary"); 
+            dto.setColor("secondary");
         } else if (nombre.contains("electrónica") || nombre.contains("electronica")) {
             dto.setIcon("bi-phone");
             dto.setColor("success");
@@ -159,7 +160,7 @@ public class AdministradorService {
             dto.setColor("secondary");
         }
     }
-    
+
     // Método auxiliar para definir el icono de las Subcategorías
     private void asignarIconoSubcategoria(SubcategoriaDTO dto) {
         String nombre = dto.getLabel().toLowerCase();
@@ -180,7 +181,7 @@ public class AdministradorService {
             dto.setIcon("bi-tag"); // Default
         }
     }
-    
+
     // --- NUEVO: Método auxiliar para definir el icono del Medio de Pago ---
     private void asignarLogoMedioPago(MedioPagoDTO dto) {
         String nombre = dto.getName().toLowerCase();
@@ -209,11 +210,9 @@ public class AdministradorService {
     // === MÉTODOS DE USUARIO (MANTENIDOS) ===
     // ====================================================================================
 
-    
-    
     @Transactional
     public Usuario crearUsuarioConSuscripcion(UserCreateDTO dto) {
-        
+
         if (usuarioRepository.existsByCorreo(dto.getEmail())) {
             throw new RuntimeException("El correo " + dto.getEmail() + " ya está registrado.");
         }
@@ -227,10 +226,10 @@ public class AdministradorService {
         nuevoUsuario.setApellidoMaterno(dto.getApellidoMaterno());
         nuevoUsuario.setEdad(dto.getEdad());
         nuevoUsuario.setCorreo(dto.getEmail());
-        
+
         String hashPassword = BCrypt.hashpw(dto.getPassword(), BCrypt.gensalt());
         nuevoUsuario.setContrasena(hashPassword);
-        
+
         nuevoUsuario.setRol(dto.getRol());
         nuevoUsuario.setEstadoUsuario(estadoUsuarioActivo);
         nuevoUsuario.setFechaRegistro(LocalDate.now()); // ✅ fecha real
@@ -250,9 +249,9 @@ public class AdministradorService {
         suscripcion.setEstadoSuscripcion(estadoSusActiva);
         suscripcion.setFechaInicio(LocalDate.now());
 
-        if (dto.getSubscriptionId() == 1) { 
+        if (dto.getSubscriptionId() == 1) {
             suscripcion.setFechaFin(LocalDate.now().plusMonths(1));
-        } else if (dto.getSubscriptionId() == 2) { 
+        } else if (dto.getSubscriptionId() == 2) {
             suscripcion.setFechaFin(LocalDate.now().plusYears(1));
         } else {
             suscripcion.setFechaFin(null);
@@ -263,30 +262,29 @@ public class AdministradorService {
         return usuarioGuardado;
     }
 
-    @Transactional(readOnly = true) 
+    @Transactional(readOnly = true)
     public UserDetailDTO obtenerUsuarioParaEditar(Integer id) {
         Usuario u = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        Integer subId = 4; 
+        Integer subId = 4;
         if (u.getSuscripciones() != null) {
             subId = u.getSuscripciones().stream()
-                    .filter(s -> s.getEstadoSuscripcion().getIdEstadoSuscripcion() == 1) 
-                    .map(s -> s.getTipoSuscripcion().getIdTipoSuscripcion()) 
+                    .filter(s -> s.getEstadoSuscripcion().getIdEstadoSuscripcion() == 1)
+                    .map(s -> s.getTipoSuscripcion().getIdTipoSuscripcion())
                     .findFirst()
                     .orElse(4);
         }
 
         return new UserDetailDTO(
-            u.getId(),
-            u.getNombre(),
-            u.getApellidoPaterno(),
-            u.getApellidoMaterno(),
-            u.getEdad(),
-            u.getCorreo(),
-            u.getRol(),
-            subId
-        );
+                u.getId(),
+                u.getNombre(),
+                u.getApellidoPaterno(),
+                u.getApellidoMaterno(),
+                u.getEdad(),
+                u.getCorreo(),
+                u.getRol(),
+                subId);
     }
 
     @Transactional
@@ -294,8 +292,8 @@ public class AdministradorService {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        if (!usuario.getCorreo().equalsIgnoreCase(dto.getEmail()) && 
-            usuarioRepository.existsByCorreo(dto.getEmail())) {
+        if (!usuario.getCorreo().equalsIgnoreCase(dto.getEmail()) &&
+                usuarioRepository.existsByCorreo(dto.getEmail())) {
             throw new RuntimeException("El correo ya está en uso por otro usuario.");
         }
 
@@ -310,19 +308,20 @@ public class AdministradorService {
             String hashPassword = BCrypt.hashpw(dto.getPassword(), BCrypt.gensalt());
             usuario.setContrasena(hashPassword);
         }
-        
+
         // --- ACTUALIZAR SUSCRIPCIÓN ---
         if (dto.getSubscriptionId() != null) {
             Suscripcion subActiva = null;
             if (usuario.getSuscripciones() != null) {
                 subActiva = usuario.getSuscripciones().stream()
-                    .filter(s -> s.getEstadoSuscripcion().getIdEstadoSuscripcion() == 1) // 1 = Activa
-                    .findFirst()
-                    .orElse(null);
+                        .filter(s -> s.getEstadoSuscripcion().getIdEstadoSuscripcion() == 1) // 1 = Activa
+                        .findFirst()
+                        .orElse(null);
             }
 
-            if (subActiva == null || !subActiva.getTipoSuscripcion().getIdTipoSuscripcion().equals(dto.getSubscriptionId())) {
-                
+            if (subActiva == null
+                    || !subActiva.getTipoSuscripcion().getIdTipoSuscripcion().equals(dto.getSubscriptionId())) {
+
                 TipoSuscripcion nuevoTipo = tipoSuscripcionRepository.findById(dto.getSubscriptionId())
                         .orElseThrow(() -> new RuntimeException("Tipo de suscripción inválido"));
 
@@ -348,14 +347,21 @@ public class AdministradorService {
                 suscripcionRepository.save(subActiva);
             }
         }
-        
+
+        // ✅ Cambiar estado si viene en el DTO
+        if (dto.getEstadoUsuarioId() != null) {
+            EstadoUsuario nuevoEstado = estadoUsuarioRepository.findById(dto.getEstadoUsuarioId())
+                    .orElseThrow(() -> new RuntimeException("Estado no válido"));
+            usuario.setEstadoUsuario(nuevoEstado);
+        }
         return usuarioRepository.save(usuario);
     }
+
     @Transactional(readOnly = true)
     public PaginacionUsuarioResponse getUsuariosPaginadosYFiltrados(int page, int limit, String status) {
         Pageable pageable = PageRequest.of(page - 1, limit, Sort.by(Sort.Direction.DESC, "id"));
         Page<Usuario> paginaUsuarios;
-        
+
         if (status.equalsIgnoreCase("active")) {
             paginaUsuarios = usuarioRepository.findByEstadoUsuario_IdEstado(ID_ESTADO_ACTIVO, pageable);
         } else if (status.equalsIgnoreCase("inactive")) {
@@ -370,9 +376,9 @@ public class AdministradorService {
 
         return new PaginacionUsuarioResponse(listaResponse, paginaUsuarios.getTotalElements());
     }
-    
+
     public List<Usuario> obtenerListaDeUsuariosParaExportar() {
-        return usuarioRepository.findAll(Sort.by(Sort.Direction.DESC, "id")); 
+        return usuarioRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
     }
 
     public Usuario guardarCliente(Usuario usuario) {
@@ -392,7 +398,8 @@ public class AdministradorService {
             usuarioExistente.setCorreo(usuarioConCambios.getCorreo());
             usuarioExistente.setEdad(usuarioConCambios.getEdad());
 
-            if (usuarioConCambios.getEstadoUsuario() != null && usuarioConCambios.getEstadoUsuario().getIdEstado() != null) {
+            if (usuarioConCambios.getEstadoUsuario() != null
+                    && usuarioConCambios.getEstadoUsuario().getIdEstado() != null) {
                 usuarioExistente.setEstadoUsuario(usuarioConCambios.getEstadoUsuario());
             }
             return usuarioRepository.save(usuarioExistente);
@@ -409,203 +416,202 @@ public class AdministradorService {
     }
 
     @Transactional
-public MedioPagoDTO crearMedioPagoPredeterminado(MedioPagoDTO dto) {
-    // Guardamos como predeterminado (usuario = null)
-    MedioPago mp = MedioPago.builder()
-            .nombreMedioPago(dto.getName())
-            .montoInicial(0.0)          // valor inicial 0 para el sistema
-            .fechaCreacion(LocalDateTime.now())
-            .usuario(null)               // predeterminado
-            .build();
+    public MedioPagoDTO crearMedioPagoPredeterminado(MedioPagoDTO dto) {
+        // Guardamos como predeterminado (usuario = null)
+        MedioPago mp = MedioPago.builder()
+                .nombreMedioPago(dto.getName())
+                .montoInicial(0.0) // valor inicial 0 para el sistema
+                .fechaCreacion(LocalDateTime.now())
+                .usuario(null) // predeterminado
+                .build();
 
-    mp = medioPagoRepository.save(mp);
+        mp = medioPagoRepository.save(mp);
 
-    // Devolvemos el DTO con el id asignado
-    return new MedioPagoDTO(mp.getIdMedioPago(), dto.getName(), dto.getLogo());
-}
-
-@Transactional
-public MedioPagoDTO actualizarMedioPagoPredeterminado(Integer id, MedioPagoDTO dto) {
-    // 1) LOG: qué ID y qué DTO llegan realmente
-    log.warn("🔍 PUT /payment-methods/{}  body={}", id, dto);
-
-    // 2) Buscar el registro
-    MedioPago mp = medioPagoRepository.findByIdSinJoin(id)
-        .orElseThrow(() -> new RuntimeException("Medio de pago no encontrado"));
-
-    // 3) Segunda validación: solo predeterminados
-    if (mp.getUsuario() != null) {
-        throw new RuntimeException("No se puede editar un medio de pago de usuario");
+        // Devolvemos el DTO con el id asignado
+        return new MedioPagoDTO(mp.getIdMedioPago(), dto.getName(), dto.getLogo());
     }
 
-    // 4) Actualizar únicamente el nombre
-    mp.setNombreMedioPago(dto.getName());
-    MedioPago guardado = medioPagoRepository.save(mp);
+    @Transactional
+    public MedioPagoDTO actualizarMedioPagoPredeterminado(Integer id, MedioPagoDTO dto) {
+        // 1) LOG: qué ID y qué DTO llegan realmente
+        log.warn("🔍 PUT /payment-methods/{}  body={}", id, dto);
 
-    // 5) Devolver DTO (logo se devuelve sin persistir por ahora)
-    return new MedioPagoDTO(guardado.getIdMedioPago(),
-                            guardado.getNombreMedioPago(),
-                            dto.getLogo());
-}
+        // 2) Buscar el registro
+        MedioPago mp = medioPagoRepository.findByIdSinJoin(id)
+                .orElseThrow(() -> new RuntimeException("Medio de pago no encontrado"));
 
-@Transactional
-public void eliminarMedioPagoPredeterminado(Integer id) {
-    // 1. Verificar que exista y sea predeterminado
-    MedioPago mp = medioPagoRepository.findByIdSinJoin(id)
-            .orElseThrow(() -> new RuntimeException("Medio de pago no encontrado"));
+        // 3) Segunda validación: solo predeterminados
+        if (mp.getUsuario() != null) {
+            throw new RuntimeException("No se puede editar un medio de pago de usuario");
+        }
 
-    if (mp.getUsuario() != null) {
-        throw new RuntimeException("No se puede eliminar un medio de pago de usuario");
+        // 4) Actualizar únicamente el nombre
+        mp.setNombreMedioPago(dto.getName());
+        MedioPago guardado = medioPagoRepository.save(mp);
+
+        // 5) Devolver DTO (logo se devuelve sin persistir por ahora)
+        return new MedioPagoDTO(guardado.getIdMedioPago(),
+                guardado.getNombreMedioPago(),
+                dto.getLogo());
     }
 
-    // 2. Eliminación física
-    medioPagoRepository.delete(mp);
-}
+    @Transactional
+    public void eliminarMedioPagoPredeterminado(Integer id) {
+        // 1. Verificar que exista y sea predeterminado
+        MedioPago mp = medioPagoRepository.findByIdSinJoin(id)
+                .orElseThrow(() -> new RuntimeException("Medio de pago no encontrado"));
 
-@Transactional
-public CategoriaDTO actualizarCategoriaPredeterminada(Integer id, CategoriaDTO dto) {
-    Categoria cat = categoriaRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
+        if (mp.getUsuario() != null) {
+            throw new RuntimeException("No se puede eliminar un medio de pago de usuario");
+        }
 
-    if (cat.getUsuario() != null) {
-        throw new RuntimeException("No se puede editar una categoría de usuario");
+        // 2. Eliminación física
+        medioPagoRepository.delete(mp);
     }
 
-    // 1. Nombre
-    cat.setNombreCategoria(dto.getLabel());
+    @Transactional
+    public CategoriaDTO actualizarCategoriaPredeterminada(Integer id, CategoriaDTO dto) {
+        Categoria cat = categoriaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
 
-    // 2. Icono y color (si los guardas en la BD; si no, solo visuales)
-    //    Si NO hay columnas icon/color, comenta estas líneas
-    // cat.setIcon(dto.getIcon());
-    // cat.setColor(dto.getColor());
+        if (cat.getUsuario() != null) {
+            throw new RuntimeException("No se puede editar una categoría de usuario");
+        }
 
-    Categoria guardada = categoriaRepository.save(cat);
+        // 1. Nombre
+        cat.setNombreCategoria(dto.getLabel());
 
-    // 3. Recalcular cantidad de subcategorías (opcional)
-    Long count = subcategoriaRepository.countByCategoria(guardada);
+        // 2. Icono y color (si los guardas en la BD; si no, solo visuales)
+        // Si NO hay columnas icon/color, comenta estas líneas
+        // cat.setIcon(dto.getIcon());
+        // cat.setColor(dto.getColor());
 
-    return new CategoriaDTO(
-            guardada.getIdCategoria(),
-            guardada.getNombreCategoria(),
-            dto.getIcon(),      // o null si solo es visual
-            dto.getColor(),     // o null
-            count);
-}
+        Categoria guardada = categoriaRepository.save(cat);
 
-@Transactional
-public void eliminarCategoriaPredeterminada(Integer id) {
-    Categoria cat = categoriaRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
+        // 3. Recalcular cantidad de subcategorías (opcional)
+        Long count = subcategoriaRepository.countByCategoria(guardada);
 
-    if (cat.getUsuario() != null) {
-        throw new RuntimeException("No se puede eliminar una categoría de usuario");
+        return new CategoriaDTO(
+                guardada.getIdCategoria(),
+                guardada.getNombreCategoria(),
+                dto.getIcon(), // o null si solo es visual
+                dto.getColor(), // o null
+                count);
     }
 
-    // Eliminación física (subcategorías deben tener ON DELETE CASCADE)
-    categoriaRepository.delete(cat);
-}
-@Transactional
-public void eliminarSubcategoriaPredeterminada(Integer id) {
-    Subcategoria sub = subcategoriaRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Subcategoría no encontrada"));
+    @Transactional
+    public void eliminarCategoriaPredeterminada(Integer id) {
+        Categoria cat = categoriaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
 
-    // Solo predeterminadas (sin usuario)
-    if (sub.getUsuario() != null) {
-        throw new RuntimeException("No se puede eliminar una subcategoría de usuario");
+        if (cat.getUsuario() != null) {
+            throw new RuntimeException("No se puede eliminar una categoría de usuario");
+        }
+
+        // Eliminación física (subcategorías deben tener ON DELETE CASCADE)
+        categoriaRepository.delete(cat);
     }
 
-    subcategoriaRepository.delete(sub);
-}
+    @Transactional
+    public void eliminarSubcategoriaPredeterminada(Integer id) {
+        Subcategoria sub = subcategoriaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Subcategoría no encontrada"));
 
-/* ---------- EDITAR SUBCATEGORÍA (PUT) ---------- */
-@Transactional
-public SubcategoriaDTO actualizarSubcategoriaPredeterminada(Integer id, SubcategoriaDTO dto) {
-    Subcategoria sub = subcategoriaRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Subcategoría no encontrada"));
+        // Solo predeterminadas (sin usuario)
+        if (sub.getUsuario() != null) {
+            throw new RuntimeException("No se puede eliminar una subcategoría de usuario");
+        }
 
-    if (sub.getUsuario() != null) {
-        throw new RuntimeException("No se puede editar una subcategoría de usuario");
+        subcategoriaRepository.delete(sub);
     }
 
-    // 1. Nombre legible
-    sub.setNombreSubcategoria(dto.getLabel());
+    /* ---------- EDITAR SUBCATEGORÍA (PUT) ---------- */
+    @Transactional
+    public SubcategoriaDTO actualizarSubcategoriaPredeterminada(Integer id, SubcategoriaDTO dto) {
+        Subcategoria sub = subcategoriaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Subcategoría no encontrada"));
 
-    // 2. Cambiar categoría padre (si se envió)
-    if (dto.getCategoriaId() != null && !dto.getCategoriaId().equals(sub.getCategoria().getIdCategoria())) {
-        Categoria nueva = categoriaRepository.findById(dto.getCategoriaId())
-                .orElseThrow(() -> new RuntimeException("Categoría destino no encontrada"));
-        sub.setCategoria(nueva);
+        if (sub.getUsuario() != null) {
+            throw new RuntimeException("No se puede editar una subcategoría de usuario");
+        }
+
+        // 1. Nombre legible
+        sub.setNombreSubcategoria(dto.getLabel());
+
+        // 2. Cambiar categoría padre (si se envió)
+        if (dto.getCategoriaId() != null && !dto.getCategoriaId().equals(sub.getCategoria().getIdCategoria())) {
+            Categoria nueva = categoriaRepository.findById(dto.getCategoriaId())
+                    .orElseThrow(() -> new RuntimeException("Categoría destino no encontrada"));
+            sub.setCategoria(nueva);
+        }
+
+        // 3. Guardar
+        Subcategoria guardada = subcategoriaRepository.save(sub);
+
+        // 4. Devolver DTO (usamos los campos que tienes)
+        return new SubcategoriaDTO(
+                guardada.getIdSubcategoria(),
+                guardada.getNombreSubcategoria().toLowerCase().replaceAll("\\s+", "_"), // name técnico
+                guardada.getNombreSubcategoria(), // label legible
+                dto.getIcon(), // icono que mandó front
+                guardada.getCategoria().getIdCategoria() // categoría padre
+        );
     }
 
-    // 3. Guardar
-    Subcategoria guardada = subcategoriaRepository.save(sub);
+    @Transactional
+    public SubcategoriaDTO crearSubcategoriaPredeterminada(SubcategoriaDTO dto) {
+        // 1. Validar categoría padre
+        Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
+                .orElseThrow(() -> new RuntimeException("Categoría padre no encontrada"));
 
-    // 4. Devolver DTO (usamos los campos que tienes)
-    return new SubcategoriaDTO(
-            guardada.getIdSubcategoria(),
-            guardada.getNombreSubcategoria().toLowerCase().replaceAll("\\s+", "_"), // name técnico
-            guardada.getNombreSubcategoria(),                                       // label legible
-            dto.getIcon(),                                                          // icono que mandó front
-            guardada.getCategoria().getIdCategoria()                                // categoría padre
-    );
-}
+        // 2. Crear subcategoría (sin usuario = predeterminada)
+        Subcategoria nueva = Subcategoria.builder()
+                .nombreSubcategoria(dto.getLabel())
+                .categoria(categoria)
+                .usuario(null) // predeterminada
+                .build();
 
-@Transactional
-public SubcategoriaDTO crearSubcategoriaPredeterminada(SubcategoriaDTO dto) {
-    // 1. Validar categoría padre
-    Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
-            .orElseThrow(() -> new RuntimeException("Categoría padre no encontrada"));
+        Subcategoria guardada = subcategoriaRepository.save(nueva);
 
-    // 2. Crear subcategoría (sin usuario = predeterminada)
-    Subcategoria nueva = Subcategoria.builder()
-            .nombreSubcategoria(dto.getLabel())
-            .categoria(categoria)
-            .usuario(null) // predeterminada
-            .build();
-
-    Subcategoria guardada = subcategoriaRepository.save(nueva);
-
-    // 3. Devolver DTO
-    return new SubcategoriaDTO(
-            guardada.getIdSubcategoria(),
-            guardada.getNombreSubcategoria().toLowerCase().replaceAll("\\s+", "_"),
-            guardada.getNombreSubcategoria(),
-            dto.getIcon(), // opcional
-            guardada.getCategoria().getIdCategoria()
-    );
-}
-
-@Transactional
-public CategoriaDTO crearCategoriaPredeterminada(CategoriaDTO dto) {
-    // 1. Validar que no exista el nombre (opcional)
-    if (categoriaRepository.existsByNombreCategoriaAndUsuarioIsNull(dto.getLabel())) {
-        throw new RuntimeException("Ya existe una categoría predeterminada con ese nombre");
+        // 3. Devolver DTO
+        return new SubcategoriaDTO(
+                guardada.getIdSubcategoria(),
+                guardada.getNombreSubcategoria().toLowerCase().replaceAll("\\s+", "_"),
+                guardada.getNombreSubcategoria(),
+                dto.getIcon(), // opcional
+                guardada.getCategoria().getIdCategoria());
     }
 
-    // 2. Obtener fuente predeterminada (id = 1)
-    FuenteCategoria fuente = fuenteCategoriaRepository.findById(1)
-        .orElseThrow(() -> new RuntimeException("Fuente predeterminada no encontrada"));
+    @Transactional
+    public CategoriaDTO crearCategoriaPredeterminada(CategoriaDTO dto) {
+        // 1. Validar que no exista el nombre (opcional)
+        if (categoriaRepository.existsByNombreCategoriaAndUsuarioIsNull(dto.getLabel())) {
+            throw new RuntimeException("Ya existe una categoría predeterminada con ese nombre");
+        }
 
-    // 3. Crear categoría (sin usuario = predeterminada)
-Categoria nueva = Categoria.builder()
-        .nombreCategoria(dto.getLabel())
-        .fuente(fuente)         // ← nombre real del campo
-        .usuario(null)          // predeterminada
-        .build();
+        // 2. Obtener fuente predeterminada (id = 1)
+        FuenteCategoria fuente = fuenteCategoriaRepository.findById(1)
+                .orElseThrow(() -> new RuntimeException("Fuente predeterminada no encontrada"));
 
-    Categoria guardada = categoriaRepository.save(nueva);
+        // 3. Crear categoría (sin usuario = predeterminada)
+        Categoria nueva = Categoria.builder()
+                .nombreCategoria(dto.getLabel())
+                .fuente(fuente) // ← nombre real del campo
+                .usuario(null) // predeterminada
+                .build();
 
-    // 4. Contar subcategorías (0 al crear)
-    Long count = subcategoriaRepository.countByCategoria(guardada);
+        Categoria guardada = categoriaRepository.save(nueva);
 
-    // 5. Devolver DTO
-    return new CategoriaDTO(
-            guardada.getIdCategoria(),
-            guardada.getNombreCategoria(),
-            dto.getIcon(),      // visual
-            dto.getColor(),     // visual
-            count
-    );
-}
+        // 4. Contar subcategorías (0 al crear)
+        Long count = subcategoriaRepository.countByCategoria(guardada);
+
+        // 5. Devolver DTO
+        return new CategoriaDTO(
+                guardada.getIdCategoria(),
+                guardada.getNombreCategoria(),
+                dto.getIcon(), // visual
+                dto.getColor(), // visual
+                count);
+    }
 
 }

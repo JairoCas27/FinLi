@@ -2,7 +2,7 @@
 let currentPageInicio = 1;
 const usersPerPageInicio = 3;
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     initializeInicio();
 });
 
@@ -40,7 +40,7 @@ async function editUser(id) {
         // Llamada al backend para obtener el detalle separado
         // Endpoint: GET /api/admin/users/{id}
         const response = await fetch(`http://localhost:8080/api/admin/users/${id}`);
-        
+
         if (!response.ok) {
             throw new Error('No se pudo obtener la información del usuario');
         }
@@ -53,7 +53,7 @@ async function editUser(id) {
         document.getElementById('editUserApellidoMaterno').value = user.apellidoMaterno || '';
         document.getElementById('editUserEdad').value = user.edad || '';
         document.getElementById('editUserEmail').value = user.email || '';
-        
+
         // Seleccionar ROL (si existe en el select, sino default 'usuario')
         const rolSelect = document.getElementById('editUserRol');
         if (rolSelect) rolSelect.value = user.rol || 'usuario';
@@ -61,10 +61,10 @@ async function editUser(id) {
         // Seleccionar SUSCRIPCIÓN (si existe en el select, sino default 4)
         const subSelect = document.getElementById('editUserSubscriptionType');
         if (subSelect) subSelect.value = user.subscriptionId || 4;
-        
+
         // Limpiar el campo de contraseña (para que esté vacío por seguridad)
         const passField = document.getElementById('editUserPassword');
-        if(passField) passField.value = '';
+        if (passField) passField.value = '';
 
         // Mostrar modal
         const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
@@ -110,36 +110,45 @@ async function editUser(id) {
     }
 }
 
+// ===== ELIMINAR USUARIO (abre modal) =====
+function deleteUser(id) {
+    userToDeleteId = id; // usada luego en confirmDeleteUser
+    const user = users.find(u => u.id === id);
+    document.getElementById('deleteUserName').textContent = user ? user.name : 'este usuario';
+    const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+    modal.show();
+}
+
 async function initializeInicio() {
     await loadLatestUsersForHome(); // ✅ carga real
     initializeChartsInicio();
     updateNotificationsDropdown();
     updateRecentActivities();
     updateUserCount();
-    
+
     // Event listeners para modales de usuarios
     document.getElementById('saveUserBtn').addEventListener('click', saveUser);
     document.getElementById('updateUserBtn').addEventListener('click', updateUser);
     document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDeleteUser);
-    
+
     // Event listener para vista previa de foto
-    document.getElementById('userPhoto').addEventListener('change', function(e) {
+    document.getElementById('userPhoto').addEventListener('change', function (e) {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function (e) {
                 document.getElementById('addPhotoPreview').src = e.target.result;
                 document.getElementById('addPhotoPreview').style.display = 'block';
             };
             reader.readAsDataURL(file);
         }
     });
-    
-    document.getElementById('editUserPhoto').addEventListener('change', function(e) {
+
+    document.getElementById('editUserPhoto').addEventListener('change', function (e) {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function (e) {
                 document.getElementById('editPhotoPreview').src = e.target.result;
                 document.getElementById('editPhotoPreview').style.display = 'block';
             };
@@ -148,12 +157,12 @@ async function initializeInicio() {
     });
 
     // Event listeners para botones de acción en tabla
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (e.target.closest('.edit-user')) {
             const userId = parseInt(e.target.closest('.edit-user').getAttribute('data-id'));
             editUser(userId);
         }
-        
+
         if (e.target.closest('.delete-user')) {
             const userId = parseInt(e.target.closest('.delete-user').getAttribute('data-id'));
             deleteUser(userId);
@@ -161,7 +170,7 @@ async function initializeInicio() {
     });
 
     // Event listener para exportar CSV
-    document.getElementById('exportBtnInicio').addEventListener('click', function() {
+    document.getElementById('exportBtnInicio').addEventListener('click', function () {
         exportUsersToCSV('usuarios_inicio.csv');
     });
 }
@@ -169,44 +178,44 @@ async function initializeInicio() {
 
 function renderUsersInicio() {
     const sortedUsers = [...users].sort((a, b) => new Date(b.registrationDate) - new Date(a.registrationDate));
-    
+
     const tbodyInicio = document.getElementById('tbodyInicio');
     tbodyInicio.innerHTML = '';
-    
+
     const startIndexInicio = (currentPageInicio - 1) * usersPerPageInicio;
     const usersForInicio = sortedUsers.slice(startIndexInicio, startIndexInicio + usersPerPageInicio);
-    
+
     usersForInicio.forEach(user => {
         tbodyInicio.appendChild(createUserRowInicio(user));
     });
-    
+
     updateInicioPagination(sortedUsers.length);
 }
 
 function createUserRowInicio(user) {
     const tr = document.createElement('tr');
-    
+
     const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
     const colors = ['var(--accent)', 'var(--accent-3)', 'var(--accent-4)', 'var(--muted)', '#3498db', '#e74c3c', '#2ecc71', '#9b59b6', '#f39c12', '#1abc9c'];
     const colorIndex = user.id % colors.length;
     const bgColor = colors[colorIndex];
-    
+
     const subscriptionBadgeClass = {
         'Sin suscripción': 'bg-light text-dark',
         'Mensual': 'bg-success text-white',
         'Anual': 'bg-warning text-dark',
         'De por vida': 'bg-info text-white'
     };
-    
+
     tr.innerHTML = `
         <td><span class="badge bg-light text-dark">${user.id}</span></td>
         <td>
             <div class="d-flex align-items-center gap-2">
                 <div class="avatar-sm" style="background:${user.photo ? 'transparent' : bgColor}">
-                    ${user.photo ? 
-                    `<img src="${user.photo}" alt="${user.name}">` : 
-                    `<span>${initials}</span>`
-                    }
+                    ${user.photo ?
+            `<img src="${user.photo}" alt="${user.name}">` :
+            `<span>${initials}</span>`
+        }
                 </div>
             </div>
         </td>
@@ -227,7 +236,7 @@ function createUserRowInicio(user) {
             </div>
         </td>
     `;
-    
+
     return tr;
 }
 
@@ -235,23 +244,23 @@ function updateInicioPagination(totalUsers) {
     const totalPages = Math.ceil(totalUsers / usersPerPageInicio);
     const paginationContainer = document.getElementById('paginationInicio');
     const countElement = document.getElementById('countInicio');
-    
+
     if (countElement) {
         const startIndex = (currentPageInicio - 1) * usersPerPageInicio + 1;
         const endIndex = Math.min(startIndex + usersPerPageInicio - 1, totalUsers);
         countElement.textContent = `${startIndex}-${endIndex}`;
     }
-    
+
     if (paginationContainer) {
         let paginationHTML = '';
-        
+
         // Botón Anterior
         paginationHTML += `
             <li class="page-item ${currentPageInicio === 1 ? 'disabled' : ''}">
                 <a class="page-link" href="#" onclick="changePageInicio(${currentPageInicio - 1})">Anterior</a>
             </li>
         `;
-        
+
         // Números de página
         for (let i = 1; i <= totalPages; i++) {
             paginationHTML += `
@@ -260,14 +269,14 @@ function updateInicioPagination(totalUsers) {
                 </li>
             `;
         }
-        
+
         // Botón Siguiente
         paginationHTML += `
             <li class="page-item ${currentPageInicio === totalPages ? 'disabled' : ''}">
                 <a class="page-link" href="#" onclick="changePageInicio(${currentPageInicio + 1})">Siguiente</a>
             </li>
         `;
-        
+
         paginationContainer.innerHTML = paginationHTML;
     }
 }
@@ -326,12 +335,12 @@ function initializeChartsInicio() {
 function updateNotificationsDropdown() {
     const badge = document.getElementById('notificationBadge');
     const dropdownContent = document.getElementById('activitiesDropdownContent');
-    
+
     if (!badge || !dropdownContent) return;
 
     const recentActivities = activities.slice(0, 5);
     const unreadCount = recentActivities.filter(act => !act.read).length;
-    
+
     badge.textContent = unreadCount > 0 ? unreadCount : '';
     badge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
 
@@ -367,14 +376,14 @@ function updateNotificationsDropdown() {
 function updateRecentActivities() {
     const container = document.getElementById('recentActivitiesList');
     if (!container) return;
-    
+
     const recentActivities = activities.slice(0, 3);
-    
+
     if (recentActivities.length === 0) {
         container.innerHTML = '<p class="text-muted small text-center py-4">No hay actividades recientes</p>';
         return;
     }
-    
+
     let html = '';
     recentActivities.forEach(activity => {
         const timeAgo = getTimeAgo(activity.timestamp);
@@ -392,17 +401,17 @@ function updateRecentActivities() {
             </div>
         `;
     });
-    
+
     container.innerHTML = html;
 }
 
 function exportUsersToCSV(filename) {
     let csv = 'ID,Nombre,Email,Tipo Suscripción,Fecha Registro\n';
-    
+
     users.forEach(user => {
         csv += `"${user.id}","${user.name}","${user.email}","${user.subscriptionType}","${user.registrationDate}"\n`;
     });
-    
+
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -412,7 +421,7 @@ function exportUsersToCSV(filename) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    
+
     showNotification('Datos exportados exitosamente', 'success');
 }
 
@@ -515,32 +524,58 @@ async function updateUser() {
     }
 }
 
-// Eliminar usuario
+
+
+// ===== ELIMINAR LÓGICA (cambiar estado a "Desactivado") =====
 async function confirmDeleteUser() {
     if (!userToDeleteId) return;
     const btn = document.getElementById('confirmDeleteBtn');
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Eliminando...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Desactivando...';
 
     try {
-        const res = await fetch(`http://localhost:8080/api/admin/users/${userToDeleteId}`, {
-            method: 'DELETE'
+        // 1. Obtener datos actuales del usuario
+        const resGet = await fetch(`http://localhost:8080/api/admin/users/${userToDeleteId}`);
+        if (!resGet.ok) throw new Error('No se pudo obtener el usuario');
+        const user = await resGet.json();
+
+        // 2. Preparar DTO con estado = Desactivado (ID 2)
+        const updatedData = {
+            nombre: user.nombre,
+            apellidoPaterno: user.apellidoPaterno,
+            apellidoMaterno: user.apellidoMaterno,
+            edad: user.edad,
+            email: user.email,
+            password: '', // vacío = no cambiar
+            rol: user.rol,
+            subscriptionId: user.subscriptionId ?? 4,
+            // ✅ AGREGAMOS ESTADO = 2 (Desactivado)
+            estadoUsuarioId: 2
+        };
+
+        // 3. Enviar PUT con el mismo DTO que usas para editar
+        const resPut = await fetch(`http://localhost:8080/api/admin/users/${userToDeleteId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData)
         });
 
-        if (res.ok) {
+        if (resPut.ok) {
             const modal = bootstrap.Modal.getInstance(document.getElementById('deleteUserModal'));
             modal.hide();
-            showNotification('Usuario eliminado', 'success');
+            showNotification('Usuario desactivado', 'success');
             await loadLatestUsersForHome(); // recarga tabla
         } else {
-            alert("Error al eliminar");
+            const msg = await resPut.text();
+            alert("Error al desactivar: " + msg);
         }
     } catch (err) {
         console.error(err);
         alert("Error de conexión.");
     } finally {
         btn.disabled = false;
-        btn.innerHTML = 'Eliminar Usuario';
+        btn.innerHTML = 'Desactivar Usuario';
         userToDeleteId = null;
     }
+
 }

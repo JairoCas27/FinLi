@@ -21,4 +21,7 @@ public class UserCreateDTO {
     // Configuración
     private String rol;
     private Integer subscriptionId; // El ID de la suscripción (1, 2, 3 o 4)
+
+    // Estado del usuario (opcional, para desactivar)
+    private Integer estadoUsuarioId;
 }
