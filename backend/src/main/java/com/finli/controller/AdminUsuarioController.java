@@ -137,4 +137,11 @@ public ResponseEntity<List<UserHomeDTO>> getLatestUsersForHome() {
         .collect(Collectors.toList());
     return ResponseEntity.ok(dto);
 }
+
+// Nuevo: crecimiento de usuarios por mes (últimos 12 meses)
+@GetMapping("/usuarios/crecimiento-mensual")
+public ResponseEntity<List<Integer>> getUserGrowthLast12Months() {
+    return ResponseEntity.ok(administradorService.obtenerCrecimientoUsuariosUltimos12Meses());
+}
+
 }

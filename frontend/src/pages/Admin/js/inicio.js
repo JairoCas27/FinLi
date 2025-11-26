@@ -289,7 +289,7 @@ function changePageInicio(page) {
     }
 }
 
-function initializeChartsInicio() {
+async function initializeChartsInicio() {
     const userGrowthCtxInicio = document.getElementById('userGrowthChartInicio');
     if (userGrowthCtxInicio) {
         new Chart(userGrowthCtxInicio.getContext('2d'), {
@@ -298,7 +298,7 @@ function initializeChartsInicio() {
                 labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
                 datasets: [{
                     label: 'Usuarios Registrados',
-                    data: generateUserGrowthData(),
+                    data: await generateUserGrowthData(),
                     borderColor: '#0ea46f',
                     backgroundColor: 'rgba(14, 164, 111, 0.1)',
                     borderWidth: 3,
@@ -403,6 +403,18 @@ function updateRecentActivities() {
     });
 
     container.innerHTML = html;
+}
+
+// ===== DATOS REALES PARA EL GRÁFICO (últimos 12 meses) =====
+async function generateUserGrowthData() {
+    try {
+        const res = await fetch('http://localhost:8080/api/admin/usuarios/crecimiento-mensual');
+        if (!res.ok) throw new Error('Error obteniendo crecimiento');
+        return await res.json(); // array de 12 enteros
+    } catch (err) {
+        console.error(err);
+        return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // fallback
+    }
 }
 
 function exportUsersToCSV(filename) {

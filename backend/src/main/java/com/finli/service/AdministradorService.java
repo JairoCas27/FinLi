@@ -38,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -613,5 +614,21 @@ public class AdministradorService {
                 dto.getColor(), // visual
                 count);
     }
+ 
+    public List<Integer> obtenerCrecimientoUsuariosUltimos12Meses() {
+    LocalDate hoy = LocalDate.now();
+    LocalDate inicio = hoy.minusMonths(11).withDayOfMonth(1); // 11 meses atrás, día 1
 
+    List<Integer> cantidades = new ArrayList<>();
+
+    for (int i = 0; i < 12; i++) {
+        LocalDate mesInicio = inicio.plusMonths(i);
+        LocalDate mesFin   = mesInicio.plusMonths(1).minusDays(1);
+
+        Integer cantidad = usuarioRepository.countByFechaRegistroBetween(mesInicio, mesFin);
+        cantidades.add(cantidad);
+    }
+
+    return cantidades;
+}
 }
