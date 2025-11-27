@@ -1,5 +1,3 @@
-
-
 // Datos de planes
 const plans = {
     mensual: {
@@ -62,16 +60,9 @@ function setupEventListeners() {
     // Cambio de plan
     planOptions.forEach(option => {
         option.addEventListener('click', function() {
-            // Quitar selección anterior
             planOptions.forEach(opt => opt.classList.remove('selected'));
-            
-            // Agregar selección actual
             this.classList.add('selected');
-            
-            // Actualizar plan seleccionado
             selectedPlan = this.getAttribute('data-plan');
-            
-            // Actualizar la visualización
             updatePlanDisplay();
         });
     });
@@ -83,7 +74,6 @@ function setupEventListeners() {
         if (formattedValue) {
             e.target.value = formattedValue;
         }
-        
         validateCardNumber(e.target);
     });
 
@@ -93,7 +83,6 @@ function setupEventListeners() {
         if (value.length >= 2) {
             e.target.value = value.substring(0, 2) + '/' + value.substring(2, 4);
         }
-        
         validateExpiryDate(e.target);
     });
 
@@ -113,17 +102,16 @@ function setupEventListeners() {
     });
 
     // Envío del formulario
-paymentForm.addEventListener('submit', function(e) {
-    e.preventDefault(); // ✅ Prevenir recarga
-    processPayment();   // Ejecutar el pago
-});
+    paymentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        processPayment();
+    });
 
     // Enlace de volver
     backLink.addEventListener('click', function(e) {
         e.preventDefault();
         if (confirm('¿Estás seguro de que quieres volver? Se perderá la información ingresada.')) {
             window.history.back();
-            window.location.replace('usuario.html');
         }
     });
 }
@@ -132,12 +120,10 @@ paymentForm.addEventListener('submit', function(e) {
 function updatePlanDisplay() {
     const plan = plans[selectedPlan];
     
-    // Actualizar resumen
     summaryPlan.textContent = `Plan ${plan.name}`;
     summaryPrice.textContent = `S/. ${plan.price.toFixed(2)}`;
     summaryPeriod.textContent = plan.period;
     
-    // Actualizar detalles
     detailPlan.textContent = `Plan ${plan.name}`;
     detailPrice.textContent = `S/. ${plan.price.toFixed(2)}`;
     
@@ -151,7 +137,6 @@ function updatePlanDisplay() {
     detailTaxes.textContent = `S/. ${plan.taxes.toFixed(2)}`;
     detailTotal.textContent = `S/. ${plan.price.toFixed(2)}`;
     
-    // Actualizar botón de pago
     paymentAmount.textContent = `S/. ${plan.price.toFixed(2)}`;
 }
 
@@ -240,134 +225,146 @@ function validateForm() {
     return validations.every(validation => validation === true);
 }
 
-// Procesar el pago
-// Procesar el pago
+// Procesar el pago - VERSIÓN QUE REDIRIGE A exitoPago.html
 function processPayment() {
-  if (!validateForm()) {
-    alert("Por favor corrige los errores en el formulario.");
-    return;
-  }
+    if (!validateForm()) {
+        alert("Por favor corrige los errores en el formulario.");
+        return;
+    }
 
-  const emailInput = document.getElementById("email").value;
-  const cardNumberInput = document.getElementById("cardNumber").value.replace(/\s/g, "");
-  const cardLast4 = cardNumberInput.slice(-4);
+    const emailInput = document.getElementById("email").value;
+    const cardNumberInput = document.getElementById("cardNumber").value.replace(/\s/g, "");
 
-  // 🟦 MAPEO QUE TU BACKEND RECONOCE
-  const planName =
-    selectedPlan === "mensual" ? "Mensual" :
-    selectedPlan === "anual" ? "Anual" :
-    "De por vida";
+    const planName = selectedPlan === "mensual" ? "Mensual" :
+                    selectedPlan === "anual" ? "Anual" : "De por vida";
 
+    console.log("📦 Iniciando proceso de pago para plan:", planName);
 
-    // Mostrar overlay de carga inmediatamente
+    // Mostrar overlay de carga
+    showLoadingOverlay();
+
+    // SIMULAR PROCESO DE PAGO CON TIEMPO DE ESPERA
+    setTimeout(() => {
+        // 1. Actualizar el estado del usuario inmediatamente
+        updateUserSubscriptionStatus();
+
+        // 2. Guardar datos del pago en sessionStorage para la página de éxito
+        const pagoData = {
+            planName: planName,
+            price: plans[selectedPlan].price.toFixed(2),
+            email: emailInput,
+            userName: loggedUser.nombre
+        };
+        
+        sessionStorage.setItem('pagoExitoso', JSON.stringify(pagoData));
+
+        // 3. Ejecutar proceso en segundo plano (no bloquea la redirección)
+        executeBackgroundProcess(planName, emailInput, cardNumberInput);
+
+        // 4. Redirigir a la página de éxito
+        window.location.href = 'exitoPago.html';
+
+    }, 3000); // 3 segundos de espera
+}
+
+// Función para ejecutar proceso en segundo plano SIN bloquear la redirección
+function executeBackgroundProcess(planName, emailInput, cardNumberInput) {
+    console.log("🔄 Ejecutando proceso en segundo plano...");
+    
+    // Intentar las llamadas API sin afectar la experiencia del usuario
+    Promise.all([
+        updateSubscriptionAPI(planName),
+        sendPaymentConfirmationAPI(planName, emailInput, cardNumberInput)
+    ]).then(results => {
+        console.log("✅ Procesos en segundo plano completados:", results);
+    }).catch(error => {
+        console.error("❌ Error en procesos en segundo plano:", error);
+        // No mostramos error al usuario ya que la redirección ya ocurrió
+    });
+}
+
+// Función para actualizar suscripción en API
+function updateSubscriptionAPI(planName) {
+    return fetch("http://localhost:8080/api/suscripciones/cambiar", {
+        method: "PUT",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+            idUsuario: loggedUser.id,
+            idTipoSuscripcion: selectedPlan === "mensual" ? 1 : selectedPlan === "anual" ? 2 : 3
+        })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
+        return res.json();
+    })
+    .then(data => {
+        console.log("✅ Suscripción actualizada en API:", data);
+        return data;
+    });
+}
+
+// Función para enviar confirmación de pago
+function sendPaymentConfirmationAPI(planName, emailInput, cardNumberInput) {
+    return fetch("http://localhost:8080/api/pagos/confirmar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            idUsuario: loggedUser.id,
+            correoUsuario: loggedUser.correo,
+            nombreTipoSuscripcion: planName,
+            cardNumber: cardNumberInput,
+            email: emailInput
+        })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
+        return res.text();
+    })
+    .then(data => {
+        console.log("✅ Confirmación de pago enviada:", data);
+        return data;
+    });
+}
+
+// Mostrar overlay de carga
+function showLoadingOverlay() {
     loadingOverlay.innerHTML = `
         <div class="spinner"></div>
         <h3>Procesando tu pago</h3>
         <p>Esto puede tomar unos segundos...</p>
     `;
     loadingOverlay.classList.add('active');
-
-  console.log("📦 Tipo de suscripción enviada:", planName);
-
-  
-
-  // 1️⃣ Primero actualizar la suscripción
-  fetch("http://localhost:8080/api/suscripciones/cambiar", {
-    method: "PUT",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      idUsuario: loggedUser.id,
-      idTipoSuscripcion:
-        selectedPlan === "mensual" ? 1 :
-        selectedPlan === "anual" ? 2 : 3
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    console.log("✅ Suscripción actualizada:", data);
-
-    // Guardar en sesión
-    loggedUser.tipoSuscripcion = planName;
-    loggedUser.estadoSuscripcion = "Activa";
-    loggedUser.fechaFinSuscripcion = data.fechaFin || null;
-
-    sessionStorage.setItem("loggedUser", JSON.stringify(loggedUser));
-    console.log("📧 Email que se enviará:", emailInput);
-
-    // 2️⃣ Enviar a la ruta principal /pagos/confirmar
-    return fetch("http://localhost:8080/api/pagos/confirmar", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        idUsuario: loggedUser.id,
-
-        // ✔ Estas son EXACTAMENTE las keys que tu backend exige
-        correoUsuario: loggedUser.correo,
-        nombreTipoSuscripcion: planName,
-        cardNumber: cardNumberInput,
-        email: emailInput
-      })
-    });
-
-  })
-  .then(res => res.json())
-  .then(data => {
-    console.log("📄 Recibo enviado:", data);
-    showSuccessMessage();
-  })
-  .catch(err => {
-    console.error("❌ Error final:", err);
-  
-    alert("Ocurrió un error al procesar tu pago.");
-    loadingOverlay.classList.remove('active');
-  });
-
 }
 
+// Actualizar el estado de suscripción del usuario en sessionStorage
+function updateUserSubscriptionStatus() {
+    const planName = selectedPlan === "mensual" ? "Mensual" :
+                    selectedPlan === "anual" ? "Anual" : "De por vida";
+    
+    if (loggedUser) {
+        loggedUser.tipoSuscripcion = planName;
+        loggedUser.estadoSuscripcion = "Activa";
+        
+        // Calcular fecha de fin según el plan
+        const today = new Date();
+        let endDate = new Date();
+        
+        if (selectedPlan === "mensual") {
+            endDate.setMonth(today.getMonth() + 1);
+        } else if (selectedPlan === "anual") {
+            endDate.setFullYear(today.getFullYear() + 1);
+        } else { // vitalicio
+            endDate.setFullYear(today.getFullYear() + 50); // 50 años como "vitalicio"
+        }
+        
+        loggedUser.fechaFinSuscripcion = endDate.toISOString().split('T')[0];
+        sessionStorage.setItem("loggedUser", JSON.stringify(loggedUser));
+        
+        console.log("✅ Usuario actualizado en sessionStorage:", loggedUser);
+    }
+}
 
-
-// Mostrar mensaje de éxito
-function showSuccessMessage() {
-    const email = document.getElementById('email').value;
-    const plan = plans[selectedPlan];
-
-
-    // Ahora sí agregamos el mensaje sin destruir el overlay
-    const successHTML = `
-        <div class="success-message">
-            <div class="success-icon">
-                <i class="bi bi-check-lg"></i>
-            </div>
-            <h3>¡Pago Completado Exitosamente!</h3>
-            <p class="text-muted">¡Felicidades ${loggedUser.nombre}! Tu suscripción <strong>${plan.name}</strong> ha sido activada.</p>
-            <div class="summary-details mt-3">
-                <div class="detail-row">
-                    <span>Plan:</span>
-                    <span>${plan.name}</span>
-                </div>
-                <div class="detail-row">
-                    <span>Total pagado:</span>
-                    <span>S/. ${plan.price.toFixed(2)}</span>
-                </div>
-                <div class="detail-row">
-                    <span>Correo:</span>
-                    <span>${email}</span>
-                </div>
-            </div>
-            <p class="mt-3 small text-muted">Hemos enviado un correo de confirmación a ${email} con los detalles de tu suscripción.</p>
-            <button class="btn-payment mt-3" id="go-to-dashboard">
-                <i class="bi bi-rocket-takeoff"></i> Comenzar a usar FinLi Premium
-            </button>
-        </div>
-    `;
-
-    // Reemplazamos SOLO el contenido del overlay por el success message
-    loadingOverlay.innerHTML = successHTML;
-
-    loadingOverlay.classList.add('active');
-
-    // Listener del botón
-    document.getElementById('go-to-dashboard').addEventListener('click', function() {
-        window.location.replace('premium.html');
-    });
+// Ocultar overlay
+function hideOverlay() {
+    loadingOverlay.classList.remove('active');
 }
