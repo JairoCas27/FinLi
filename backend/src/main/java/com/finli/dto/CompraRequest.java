@@ -5,8 +5,8 @@ import lombok.Data;
 @Data
 public class CompraRequest {
 
-    private String correoUsuario;        // 👈 este
-    private String nombreTipoSuscripcion; // 👈 este
+    private String correoUsuario;
+    private String nombreTipoSuscripcion;
     private String email;
     private String cardNumber;
 

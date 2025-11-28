@@ -192,7 +192,7 @@ if(toggleConfirmPassword && confirmPasswordInput) setupToggle(toggleConfirmPassw
 // =================================================================
 // Temporizador 
 // =================================================================
-let timeLeft = 60;
+let timeLeft = 120;
 let countdownInterval = null;
 
 const timerElement = document.getElementById('time');
@@ -209,7 +209,7 @@ if (timerElement && countdownElement && resendLink) {
         resendLink.style.display = timeLeft <= 0 ? 'inline' : 'none';
     }
 
-    function startTimer(initialSeconds = 60) {
+    function startTimer(initialSeconds = 120) {
         clearInterval(countdownInterval);
         timeLeft = initialSeconds;
         render(); 
@@ -233,10 +233,10 @@ if (timerElement && countdownElement && resendLink) {
     resendLink.addEventListener('click', function (evt) {
         evt.preventDefault();
         resendCodeAction();
-        startTimer(60);
+        startTimer(120);
     });
 
-    startTimer(60);
+    startTimer(120);
 }
 
 
