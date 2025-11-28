@@ -46,7 +46,10 @@ document.addEventListener("DOMContentLoaded", () => {
         email,
         contrasena,
         confirmarContrasena: contrasena,
-        edad: parseInt(edad)
+        edad: parseInt(edad),
+        rol: "usuario",
+        fechaRegistro: new Date().toISOString(),
+        foto: null 
     })
 });
 

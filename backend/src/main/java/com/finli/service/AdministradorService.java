@@ -233,7 +233,7 @@ public class AdministradorService {
 
         nuevoUsuario.setRol(dto.getRol());
         nuevoUsuario.setEstadoUsuario(estadoUsuarioActivo);
-        nuevoUsuario.setFechaRegistro(LocalDate.now()); // ✅ fecha real
+        nuevoUsuario.setFechaRegistro(LocalDateTime.now()); // ✅ fecha real
 
         Usuario usuarioGuardado = usuarioRepository.save(nuevoUsuario);
 

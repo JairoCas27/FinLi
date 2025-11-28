@@ -21,7 +21,7 @@ public class SuscripcionService {
     private final UsuarioRepository usuarioRepository;
 
     /**
-     * 📌 Crear una suscripción gratuita automáticamente
+     *    Crear una suscripción gratuita automáticamente
      *    cuando se registra un nuevo usuario.
      */
     public void crearSuscripcionGratuita(Integer idUsuario) {

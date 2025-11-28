@@ -1,6 +1,7 @@
 package com.finli.model;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -42,10 +43,12 @@ public class Usuario {
 
     // --- NUEVO CAMPO AGREGADO (Soluciona el error setRol) ---
     @Column(nullable = false, length = 20)
-    private String rol;
+    @Builder.Default
+    private String rol = "usuario";
 
     @Column(name = "fecha_registro", nullable = false)
-    private LocalDate fechaRegistro;
+    @Builder.Default
+    private LocalDateTime fechaRegistro = LocalDateTime.now();
 
     @Column(name = "foto", length = 500)
     private String foto;
