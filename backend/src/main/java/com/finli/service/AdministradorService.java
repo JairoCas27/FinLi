@@ -39,7 +39,9 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -58,14 +60,14 @@ public class AdministradorService {
     private final EstadoSuscripcionRepository estadoSuscripcionRepository;
     private final CategoriaRepository categoriaRepository;
     private final SubcategoriaRepository subcategoriaRepository;
-    private final MedioPagoRepository medioPagoRepository; // <-- AHORA INYECTADO
+    private final MedioPagoRepository medioPagoRepository;
 
     private final Integer ID_ESTADO_ACTIVO = 1;
     private final Integer ID_ESTADO_INACTIVO = 2;
 
-    // ⬇️⬇️ AGREGAMOS ESTA LÍNEA ⬇️⬇️
     @Autowired
-    private final FuenteCategoriaRepository fuenteCategoriaRepository; // ✅ nombre real
+    private final FuenteCategoriaRepository fuenteCategoriaRepository;
+
     // ====================================================================================
     // === GESTIÓN DE CATEGORÍAS, SUBCATEGORÍAS y MEDIOS DE PAGO ===
     // ====================================================================================
@@ -207,6 +209,7 @@ public class AdministradorService {
             dto.setLogo("bi-currency-exchange");
         }
     }
+
     // ====================================================================================
     // === MÉTODOS DE USUARIO (MANTENIDOS) ===
     // ====================================================================================
@@ -233,7 +236,7 @@ public class AdministradorService {
 
         nuevoUsuario.setRol(dto.getRol());
         nuevoUsuario.setEstadoUsuario(estadoUsuarioActivo);
-        nuevoUsuario.setFechaRegistro(LocalDateTime.now()); // ✅ fecha real
+        nuevoUsuario.setFechaRegistro(LocalDateTime.now());
 
         Usuario usuarioGuardado = usuarioRepository.save(nuevoUsuario);
 
@@ -315,7 +318,7 @@ public class AdministradorService {
             Suscripcion subActiva = null;
             if (usuario.getSuscripciones() != null) {
                 subActiva = usuario.getSuscripciones().stream()
-                        .filter(s -> s.getEstadoSuscripcion().getIdEstadoSuscripcion() == 1) // 1 = Activa
+                        .filter(s -> s.getEstadoSuscripcion().getIdEstadoSuscripcion() == 1)
                         .findFirst()
                         .orElse(null);
             }
@@ -337,12 +340,12 @@ public class AdministradorService {
 
                 subActiva.setTipoSuscripcion(nuevoTipo);
 
-                if (dto.getSubscriptionId() == 1) { // Mensual
+                if (dto.getSubscriptionId() == 1) {
                     subActiva.setFechaFin(LocalDate.now().plusMonths(1));
-                } else if (dto.getSubscriptionId() == 2) { // Anual
+                } else if (dto.getSubscriptionId() == 2) {
                     subActiva.setFechaFin(LocalDate.now().plusYears(1));
                 } else {
-                    subActiva.setFechaFin(null); // De por vida / Gratuito
+                    subActiva.setFechaFin(null);
                 }
 
                 suscripcionRepository.save(subActiva);
@@ -418,39 +421,32 @@ public class AdministradorService {
 
     @Transactional
     public MedioPagoDTO crearMedioPagoPredeterminado(MedioPagoDTO dto) {
-        // Guardamos como predeterminado (usuario = null)
         MedioPago mp = MedioPago.builder()
                 .nombreMedioPago(dto.getName())
-                .montoInicial(0.0) // valor inicial 0 para el sistema
+                .montoInicial(0.0)
                 .fechaCreacion(LocalDateTime.now())
-                .usuario(null) // predeterminado
+                .usuario(null)
                 .build();
 
         mp = medioPagoRepository.save(mp);
 
-        // Devolvemos el DTO con el id asignado
         return new MedioPagoDTO(mp.getIdMedioPago(), dto.getName(), dto.getLogo());
     }
 
     @Transactional
     public MedioPagoDTO actualizarMedioPagoPredeterminado(Integer id, MedioPagoDTO dto) {
-        // 1) LOG: qué ID y qué DTO llegan realmente
         log.warn("🔍 PUT /payment-methods/{}  body={}", id, dto);
 
-        // 2) Buscar el registro
-        MedioPago mp = medioPagoRepository.findByIdSinJoin(id)
+        MedioPago mp = medioPagoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Medio de pago no encontrado"));
 
-        // 3) Segunda validación: solo predeterminados
         if (mp.getUsuario() != null) {
             throw new RuntimeException("No se puede editar un medio de pago de usuario");
         }
 
-        // 4) Actualizar únicamente el nombre
         mp.setNombreMedioPago(dto.getName());
         MedioPago guardado = medioPagoRepository.save(mp);
 
-        // 5) Devolver DTO (logo se devuelve sin persistir por ahora)
         return new MedioPagoDTO(guardado.getIdMedioPago(),
                 guardado.getNombreMedioPago(),
                 dto.getLogo());
@@ -458,15 +454,13 @@ public class AdministradorService {
 
     @Transactional
     public void eliminarMedioPagoPredeterminado(Integer id) {
-        // 1. Verificar que exista y sea predeterminado
-        MedioPago mp = medioPagoRepository.findByIdSinJoin(id)
+        MedioPago mp = medioPagoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Medio de pago no encontrado"));
 
         if (mp.getUsuario() != null) {
             throw new RuntimeException("No se puede eliminar un medio de pago de usuario");
         }
 
-        // 2. Eliminación física
         medioPagoRepository.delete(mp);
     }
 
@@ -479,24 +473,17 @@ public class AdministradorService {
             throw new RuntimeException("No se puede editar una categoría de usuario");
         }
 
-        // 1. Nombre
         cat.setNombreCategoria(dto.getLabel());
-
-        // 2. Icono y color (si los guardas en la BD; si no, solo visuales)
-        // Si NO hay columnas icon/color, comenta estas líneas
-        // cat.setIcon(dto.getIcon());
-        // cat.setColor(dto.getColor());
 
         Categoria guardada = categoriaRepository.save(cat);
 
-        // 3. Recalcular cantidad de subcategorías (opcional)
         Long count = subcategoriaRepository.countByCategoria(guardada);
 
         return new CategoriaDTO(
                 guardada.getIdCategoria(),
                 guardada.getNombreCategoria(),
-                dto.getIcon(), // o null si solo es visual
-                dto.getColor(), // o null
+                dto.getIcon(),
+                dto.getColor(),
                 count);
     }
 
@@ -509,7 +496,6 @@ public class AdministradorService {
             throw new RuntimeException("No se puede eliminar una categoría de usuario");
         }
 
-        // Eliminación física (subcategorías deben tener ON DELETE CASCADE)
         categoriaRepository.delete(cat);
     }
 
@@ -518,7 +504,6 @@ public class AdministradorService {
         Subcategoria sub = subcategoriaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Subcategoría no encontrada"));
 
-        // Solo predeterminadas (sin usuario)
         if (sub.getUsuario() != null) {
             throw new RuntimeException("No se puede eliminar una subcategoría de usuario");
         }
@@ -526,7 +511,6 @@ public class AdministradorService {
         subcategoriaRepository.delete(sub);
     }
 
-    /* ---------- EDITAR SUBCATEGORÍA (PUT) ---------- */
     @Transactional
     public SubcategoriaDTO actualizarSubcategoriaPredeterminada(Integer id, SubcategoriaDTO dto) {
         Subcategoria sub = subcategoriaRepository.findById(id)
@@ -536,99 +520,125 @@ public class AdministradorService {
             throw new RuntimeException("No se puede editar una subcategoría de usuario");
         }
 
-        // 1. Nombre legible
         sub.setNombreSubcategoria(dto.getLabel());
 
-        // 2. Cambiar categoría padre (si se envió)
         if (dto.getCategoriaId() != null && !dto.getCategoriaId().equals(sub.getCategoria().getIdCategoria())) {
             Categoria nueva = categoriaRepository.findById(dto.getCategoriaId())
                     .orElseThrow(() -> new RuntimeException("Categoría destino no encontrada"));
             sub.setCategoria(nueva);
         }
 
-        // 3. Guardar
         Subcategoria guardada = subcategoriaRepository.save(sub);
 
-        // 4. Devolver DTO (usamos los campos que tienes)
-        return new SubcategoriaDTO(
-                guardada.getIdSubcategoria(),
-                guardada.getNombreSubcategoria().toLowerCase().replaceAll("\\s+", "_"), // name técnico
-                guardada.getNombreSubcategoria(), // label legible
-                dto.getIcon(), // icono que mandó front
-                guardada.getCategoria().getIdCategoria() // categoría padre
-        );
-    }
-
-    @Transactional
-    public SubcategoriaDTO crearSubcategoriaPredeterminada(SubcategoriaDTO dto) {
-        // 1. Validar categoría padre
-        Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
-                .orElseThrow(() -> new RuntimeException("Categoría padre no encontrada"));
-
-        // 2. Crear subcategoría (sin usuario = predeterminada)
-        Subcategoria nueva = Subcategoria.builder()
-                .nombreSubcategoria(dto.getLabel())
-                .categoria(categoria)
-                .usuario(null) // predeterminada
-                .build();
-
-        Subcategoria guardada = subcategoriaRepository.save(nueva);
-
-        // 3. Devolver DTO
         return new SubcategoriaDTO(
                 guardada.getIdSubcategoria(),
                 guardada.getNombreSubcategoria().toLowerCase().replaceAll("\\s+", "_"),
                 guardada.getNombreSubcategoria(),
-                dto.getIcon(), // opcional
+                dto.getIcon(),
+                guardada.getCategoria().getIdCategoria());
+    }
+
+    @Transactional
+    public SubcategoriaDTO crearSubcategoriaPredeterminada(SubcategoriaDTO dto) {
+        Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
+                .orElseThrow(() -> new RuntimeException("Categoría padre no encontrada"));
+
+        Subcategoria nueva = Subcategoria.builder()
+                .nombreSubcategoria(dto.getLabel())
+                .categoria(categoria)
+                .usuario(null)
+                .build();
+
+        Subcategoria guardada = subcategoriaRepository.save(nueva);
+
+        return new SubcategoriaDTO(
+                guardada.getIdSubcategoria(),
+                guardada.getNombreSubcategoria().toLowerCase().replaceAll("\\s+", "_"),
+                guardada.getNombreSubcategoria(),
+                dto.getIcon(),
                 guardada.getCategoria().getIdCategoria());
     }
 
     @Transactional
     public CategoriaDTO crearCategoriaPredeterminada(CategoriaDTO dto) {
-        // 1. Validar que no exista el nombre (opcional)
         if (categoriaRepository.existsByNombreCategoriaAndUsuarioIsNull(dto.getLabel())) {
             throw new RuntimeException("Ya existe una categoría predeterminada con ese nombre");
         }
 
-        // 2. Obtener fuente predeterminada (id = 1)
         FuenteCategoria fuente = fuenteCategoriaRepository.findById(1)
                 .orElseThrow(() -> new RuntimeException("Fuente predeterminada no encontrada"));
 
-        // 3. Crear categoría (sin usuario = predeterminada)
         Categoria nueva = Categoria.builder()
                 .nombreCategoria(dto.getLabel())
-                .fuente(fuente) // ← nombre real del campo
-                .usuario(null) // predeterminada
+                .fuente(fuente)
+                .usuario(null)
                 .build();
 
         Categoria guardada = categoriaRepository.save(nueva);
 
-        // 4. Contar subcategorías (0 al crear)
         Long count = subcategoriaRepository.countByCategoria(guardada);
 
-        // 5. Devolver DTO
         return new CategoriaDTO(
                 guardada.getIdCategoria(),
                 guardada.getNombreCategoria(),
-                dto.getIcon(), // visual
-                dto.getColor(), // visual
+                dto.getIcon(),
+                dto.getColor(),
                 count);
     }
  
+    // CORREGIDO: Método que usa LocalDateTime en lugar de LocalDate
     public List<Integer> obtenerCrecimientoUsuariosUltimos12Meses() {
-    LocalDate hoy = LocalDate.now();
-    LocalDate inicio = hoy.minusMonths(11).withDayOfMonth(1); // 11 meses atrás, día 1
+        LocalDate hoy = LocalDate.now();
+        LocalDate inicio = hoy.minusMonths(11).withDayOfMonth(1);
 
-    List<Integer> cantidades = new ArrayList<>();
+        List<Integer> cantidades = new ArrayList<>();
 
-    for (int i = 0; i < 12; i++) {
-        LocalDate mesInicio = inicio.plusMonths(i);
-        LocalDate mesFin   = mesInicio.plusMonths(1).minusDays(1);
+        for (int i = 0; i < 12; i++) {
+            LocalDate mesInicio = inicio.plusMonths(i);
+            LocalDate mesFin = mesInicio.plusMonths(1).minusDays(1);
+            
+            // Convertir a LocalDateTime
+            LocalDateTime inicioDateTime = mesInicio.atStartOfDay();
+            LocalDateTime finDateTime = mesFin.atTime(23, 59, 59);
 
-        Integer cantidad = usuarioRepository.countByFechaRegistroBetween(mesInicio, mesFin);
-        cantidades.add(cantidad);
+            Integer cantidad = usuarioRepository.countByFechaRegistroBetween(inicioDateTime, finDateTime);
+            cantidades.add(cantidad != null ? cantidad : 0);
+        }
+
+        return cantidades;
     }
-
-    return cantidades;
-}
+    
+    // Nuevo método para contar usuarios con suscripción activa
+    public Long countUsuariosConSuscripcionActiva() {
+        try {
+            return usuarioRepository.countUsuariosConSuscripcionActiva();
+        } catch (Exception e) {
+            log.error("Error al contar usuarios con suscripción activa: ", e);
+            return 0L;
+        }
+    }
+    
+    // Método para obtener estadísticas del dashboard
+    public Map<String, Object> obtenerEstadisticasDashboard() {
+        Map<String, Object> stats = new HashMap<>();
+        
+        // 1. Total de usuarios
+        long totalUsuarios = usuarioRepository.count();
+        stats.put("totalUsers", totalUsuarios);
+        
+        // 2. Usuarios con suscripción activa
+        Long usuariosSuscritos = countUsuariosConSuscripcionActiva();
+        stats.put("subscribedUsers", usuariosSuscritos != null ? usuariosSuscritos : 0);
+        
+        // 3. Crecimiento de usuarios (últimos 12 meses)
+        List<Integer> crecimiento = obtenerCrecimientoUsuariosUltimos12Meses();
+        stats.put("userGrowth", crecimiento);
+        
+        // 4. Calcular tasa de retención (simplificada)
+        double tasaRetencion = totalUsuarios > 0 ? 
+            (usuariosSuscritos != null ? (usuariosSuscritos.doubleValue() / totalUsuarios) * 100 : 0) : 0;
+        stats.put("retentionRate", Math.round(tasaRetencion * 100.0) / 100.0);
+        
+        return stats;
+    }
 }

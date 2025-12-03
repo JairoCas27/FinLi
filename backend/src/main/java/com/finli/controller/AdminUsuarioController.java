@@ -7,16 +7,18 @@ import com.finli.dto.UserHomeDTO;
 import com.finli.model.Usuario;
 import com.finli.repository.UsuarioRepository;
 import com.finli.service.AdministradorService;
-import com.finli.service.ExcelExportService; // <-- NUEVO
+import com.finli.service.ExcelExportService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders; // <-- NUEVO
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType; // <-- NUEVO
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException; // <-- NUEVO
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -31,7 +33,7 @@ public class AdminUsuarioController {
     private AdministradorService administradorService;
 
     @Autowired
-    private ExcelExportService excelExportService; // <-- Inyectamos el servicio de Excel
+    private ExcelExportService excelExportService;
 
     // --- 1. LISTAR USUARIOS (GET) ---
     @GetMapping("/users")
@@ -122,26 +124,59 @@ public class AdminUsuarioController {
     }
 
    @GetMapping("/users/latest")
-public ResponseEntity<List<UserHomeDTO>> getLatestUsersForHome() {
-    List<Object[]> rows = usuarioRepository.findLatestUsersForHomeRaw();
-    List<UserHomeDTO> dto = rows.stream()
-        .map(r -> new UserHomeDTO(
-            (Integer) r[0],
-            (String) r[1],
-            (String) r[2],
-            (String) r[3],
-            (String) r[4],
-            r[5].toString(),
-            (String) r[6]
-        ))
-        .collect(Collectors.toList());
-    return ResponseEntity.ok(dto);
-}
+   public ResponseEntity<List<UserHomeDTO>> getLatestUsersForHome() {
+       List<Object[]> rows = usuarioRepository.findLatestUsersForHomeRaw();
+       List<UserHomeDTO> dto = rows.stream()
+           .map(r -> new UserHomeDTO(
+               (Integer) r[0],
+               (String) r[1],
+               (String) r[2],
+               (String) r[3],
+               (String) r[4],
+               r[5].toString(),
+               (String) r[6]
+           ))
+           .collect(Collectors.toList());
+       return ResponseEntity.ok(dto);
+   }
 
-// Nuevo: crecimiento de usuarios por mes (últimos 12 meses)
-@GetMapping("/usuarios/crecimiento-mensual")
-public ResponseEntity<List<Integer>> getUserGrowthLast12Months() {
-    return ResponseEntity.ok(administradorService.obtenerCrecimientoUsuariosUltimos12Meses());
-}
-
+   // Nuevo: crecimiento de usuarios por mes (últimos 12 meses)
+   @GetMapping("/usuarios/crecimiento-mensual")
+   public ResponseEntity<List<Integer>> getUserGrowthLast12Months() {
+       return ResponseEntity.ok(administradorService.obtenerCrecimientoUsuariosUltimos12Meses());
+   }
+   
+   // Nuevo endpoint para estadísticas del dashboard
+   @GetMapping("/stats/dashboard")
+   public ResponseEntity<Map<String, Object>> getDashboardStats() {
+       Map<String, Object> stats = new HashMap<>();
+       
+       // 1. Total de usuarios
+       long totalUsers = usuarioRepository.count();
+       stats.put("totalUsers", totalUsers);
+       
+       // 2. Usuarios con suscripción activa (estado de suscripción = 1)
+       // Necesitamos contar usuarios que tienen al menos una suscripción activa
+       // Vamos a hacerlo mediante una consulta en el servicio
+       Long subscribedUsers = administradorService.countUsuariosConSuscripcionActiva();
+       stats.put("subscribedUsers", subscribedUsers != null ? subscribedUsers : 0);
+       
+       // 3. Transacciones recientes (últimos 30 días)
+       // TODO: Necesitarás implementar este método en TransaccionRepository
+       // long recentTransactions = transaccionRepository.countByFechaAfter(LocalDateTime.now().minusDays(30));
+       // stats.put("recentTransactions", recentTransactions);
+       
+       // 4. Crecimiento de usuarios (últimos 12 meses)
+       List<Integer> growthData = administradorService.obtenerCrecimientoUsuariosUltimos12Meses();
+       stats.put("userGrowth", growthData);
+       
+       return ResponseEntity.ok(stats);
+   }
+   
+   // Método auxiliar para contar usuarios activos
+   @GetMapping("/stats/active-users")
+   public ResponseEntity<Long> getActiveUsersCount() {
+       Long activeUsers = usuarioRepository.countByEstadoUsuario_IdEstado(1); // Asumiendo que 1 es "Activo"
+       return ResponseEntity.ok(activeUsers != null ? activeUsers : 0L);
+   }
 }

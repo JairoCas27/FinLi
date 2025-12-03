@@ -32,47 +32,38 @@ async function loadLatestUsersForHome() {
     }
 }
 
-// 3. EDITAR (CARGAR DATOS EN EL MODAL)
-async function editUser(id) {
-    userToEditId = id; // Guardamos el ID para usarlo al guardar cambios
-
+// Cargar estadísticas del dashboard
+async function loadDashboardStats() {
     try {
-        // Llamada al backend para obtener el detalle separado
-        // Endpoint: GET /api/admin/users/{id}
-        const response = await fetch(`http://localhost:8080/api/admin/users/${id}`);
-
-        if (!response.ok) {
-            throw new Error('No se pudo obtener la información del usuario');
+        const res = await fetch('http://localhost:8080/api/admin/stats/dashboard');
+        if (!res.ok) throw new Error('Error obteniendo estadísticas');
+        const stats = await res.json();
+        
+        // Actualizar UI
+        document.getElementById('totalUsersCount').textContent = stats.totalUsers || '0';
+        document.getElementById('totalSubscriptions').textContent = stats.subscribedUsers || '0';
+        
+        // Si hay datos de transacciones, actualizar
+        if (stats.recentTransactions !== undefined) {
+            document.querySelector('.card-stat.tx .stat-value').textContent = stats.recentTransactions || '0';
         }
-
-        const user = await response.json();
-
-        // Llenar el formulario con los datos recibidos del DTO (UserDetailDTO)
-        document.getElementById('editUserNombre').value = user.nombre || '';
-        document.getElementById('editUserApellidoPaterno').value = user.apellidoPaterno || '';
-        document.getElementById('editUserApellidoMaterno').value = user.apellidoMaterno || '';
-        document.getElementById('editUserEdad').value = user.edad || '';
-        document.getElementById('editUserEmail').value = user.email || '';
-
-        // Seleccionar ROL (si existe en el select, sino default 'usuario')
-        const rolSelect = document.getElementById('editUserRol');
-        if (rolSelect) rolSelect.value = user.rol || 'usuario';
-
-        // Seleccionar SUSCRIPCIÓN (si existe en el select, sino default 4)
-        const subSelect = document.getElementById('editUserSubscriptionType');
-        if (subSelect) subSelect.value = user.subscriptionId || 4;
-
-        // Limpiar el campo de contraseña (para que esté vacío por seguridad)
-        const passField = document.getElementById('editUserPassword');
-        if (passField) passField.value = '';
-
-        // Mostrar modal
-        const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
-        editModal.show();
-
+        
+        // Calcular crecimiento porcentual (si hay datos de crecimiento)
+        if (stats.userGrowth && stats.userGrowth.length >= 2) {
+            const growthPercentage = stats.userGrowth[stats.userGrowth.length - 1] > 0 ? 
+                Math.round((stats.userGrowth[stats.userGrowth.length - 1] / 
+                          Math.max(stats.userGrowth[stats.userGrowth.length - 2], 1)) * 100) : 0;
+            
+            const growthElement = document.querySelector('.card-stat.users .mt-3');
+            if (growthElement) {
+                growthElement.innerHTML = `<i class="bi bi-arrow-up-right text-success me-1"></i> Crecimiento +${growthPercentage}% en el último mes`;
+            }
+        }
+        
+        return stats.userGrowth || [];
     } catch (error) {
-        console.error("Error cargando usuario para editar:", error);
-        alert("Error al cargar los datos del usuario.");
+        console.error('Error cargando estadísticas:', error);
+        return [];
     }
 }
 
@@ -120,7 +111,9 @@ function deleteUser(id) {
 }
 
 async function initializeInicio() {
-    await loadLatestUsersForHome(); // ✅ carga real
+    // Cargar datos reales
+    await loadLatestUsersForHome(); // ✅ carga usuarios más recientes
+    await loadDashboardStats(); // ✅ carga estadísticas del dashboard
     initializeChartsInicio();
     updateNotificationsDropdown();
     updateRecentActivities();
@@ -175,7 +168,6 @@ async function initializeInicio() {
     });
 }
 
-
 function renderUsersInicio() {
     const sortedUsers = [...users].sort((a, b) => new Date(b.registrationDate) - new Date(a.registrationDate));
 
@@ -185,9 +177,13 @@ function renderUsersInicio() {
     const startIndexInicio = (currentPageInicio - 1) * usersPerPageInicio;
     const usersForInicio = sortedUsers.slice(startIndexInicio, startIndexInicio + usersPerPageInicio);
 
-    usersForInicio.forEach(user => {
-        tbodyInicio.appendChild(createUserRowInicio(user));
-    });
+    if (usersForInicio.length === 0) {
+        tbodyInicio.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No se encontraron usuarios</td></tr>';
+    } else {
+        usersForInicio.forEach(user => {
+            tbodyInicio.appendChild(createUserRowInicio(user));
+        });
+    }
 
     updateInicioPagination(sortedUsers.length);
 }
@@ -195,9 +191,9 @@ function renderUsersInicio() {
 function createUserRowInicio(user) {
     const tr = document.createElement('tr');
 
-    const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+    const initials = user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : '?';
     const colors = ['var(--accent)', 'var(--accent-3)', 'var(--accent-4)', 'var(--muted)', '#3498db', '#e74c3c', '#2ecc71', '#9b59b6', '#f39c12', '#1abc9c'];
-    const colorIndex = user.id % colors.length;
+    const colorIndex = (user.id || 0) % colors.length;
     const bgColor = colors[colorIndex];
 
     const subscriptionBadgeClass = {
@@ -206,6 +202,7 @@ function createUserRowInicio(user) {
         'Anual': 'bg-warning text-dark',
         'De por vida': 'bg-info text-white'
     };
+    const badgeClass = subscriptionBadgeClass[user.subscriptionType] || 'bg-secondary text-white';
 
     tr.innerHTML = `
         <td><span class="badge bg-light text-dark">${user.id}</span></td>
@@ -213,18 +210,18 @@ function createUserRowInicio(user) {
             <div class="d-flex align-items-center gap-2">
                 <div class="avatar-sm" style="background:${user.photo ? 'transparent' : bgColor}">
                     ${user.photo ?
-            `<img src="${user.photo}" alt="${user.name}">` :
+            `<img src="${user.photo}" alt="${user.name}" style="width:100%;height:100%;border-radius:50%;">` :
             `<span>${initials}</span>`
         }
                 </div>
             </div>
         </td>
         <td>
-            <div style="font-weight:600">${user.name}</div>
-            <small class="text-muted">${user.email}</small>
+            <div style="font-weight:600">${user.name || 'Sin nombre'}</div>
+            <small class="text-muted">${user.email || 'Sin correo'}</small>
         </td>
-        <td>${user.email}</td>
-        <td><span class="badge rounded-pill ${subscriptionBadgeClass[user.subscriptionType]}">${user.subscriptionType}</span></td>
+        <td>${user.email || ''}</td>
+        <td><span class="badge rounded-pill ${badgeClass}">${user.subscriptionType || 'Desconocido'}</span></td>
         <td class="text-center">
             <div class="table-actions">
                 <button class="table-action-btn edit edit-user" data-id="${user.id}" title="Editar">
@@ -246,9 +243,19 @@ function updateInicioPagination(totalUsers) {
     const countElement = document.getElementById('countInicio');
 
     if (countElement) {
-        const startIndex = (currentPageInicio - 1) * usersPerPageInicio + 1;
-        const endIndex = Math.min(startIndex + usersPerPageInicio - 1, totalUsers);
-        countElement.textContent = `${startIndex}-${endIndex}`;
+        if (totalUsers === 0) {
+            countElement.textContent = '0-0';
+        } else {
+            const startIndex = (currentPageInicio - 1) * usersPerPageInicio + 1;
+            const endIndex = Math.min(startIndex + usersPerPageInicio - 1, totalUsers);
+            countElement.textContent = `${startIndex}-${endIndex}`;
+        }
+    }
+
+    // Actualizar total de usuarios en la tabla
+    const totalUsersElement = document.getElementById('totalUsersInicio');
+    if (totalUsersElement) {
+        totalUsersElement.textContent = totalUsers;
     }
 
     if (paginationContainer) {
@@ -292,18 +299,26 @@ function changePageInicio(page) {
 async function initializeChartsInicio() {
     const userGrowthCtxInicio = document.getElementById('userGrowthChartInicio');
     if (userGrowthCtxInicio) {
-        new Chart(userGrowthCtxInicio.getContext('2d'), {
+        // Obtener datos reales de crecimiento
+        const growthData = await generateUserGrowthData();
+        
+        const chart = new Chart(userGrowthCtxInicio.getContext('2d'), {
             type: 'line',
             data: {
                 labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
                 datasets: [{
                     label: 'Usuarios Registrados',
-                    data: await generateUserGrowthData(),
+                    data: growthData,
                     borderColor: '#0ea46f',
                     backgroundColor: 'rgba(14, 164, 111, 0.1)',
                     borderWidth: 3,
                     fill: true,
-                    tension: 0.4
+                    tension: 0.4,
+                    pointBackgroundColor: '#0ea46f',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
                 }]
             },
             options: {
@@ -312,6 +327,14 @@ async function initializeChartsInicio() {
                 plugins: {
                     legend: {
                         display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: '#0ea46f',
+                        borderWidth: 1,
+                        cornerRadius: 5
                     }
                 },
                 scales: {
@@ -319,16 +342,25 @@ async function initializeChartsInicio() {
                         beginAtZero: true,
                         grid: {
                             color: 'rgba(0,0,0,0.05)'
+                        },
+                        ticks: {
+                            color: '#666'
                         }
                     },
                     x: {
                         grid: {
                             display: false
+                        },
+                        ticks: {
+                            color: '#666'
                         }
                     }
                 }
             }
         });
+        
+        // Guardar referencia al chart para posibles actualizaciones
+        window.userGrowthChart = chart;
     }
 }
 
@@ -409,22 +441,38 @@ function updateRecentActivities() {
 async function generateUserGrowthData() {
     try {
         const res = await fetch('http://localhost:8080/api/admin/usuarios/crecimiento-mensual');
-        if (!res.ok) throw new Error('Error obteniendo crecimiento');
-        return await res.json(); // array de 12 enteros
+        if (!res.ok) {
+            console.warn('Error obteniendo crecimiento, usando datos de prueba');
+            return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        }
+        const data = await res.json();
+        
+        // Validar que sea un array
+        if (Array.isArray(data) && data.length === 12) {
+            return data;
+        } else {
+            console.warn('Formato de datos incorrecto, usando datos de prueba');
+            return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        }
     } catch (err) {
-        console.error(err);
+        console.error('Error generando datos de crecimiento:', err);
         return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // fallback
     }
 }
 
 function exportUsersToCSV(filename) {
-    let csv = 'ID,Nombre,Email,Tipo Suscripción,Fecha Registro\n';
+    if (!users || users.length === 0) {
+        alert('No hay datos para exportar');
+        return;
+    }
+
+    let csv = 'ID,Nombre,Email,Tipo Suscripción,Fecha Registro,Estado\n';
 
     users.forEach(user => {
-        csv += `"${user.id}","${user.name}","${user.email}","${user.subscriptionType}","${user.registrationDate}"\n`;
+        csv += `"${user.id || ''}","${user.name || ''}","${user.email || ''}","${user.subscriptionType || ''}","${user.registrationDate || ''}","${user.status || ''}"\n`;
     });
 
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.setAttribute('hidden', '');
@@ -434,7 +482,11 @@ function exportUsersToCSV(filename) {
     a.click();
     document.body.removeChild(a);
 
-    showNotification('Datos exportados exitosamente', 'success');
+    if (typeof showNotification === 'function') {
+        showNotification('Datos exportados exitosamente', 'success');
+    } else {
+        alert('Datos exportados exitosamente');
+    }
 }
 
 // ===== FUNCIONES DE GUARDAR / ACTUALIZAR / ELIMINAR (para inicio.html) =====
@@ -446,11 +498,11 @@ async function saveUser() {
         nombre: document.getElementById('userNombre').value,
         apellidoPaterno: document.getElementById('userApellidoPaterno').value,
         apellidoMaterno: document.getElementById('userApellidoMaterno').value,
-        edad: parseInt(document.getElementById('userEdad').value),
+        edad: parseInt(document.getElementById('userEdad').value) || 0,
         email: document.getElementById('userEmail').value,
         password: document.getElementById('userPassword').value,
         rol: document.getElementById('userRol').value,
-        subscriptionId: parseInt(document.getElementById('userSubscriptionType').value)
+        subscriptionId: parseInt(document.getElementById('userSubscriptionType').value) || 4
     };
 
     if (!userData.nombre || !userData.email || !userData.password) {
@@ -459,6 +511,7 @@ async function saveUser() {
     }
 
     btn.disabled = true;
+    const originalText = btn.innerHTML;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
 
     try {
@@ -472,18 +525,41 @@ async function saveUser() {
             const modal = bootstrap.Modal.getInstance(document.getElementById('addUserModal'));
             modal.hide();
             document.getElementById('addUserForm').reset();
-            showNotification('Usuario creado exitosamente', 'success');
-            await loadLatestUsersForHome(); // recarga tabla
+            
+            // Limpiar vista previa de foto
+            const preview = document.getElementById('addPhotoPreview');
+            if(preview) {
+                preview.src = '';
+                preview.style.display = 'none';
+            }
+            
+            if (typeof showNotification === 'function') {
+                showNotification('Usuario creado exitosamente', 'success');
+            } else {
+                alert('Usuario creado exitosamente');
+            }
+            
+            // Recargar datos
+            await loadLatestUsersForHome();
+            await loadDashboardStats();
+            
+            // Actualizar gráfico si existe
+            if (window.userGrowthChart) {
+                const newData = await generateUserGrowthData();
+                window.userGrowthChart.data.datasets[0].data = newData;
+                window.userGrowthChart.update();
+            }
+            
         } else {
             const msg = await res.text();
             alert("Error: " + msg);
         }
     } catch (err) {
         console.error(err);
-        alert("Error de conexión.");
+        alert("Error de conexión con el servidor.");
     } finally {
         btn.disabled = false;
-        btn.innerHTML = 'Guardar Usuario';
+        btn.innerHTML = originalText;
     }
 }
 
@@ -495,11 +571,11 @@ async function updateUser() {
         nombre: document.getElementById('editUserNombre').value,
         apellidoPaterno: document.getElementById('editUserApellidoPaterno').value,
         apellidoMaterno: document.getElementById('editUserApellidoMaterno').value,
-        edad: parseInt(document.getElementById('editUserEdad').value),
+        edad: parseInt(document.getElementById('editUserEdad').value) || 0,
         email: document.getElementById('editUserEmail').value,
-        password: document.getElementById('editUserPassword').value,
+        password: document.getElementById('editUserPassword').value || '',
         rol: document.getElementById('editUserRol').value,
-        subscriptionId: parseInt(document.getElementById('editUserSubscriptionType').value)
+        subscriptionId: parseInt(document.getElementById('editUserSubscriptionType').value) || 4
     };
 
     if (!userData.nombre || !userData.email) {
@@ -508,6 +584,7 @@ async function updateUser() {
     }
 
     btn.disabled = true;
+    const originalText = btn.innerHTML;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Actualizando...';
 
     try {
@@ -520,29 +597,36 @@ async function updateUser() {
         if (res.ok) {
             const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
             modal.hide();
-            showNotification('Usuario actualizado correctamente', 'success');
-            await loadLatestUsersForHome(); // recarga tabla
+            
+            if (typeof showNotification === 'function') {
+                showNotification('Usuario actualizado correctamente', 'success');
+            } else {
+                alert('Usuario actualizado correctamente');
+            }
+            
+            // Recargar datos
+            await loadLatestUsersForHome();
+            
         } else {
             const msg = await res.text();
             alert("Error: " + msg);
         }
     } catch (err) {
         console.error(err);
-        alert("Error de conexión.");
+        alert("Error de conexión con el servidor.");
     } finally {
         btn.disabled = false;
-        btn.innerHTML = 'Actualizar Usuario';
+        btn.innerHTML = originalText;
         userToEditId = null;
     }
 }
-
-
 
 // ===== ELIMINAR LÓGICA (cambiar estado a "Desactivado") =====
 async function confirmDeleteUser() {
     if (!userToDeleteId) return;
     const btn = document.getElementById('confirmDeleteBtn');
     btn.disabled = true;
+    const originalText = btn.innerHTML;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Desactivando...';
 
     try {
@@ -575,19 +659,41 @@ async function confirmDeleteUser() {
         if (resPut.ok) {
             const modal = bootstrap.Modal.getInstance(document.getElementById('deleteUserModal'));
             modal.hide();
-            showNotification('Usuario desactivado', 'success');
-            await loadLatestUsersForHome(); // recarga tabla
+            
+            if (typeof showNotification === 'function') {
+                showNotification('Usuario desactivado correctamente', 'success');
+            } else {
+                alert('Usuario desactivado correctamente');
+            }
+            
+            // Recargar datos
+            await loadLatestUsersForHome();
+            await loadDashboardStats();
+            
         } else {
             const msg = await resPut.text();
             alert("Error al desactivar: " + msg);
         }
     } catch (err) {
         console.error(err);
-        alert("Error de conexión.");
+        alert("Error de conexión con el servidor.");
     } finally {
         btn.disabled = false;
-        btn.innerHTML = 'Desactivar Usuario';
+        btn.innerHTML = originalText;
         userToDeleteId = null;
     }
+}
 
+// Función auxiliar para actualizar conteo de usuarios
+function updateUserCount() {
+    const totalUsersElement = document.getElementById('totalUsers');
+    const totalUsers2Element = document.getElementById('totalUsers2');
+    
+    if (totalUsersElement && users) {
+        totalUsersElement.textContent = users.length;
+    }
+    
+    if (totalUsers2Element && users) {
+        totalUsers2Element.textContent = users.length;
+    }
 }
