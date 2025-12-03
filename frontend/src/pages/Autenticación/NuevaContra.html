@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinLi - Recuperar Contraseña</title>
+    <title>FinLi - Nueva Contraseña</title>
     <link rel="icon" href="/frontend/public/img/Logo/LogoFinLi.png">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -68,7 +68,7 @@
         </div>
     </nav>
 
-    <!-- Formulario de Registro -->
+    <!-- Formulario de Nueva Contraseña -->
     <section class="form-section">
         <div class="container">
         <div class="row justify-content-center">
@@ -78,26 +78,27 @@
                 <img src="/frontend/public/img/Logo/LogoFinLi.png" alt="Logo FinLi" width="100" height="100">
                 <h1>FinLi</h1>
                 <p>NUEVA CONTRASEÑA</p>
-                <!-- Temporizador agregado aquí -->
+                <!-- Temporizador -->
                 <div class="timer-container">
                     <div class="timer" id="countdown">El código expira en <span id="time">30</span> segundos</div>
                     <a class="resend-link" id="resendCode">Reenviar código</a>
                 </div>
                 </div>
                 
-                <form>
+                <!-- FORMULARIO CON ID CORREGIDO -->
+                <form id="resetPasswordForm">
                 <div class="mb-3">
                     <label for="email" class="form-label">Introduzca su correo electrónico</label>
                     <input type="email" class="form-control" id="email" placeholder="Ejm. utepino@gmail.com" required>
                 </div>
                 <div class="mb-3">
-                    <label for="recuperacion" class="form-label">Código de Recuperación</label>
-                    <input type="recuperacion" class="form-control" id="recuperacion" placeholder="XXX-XXX" required>
+                    <label for="recuperacion" class="form-label">Código de Recuperación (6 dígitos)</label>
+                    <input type="text" class="form-control" id="recuperacion" placeholder="123456" pattern="\d{6}" maxlength="6" required>
                 </div>
                 <div class="mb-3">
                     <label for="password" class="form-label">Nueva Contraseña</label>
                     <div class="password-container">
-                        <input type="password" class="form-control" id="contrasena" placeholder="**********" required>
+                        <input type="password" class="form-control" id="contrasena" placeholder="**********" minlength="8" required>
                         <button type="button" class="password-toggle" id="togglePassword">
                             <i class="bi bi-eye"></i>
                         </button>
@@ -107,7 +108,7 @@
                 <div class="mb-3">
                     <label for="password" class="form-label">Confirmar Contraseña</label>
                     <div class="password-container">
-                        <input type="password" class="form-control" id="confirmarContrasena" placeholder="**********" required>
+                        <input type="password" class="form-control" id="confirmarContrasena" placeholder="**********" minlength="8" required>
                         <button type="button" class="password-toggle" id="toggleConfirmPassword">
                             <i class="bi bi-eye"></i>
                         </button>
@@ -119,6 +120,7 @@
                 <div class="login-redirect">
                     <a href="/frontend/src/pages/Inicio/inicio.html" class="login-link">Regresar al Inicio</a>
                 </div>
+                </form>
             </div>
             </div>
         </div>
@@ -166,8 +168,11 @@
         <p class="copyright">© 2025 FinLi. Todos los derechos reservados.</p>
         </div>
     </footer>
-</body>
+
 <script>
+// URL de su endpoint de Spring Boot
+const RESET_API_URL = 'http://localhost:8080/api/auth/reset-password';
+
 // =================================================================
 // Manejo de Toggles de Contraseña
 // =================================================================
@@ -192,7 +197,7 @@ if(toggleConfirmPassword && confirmPasswordInput) setupToggle(toggleConfirmPassw
 // =================================================================
 // Temporizador 
 // =================================================================
-let timeLeft = 60;
+let timeLeft = 120;
 let countdownInterval = null;
 
 const timerElement = document.getElementById('time');
@@ -209,7 +214,7 @@ if (timerElement && countdownElement && resendLink) {
         resendLink.style.display = timeLeft <= 0 ? 'inline' : 'none';
     }
 
-    function startTimer(initialSeconds = 60) {
+    function startTimer(initialSeconds = 120) {
         clearInterval(countdownInterval);
         timeLeft = initialSeconds;
         render(); 
@@ -236,27 +241,19 @@ if (timerElement && countdownElement && resendLink) {
         startTimer(60);
     });
 
-    startTimer(60);
+    startTimer(120);
 }
 
-
+// =================================================================
 // LÓGICA DE LA API PARA RESTABLECER CONTRASEÑA
+// =================================================================
 
-
-const RESET_API_URL = 'http://localhost:8080/api/auth/reset-password';
-const resetForm = document.getElementById('resetPasswordForm'); 
-const statusNotification = document.getElementById('statusNotification'); 
-
-// Función para mostrar la notificación de estado (éxito o error)
-function showStatusNotification(isSuccess, message) {
-
-    alert(message); 
-}
+// Obtener el formulario (ahora tiene id="resetPasswordForm")
+const resetForm = document.getElementById('resetPasswordForm');
 
 if(resetForm) {
     resetForm.addEventListener('submit', function(e) {
-        //  EVITAR LA RECARGA DE LA PÁGINA
-        e.preventDefault();
+        e.preventDefault(); // EVITAR LA RECARGA DE LA PÁGINA
         
         const email = document.getElementById('email').value.trim();
         const token = document.getElementById('recuperacion').value.trim(); 
@@ -267,12 +264,24 @@ if(resetForm) {
 
         // Validación de campos
         if (!email || !token || !nuevaContrasena || !confirmarContrasena) {
-            showStatusNotification(false, 'Todos los campos son obligatorios.');
+            alert('Todos los campos son obligatorios.');
             return;
         }
 
         if (nuevaContrasena !== confirmarContrasena) {
-            showStatusNotification(false, 'Las contraseñas no coinciden.');
+            alert('Las contraseñas no coinciden.');
+            return;
+        }
+
+        // Validar formato del token (6 dígitos)
+        if (!/^\d{6}$/.test(token)) {
+            alert('El código de recuperación debe tener 6 dígitos numéricos.');
+            return;
+        }
+
+        // Validar longitud de contraseña
+        if (nuevaContrasena.length < 8) {
+            alert('La contraseña debe tener al menos 8 caracteres.');
             return;
         }
 
@@ -280,8 +289,9 @@ if(resetForm) {
         const originalText = updateButton.textContent;
         updateButton.textContent = 'Actualizando...';
         updateButton.disabled = true;
+        updateButton.classList.add('btn-loading');
 
-        // LLAMADA AL ENDPOINT 
+        // LLAMADA AL ENDPOINT DE RESET
         fetch(RESET_API_URL, {
             method: 'POST',
             headers: {
@@ -296,14 +306,13 @@ if(resetForm) {
         .then(async response => {
             const responseText = await response.text();
             if (!response.ok) {
-                // El backend devuelve el mensaje de error aquí
                 throw new Error(responseText || 'Error desconocido al cambiar la contraseña.');
             }
             return responseText;
         })
         .then(data => {
-            // Éxito: Mostrar notificación y redirigir
-            showStatusNotification(true, data); 
+            // Éxito: Mostrar alerta y redirigir
+            alert('✅ ' + data + '\n\nSe ha enviado un correo de confirmación a tu email.');
             
             // Redirigir a la página de login después de 3 segundos
             setTimeout(function() {
@@ -314,17 +323,16 @@ if(resetForm) {
         .catch(error => {
             // Fallo: Mostrar error
             console.error('Error al restablecer contraseña:', error.message);
-            
-            // El backend devuelve el mensaje de error exacto
-            showStatusNotification(false, error.message);
+            alert('❌ Error: ' + error.message);
         })
         .finally(() => {
             // Restaurar el botón al finalizar
             updateButton.textContent = originalText;
             updateButton.disabled = false;
+            updateButton.classList.remove('btn-loading');
         });
     });
 }
-
 </script>
+</body>
 </html>
