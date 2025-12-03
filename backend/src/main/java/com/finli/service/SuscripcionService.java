@@ -1,15 +1,22 @@
 package com.finli.service;
 
-import com.finli.dto.SuscripcionResponse;
-import com.finli.model.*;
-import com.finli.repository.*;
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDate;
+import java.util.Optional;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.util.Optional;
+import com.finli.dto.SuscripcionResponse;
+import com.finli.model.EstadoSuscripcion;
+import com.finli.model.Suscripcion;
+import com.finli.model.TipoSuscripcion;
+import com.finli.model.Usuario;
+import com.finli.repository.EstadoSuscripcionRepository;
+import com.finli.repository.SuscripcionRepository;
+import com.finli.repository.TipoSuscripcionRepository;
+import com.finli.repository.UsuarioRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -129,4 +136,3 @@ return SuscripcionResponse.builder()
         });
     }
 }
-
